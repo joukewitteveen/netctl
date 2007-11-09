@@ -1,0 +1,252 @@
+### Globals
+PROFILE_DIR="/etc/network.d"
+
+### Messages
+##
+# err msg
+#   output specified message
+err() {
+echo $*
+}
+
+
+### Profile loading
+##
+# load_profile profile
+#   source the profile
+load_profile() {
+    validate_profile $1 || return 1
+    . $PROFILE_DIR/$1
+}
+# validate_profile profile
+#   check whether profile exists and is usable
+validate_profile()
+{
+    [ -z "$1" ] && return 1
+    if [ ! -f $PROFILE_DIR/$1 ]; then
+        err "Profile \"$1\" does not exist"
+        return 1
+    fi
+    . $PROFILE_DIR/$1
+    if [ -z "$INTERFACE" ]; then
+        err "Profile missing an interface to configure"
+        return 1
+    fi
+    if [ ! -f $SUBR_DIR/$CONNECTION.subr ]; then
+        err "$CONNECTION is not a valid connection, check spelling or look at examples"
+        return 1
+    fi
+}
+
+### Profile up/down
+##
+# all_down
+#   take all profiles down
+#
+all_down()
+{
+    ls -1 $STATE_DIR/profiles/ | while read prof; do
+        profile_down $prof
+    done
+}
+
+# all_suspend
+#   store a list of running profiles and take them down
+#
+all_suspend()
+{
+    [ ! -d $STATE_DIR/suspend ] && mkdir $STATE_DIR/suspend
+
+    ls -1 $STATE_DIR/profiles/ | while read prof; do
+        cp $STATE_DIR/profiles/$prof $STATE_DIR/suspend/
+        profile_down $prof
+    done
+}
+
+# all_suspend
+#   store a list of running profiles and take them down
+#
+all_resume()
+{
+    ls -1 $STATE_DIR/suspend/ | while read prof; do
+        profile_up $prof
+        rm $STATE_DIR/suspend/$prof
+    done
+}
+
+# profile_up profile
+#   put all profiles up
+#
+profile_up()
+{
+    
+    load_profile $1 || return 1
+
+    check_profile $1 && err "$1 already connected" &&  return 1
+
+    stat_busy "$1 up"
+    
+    if check_iface $INTERFACE; then
+        if checkyesno $CHECK; then
+            err "Interface $INTERFACE already in use"
+            stat_fail && return 1
+        else
+            interface_down $INTERFACE || return 1
+            load_profile $1 
+        fi
+    fi
+    
+   
+    eval $PRE_UP || return 1
+    
+    . $SUBR_DIR/${CONNECTION}.subr
+    if ! ${CONNECTION}_up $1; then
+        stat_fail
+        return 1
+    fi
+    
+    eval $POST_UP || return 1
+    
+    set_profile up $1
+    ${CONNECTION}_clean_scope
+    add_daemon net-profiles
+    stat_done
+}
+
+# profile_down profile
+#   take profile down
+#
+profile_down()
+{
+    load_profile $1 || return 1
+    
+    if ! check_profile $1; then
+        err "Profile not connected" 
+        return 1
+    fi
+    
+    stat_busy "$1 down"
+    if [ "$(get_iface_prof $INTERFACE)" == "external" ]; then
+        err "$interface was connected by another application"
+        stat_fail
+        return 1
+    fi
+    
+    eval $PRE_DOWN || return 1
+    
+    . $SUBR_DIR/${CONNECTION}.subr
+    if ! ${CONNECTION}_down $1; then
+        stat_fail
+        return 1
+    fi
+    
+    eval $POST_DOWN || return 1
+    
+    set_profile down $1
+    ${CONNECTION}_clean_scope
+    stat_done
+}
+
+# interface_down interface
+#   take interface down
+#
+interface_down()
+{
+    local prof=$(get_iface_prof $1)
+    profile_down $prof
+    return $?
+}
+
+
+### Query functions
+##
+# check_iface interface
+#   Return 0 if interface up
+#   Return 1 if interface down
+#
+check_iface() {
+    [ -f $STATE_DIR/interfaces/$1 ] && return 0
+    return 1
+}
+
+# get_iface_prof interface
+#   Echo interface profile and return 0 if up
+#   Return 1 if down.
+#
+get_iface_prof() {
+    if check_iface $1; then
+        . $STATE_DIR/interfaces/$1
+        echo $PROFILE
+    else
+        return 1
+    fi
+}
+
+# check_profile profile
+#   Return 0 if profile up
+#   Return 1 if profile down
+#
+check_profile() {
+    [ -f $STATE_DIR/profiles/$1 ] && return 0
+    return 1
+} 
+
+### Status setting functions
+##
+# set_profile up/down profile
+#   Set profile state, either up or down
+#
+set_profile() {
+    if [ "$1" == "up" ]; then
+        . $PROFILE_DIR/$2
+        cp $PROFILE_DIR/$2 $STATE_DIR/profiles/
+        set_iface up $INTERFACE $2
+    elif [ "$1" == "down" ]; then
+        . $STATE_DIR/profiles/$2
+        rm $STATE_DIR/profiles/$2
+        set_iface down $INTERFACE $2
+    fi
+}
+
+# set_iface up/down interface [profile]
+#   Set interface status to up/down
+#   optionally link it to a profile.
+#
+set_iface() {
+    PROFILE=$3
+    [ -z "$PROFILE" ] && PROFILE=external
+    if [ "$1" == "up" ]; then
+        echo "PROFILE=$PROFILE" > $STATE_DIR/interfaces/$2
+    elif [ "$1" == "down" ]; then
+        rm $STATE_DIR/interfaces/$2
+    fi    
+}
+
+
+### From FreeBSD's /etc/rc.subr
+##
+# checkyesno var
+#    Test $1 variable, and warn if not set to YES or NO.
+#    Return 0 if it's "yes" (et al), nonzero otherwise.
+#
+checkyesno()
+{
+    _value=${1}
+    #debug "checkyesno: $1 is set to $_value."
+    case $_value in
+
+        #    "yes", "true", "on", or "1"
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+
+        #    "no", "false", "off", or "0"
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        #warn "\$${1} is not set properly - see ${rcvar_manpage}."
+        return 1
+        ;;
+    esac
+}

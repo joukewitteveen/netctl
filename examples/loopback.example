@@ -1,0 +1,5 @@
+CONNECTION="ethernet"
+DESCRIPTION="A very basic ethernet profile, using dhcp"
+INTERFACE=lo
+IP="static"
+IFOPTS="127.0.0.1"

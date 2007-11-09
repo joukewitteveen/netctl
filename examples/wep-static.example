@@ -1,0 +1,12 @@
+CONNECTION="wireless"
+DESCRIPTION="A wep encrypted wireless connection using static ip"
+INTERFACE=wlan0
+SCAN="yes"
+SECURITY="wep"
+ESSID="MyNetwork"
+KEY="1234567890"
+IP="static"
+IFOPTS="192.168.1.23 netmask 255.255.255.0 broadcast 192.168.1.255"
+GATEWAY="192.168.1.1"
+DNS1=192.168.1.1
+DNS2=dns1.dreamhost.com

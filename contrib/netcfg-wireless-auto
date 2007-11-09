@@ -1,0 +1,43 @@
+#! /bin/bash
+# Originally contributed by Neuro: http://bbs.archlinux.org/viewtopic.php?pid=278148#p278148
+
+. /usr/lib/network/network.subr
+. /usr/lib/network/wireless.subr
+
+# wifi_auto
+#   autoconnect wireless interface
+#   $1 - wireless interface
+
+wifi_auto()
+{
+    INTERFACE=$1; RETRIES=6
+
+    while read essid; do
+        # awfully long grep that finds a file which has: 
+        # CONNECTION=wireless, ESSID=$essid, INTERFACE=$INTERFACE
+        profile=$(grep -rlP "CONNECTION=\"?wireless\"?(\n|.)*INTERFACE=\"?$INTERFACE\"?(\n|.)*ESSID=\"?$essid\"?" $PROFILE_DIR/|head -n 1)
+        if [[ -n "$profile" ]]; then
+            break # If we found a profile, use it.
+        fi
+    done < "$(list_networks $IFACE)"
+    
+    # If there's a profile, connect, else fail.
+    if [[ -n "$profile" ]]; then
+        netcfg2 $(basename $profile)
+        exit $?
+    else
+        err "No network found"
+        exit 1
+    fi
+}
+
+if [[ $(id -u) -ne 0 ]]; then
+    err "This script needs to be run with root priviledges"
+    exit 1
+fi
+if [[ -z $1 ]]; then
+    err "Please supply an interface to connect"
+    exit 1
+fi
+
+wifi_auto $1

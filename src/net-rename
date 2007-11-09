@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+case "$1" in
+  start)
+    stat_busy "Renaming network devices"
+    ifrename -p -t
+    stat_done
+
+    add_daemon net-rename
+    ;;
+  stop)
+    rm_daemon net-rename
+    # No stop neccesary, but add one to look nice on shutdown.
+    /bin/true
+    ;;
+  restart)
+    $0 start
+    ;;
+  *)
+    echo "usage: $0 {start|stop|restart}"  
+esac
+# vim: set ts=4 et sw=4:

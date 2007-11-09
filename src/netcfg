@@ -1,0 +1,78 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+. /usr/lib/network/network.subr
+
+err() {
+    stat_append " - $*"
+}
+
+NETCFG_VER=2.0.0
+PROFILE_DIR="/etc/network.d/"
+SUBR_DIR="/usr/lib/network/"
+STATE_DIR="/var/run/network/"
+
+version()
+{
+    echo "netcfg v$NETCFG_VER"
+}
+
+usage()
+{
+    version
+    echo "Usage:"
+    echo "      Start specified profile:    netcfg profile " 
+    echo "      Other functions:            netcfg argument profile"
+    echo "Arguments:"
+    echo "-c, check-iface    Do not start profile if interface is already up"
+    echo "-d, down           Take specified profile down"
+    echo "-a, all-down       Take all active profiles down"
+    echo "-i, iface-down     Take down profile active on specified interface"
+    echo "    all-resume     Resume previously suspended profiles and reconnect them"
+    echo "    all-suspend    Store a list of current running profiles and suspend them"
+    echo "-h, --help         This message"
+    echo "-v, --version      Output version information and exit"
+}
+
+if [ "`id -u`" != "0" ]; then
+    err "This script should be run as root."
+    exit 1
+fi
+
+case $1 in
+    --version|-v) 
+        version;;
+    --help|-h) 
+        usage;;
+    -c|check-iface)
+        CHECK="YES"; 
+        profile_up $2;;
+   clean)
+        rm /var/run/network/interfaces/*
+        rm /var/run/network/profiles/*
+        killall wpa_supplicant
+        killall dhcpcd
+        ;;	
+    -d|down) 
+        profile_down $2;;
+    -i|iface-down) 
+        interface_down $2;;
+    -a|all-down) 
+        all_down;; 
+    all-resume)
+        all_resume;;
+    all-suspend)
+        all_suspend;;
+    -*|--*) 
+        usage;;
+    *)  
+        if [ -n "$1" ]; then
+            profile_up $1
+        else
+            usage
+        fi
+        ;;  
+esac
+exit $?
+# vim: set ts=2 noet:

@@ -1,0 +1,57 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+case "$1" in
+	start)
+		if ! ck_daemon net-profiles; then
+			echo "Network Profiles are already running.  Try '/etc/rc.d/net-profiles restart'"
+			exit
+		fi
+
+		# Ensure any device renaming has occurred as intended
+		for daemon in "${DAEMONS[@]}"; do
+			if [ "$daemon" = "${daemon#!}" -a "$daemon" = "net-rename" ]; then
+				if ck_daemon net-rename; then
+					/etc/rc.d/net-rename start
+				fi
+		  fi
+		done
+
+		# $NET env var is passed from the kernel boot line
+		if [ "$NET" = "menu" -o "$NETWORKS" = "menu" ]; then
+			/usr/bin/netcfg-menu 5
+		elif [ "$NET" ]; then
+			/usr/bin/netcfg2 $NET
+		elif [ "$NETWORKS" ]; then 
+			for prof in ${NETWORKS[@]}; do
+				if [ "$prof" = "${prof#!}" ]; then
+					/usr/bin/netcfg2 -c $prof
+				fi
+			done
+		fi
+		
+		add_daemon net-profiles
+
+		;;
+	stop)
+		# shutdown any profiles started by netcfg (or from NET_PROFILES in rc.conf)
+		status "Stopping Network Profiles" /usr/bin/netcfg2 -a
+		rm_daemon net-profiles
+		;;
+	restart)
+		$0 stop
+		/bin/sleep 1
+		$0 start
+		;;
+	hotplug_ifup|ifup|ifdown|iflist|rtup|rtdown|rtlist)
+		$1 $2
+		;;
+	*)
+		echo "usage: $0 {start|stop|restart}"  
+		echo "       $0 {ifup|ifdown|iflist|rtup|rtdown|rtlist}"
+esac
+
+# vim: set ts=2 noet:
+# vim: set ts=4 et sw=4:

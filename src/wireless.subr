@@ -1,0 +1,204 @@
+#! /bin/bash
+
+# Uses wpa_supplicant to check for association to a network
+# wpa_check interface [timeout]
+wpa_check()
+{
+    INTERFACE=$1; TIMEOUT=$2
+    
+    [ -z $TIMEOUT ] && TIMEOUT=15
+    let timeout=0
+    while [ $timeout -ne $TIMEOUT ]; do
+        eval `wpa_cli status|grep wpa_state` 
+        [ "$wpa_state" = "COMPLETED" ] && return 0
+        sleep 1
+        let timeout++
+    done
+
+    wpa_cli terminate >/dev/null 2>&1
+    err "Wireless association failed."
+    return 1 
+}
+
+# Uses wireless_tools, to check for association to a network.
+# wep_check interface [timeout]
+wep_check()
+{
+    INTERFACE=$1; TIMEOUT=$2
+ 
+    [ -z $TIMEOUT ] && TIMEOUT=15
+    let timeout=0
+    while [ $timeout -ne $TIMEOUT ]; do
+        bssid=`iwgetid $INTERFACE -ra`
+        [ ! "$bssid" = "00:00:00:00:00:00" ] && return 0
+        sleep 1
+        let timeout++
+    done
+    
+    err "Wireless association failed."
+    return 1
+}
+
+# Check if a particular network is within range
+# find_essid interface essid
+find_essid()
+{
+    INTERFACE=$1; ESSID=$2; RETRIES=4
+    try=0;
+    while [ $try -ne $RETRIES ]; do
+        if iwlist $INTERFACE scan|sed "s/ESSID://g"|grep -q "\"$ESSID\""; then
+            return 0 # network found
+        fi
+        sleep 0.5
+        let try++
+    done
+    return 1
+}
+
+# Return a filename containing a list of network ESSID's found.
+# list_networks interface
+list_networks()
+{
+    # temp file used, as keeping ESSID's with spaces in their name in arrays 
+    # is hard, obscure and kinda nasty. This is simpler and clearer.
+ 
+    [[ -z "$1" ]] && return 1
+    essids=$(mktemp /tmp/essid.XXXXX)
+
+    let try 0;
+    while [[ $try -ne $RETRIES ]]; do        
+        iwlist $1 scan 2> /dev/null|grep ESSID|sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
+        sleep 0.5; let try++
+    done
+    sort -u $essids -o $essids
+  
+    # File of 0 length, ie. no ssid's.
+    if [[ ! -s $essids ]]; then
+        return 1
+    fi
+
+    echo $essids
+    return 0
+}
+
+start_wpa() 
+{
+    INTERFACE=$1; WPA_CONF=$2; WPA_OPTS=$3
+     
+    [ "$WPA_OPTS" == "" ] && WPA_OPTS="-Dwext"
+
+    wpa_supplicant -wB -P/var/run/wpa_supplicant_${INTERFACE}.pid -i${INTERFACE} -c $WPA_CONF $WPA_OPTS    
+    sleep 1
+    
+    if [ ! -f /var/run/wpa_supplicant_${INTERFACE}.pid ]; then
+        err "wpa_supplicant did not start, possible configuration error"
+        return 1
+    fi
+}
+
+wireless_up() {
+
+    load_profile $1
+    
+    if [ ! -d /sys/class/net/$INTERFACE/wireless ]; then 
+        err "Interface $INTERFACE is not a wireless interface"
+        return 1
+    fi
+
+    # Was required by broadcom
+    # iwlist $INTERFACE scan &> /dev/null
+  
+    # Required by atheros to enable device
+    ifconfig $INTERFACE up 
+
+    # Required by ipw3945 to properly re-associate
+    eval "iwconfig $INTERFACE mode managed essid \"$ESSID\""
+
+    # Kill any lingering wpa_supplicants.
+    if [ -f /var/run/wpa_supplicant_$INTERFACE.pid ]; then
+        kill $(cat /var/run/wpa_supplicant_$INTERFACE.pid)
+    fi
+    
+    if checkyesno $SCAN; then
+        if ! find_essid $INTERFACE "$ESSID"; then
+            err "Network unavailable"
+            return 1
+        fi 
+    fi
+
+    case $SECURITY in
+    wep|none)
+        # 'none' security uses iwconfig, like wep, so use same code, minus keysetting.
+        # Use sane default if no alternative is specified
+        if [ "$SECURITY" = "wep" -a "$WEP_OPTS" = "" ]; then 
+            WEP_OPTS="mode managed essid \"$ESSID\" key open $KEY"
+        elif [ "$SECURITY" = "none" -a "$WEP_OPTS" = "" ]; then
+            WEP_OPTS="mode managed essid \"$ESSID\""
+        fi 
+        
+        if ! eval iwconfig $INTERFACE $WEP_OPTS; then
+            err "Could not set wireless configuration"
+            return 1
+        fi
+
+        wep_check $INTERFACE $TIMEOUT|| return 1
+        ;;    
+    wpa)
+        local WPA_CONF=`mktemp /tmp/wpa.XXXXXXXX`
+        
+        # Temporary bugfix for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
+        if ! eval iwconfig $INTERFACE mode managed essid "\"$ESSID\""; then
+            err "Could not set wireless configuration"
+            return 1
+        fi
+        
+        # Create a random file to store configuration, make it root only. 
+        chmod 600 $WPA_CONF
+        echo "ctrl_interface=/var/run/wpa_supplicant" >> $WPA_CONF
+        echo "ctrl_interface_group=0" >> $WPA_CONF        
+        
+        # Generate configuration
+        if ! wpa_passphrase "$ESSID" "$KEY" >> $WPA_CONF; then
+            err "Configuration generation failed: `cat $WPA_CONF`"
+            return 1
+        fi
+
+        # Connect!
+        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
+        wpa_check $INTERFACE $TIMEOUT || return 1
+        ;;
+    wpa-config)
+        # If user hasnt defined one, use stock config.
+        [ -z "$WPA_CONF" ] && WPA_CONF="/etc/wpa_supplicant.conf"
+        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
+        wpa_check $INTERFACE $TIMEOUT || return 1
+        ;;        
+    esac
+    
+    . $SUBR_DIR/ethernet.subr
+    if ! ethernet_up $1; then
+        wireless_down $1 YES
+        return 1
+    fi
+}
+ 
+wireless_down() {
+    PROFILE=$1 NOETHERNETDOWN=$2
+    if ! checkyesno $2; then
+        . $SUBR_DIR/ethernet.subr
+        ethernet_down $1
+       fi
+    wpa_cli terminate &> /dev/null 
+    iwconfig $INTERFACE essid off key off &> /dev/null 
+    ifconfig $INTERFACE down
+}
+
+wireless_clean_scope() {
+    unset INTERFACE CONNECTION
+    unset TIMEOUT WPA_CONF WPA_OPTS KEY ESSID SECURITY WEP_OPTS
+    . $SUBR_DIR/ethernet.subr
+    ethernet_clean_scope
+}
+
+
+# vim: set ts=4 et sw=4:

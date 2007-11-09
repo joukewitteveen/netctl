@@ -1,0 +1,4 @@
+CONNECTION="ppp"
+INTERFACE="ignore"
+PEER="/etc/ppp/peers/provider"
+PPP_TIMEOUT=10

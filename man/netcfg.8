@@ -1,0 +1,57 @@
+.TH NETCFG 8 "MAY 2007" "Arch Linux" "Network Scripts"
+.\" groff -man -Tascii foo.1 
+.SH NAME
+netcfg \- start/stop/control network profiles
+.SH SYNOPSIS
+netcfg [\fIoptions\fR] \fBprofile\fR
+
+netcfg \fBprofile\fR
+.SH DESCRIPTION
+\fBnetcfg\fP is used to configure and manage network connections via profiles. It has pluggable support for a range of connection types, such as wireless, ethernet. ppp. It is also capable of starting/stopping many to one connections, that is, multiple connections within the same profile, optionally with bonding. 
+
+It may be run at boot, by enabling the \fI/etc/rc.d/net-profiles\fP daemon in \fI/etc/rc.conf\fP \fBDAEMONS\fP line. After boot time, it may be used to start profiles, simply by passing only the profile name.
+
+.SH OPTIONS
+.TP
+.B \-c, check-iface \fIprofile\fP
+Start the specified profile, only if it's interface is not currently up.
+.TP
+.B \-d, down \fIprofile\fP
+Stop the specified profile
+.TP
+.B \-i, iface-down \fBinterface\fP
+Stop the profile up on the specified interface.
+.TP
+.B \-a, all-down 
+Stop all connected profiles
+.TP
+.B      all-suspend
+Suspend and store the name of all active profiles.
+.TP
+.B      all-resume
+Reconnect any profiles that have been suspended.
+.TP
+.B \-v, --version
+Display version information and exit
+.TP
+.B \-h, --help
+Display help message and exit
+
+.SH FILES 
+.TP
+.I /usr/lib/network/
+Currently installed network profile types.
+.TP
+.I /etc/network.d/examples 
+Example configurations for this script
+
+.SH BUGS
+None, hopefully, but if you do find one of these elusive things, please submit at http://bugs.archlinux.org/ or email one of the authors below.
+.SH AUTHOR
+James Rayner <james@archlinux.org>
+
+Others listed in AUTHORS file in source.
+.SH SEE ALSO
+.BR ethernet (5), 
+.BR iwconfig (8),
+.BR wireless (5)

@@ -1,0 +1,57 @@
+#! /bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+. /usr/lib/network/network.subr
+
+# Scan all profiles
+i=0
+for prof in `find -L $PROFILE_DIR -maxdepth 1 -type f -printf "%f\n"`; do    
+    # if there is a profile called "main", Use as default
+    [ "$prof" = "main" ] && DEFAULT=$prof
+    unset DESCRIPTION
+    . $PROFILE_DIR/$prof
+    profiles[$i]=$prof
+    i=$((i+1))
+    profiles[$i]=$DESCRIPTION
+    i=$((i+1))
+done
+
+if [ ${#profiles} -eq 0 ]; then
+    echo "No profiles were found in $PROFILE_DIR"
+    return 1
+fi
+
+# if no default yet, use the first entry
+[ "$DEFAULT" = "" ] && DEFAULT=${profiles[0]}
+ANSWER=$(mktemp) || exit 1
+
+# Set timeout
+if [ "$1" = "" ]; then
+    TIMEOUT="0"
+else
+    TIMEOUT="$1"
+fi
+
+# Display Dialog
+dialog --timeout $TIMEOUT --default-item $DEFAULT \
+    --menu "Select the network profile you wish to use" \
+    13 50 6 "${profiles[@]}" 2>$ANSWER
+
+ret=$?
+        
+case $ret in
+    1) ;; # Cancel - do nothing
+    255) # timeout - use default 
+        netcfg2 $DEFAULT
+        ;; 
+    0)  # User selection
+        netcfg2 $(cat $ANSWER)
+        ;; 
+    *)  # Shouldnt happen
+        echo "Abnormal ret code from dialog: $ret" 
+        ;; 
+esac
+rm $ANSWER
+
+# vim: set ts=4 et sw=4:

@@ -1,0 +1,8 @@
+CONNECTION="wireless"
+INTERFACE=wlan0
+SCAN="yes"
+SECURITY="wpa"
+ESSID="mynetwork"
+KEY="SomePasskey"
+IP="dhcp"
+TIMEOUT=20

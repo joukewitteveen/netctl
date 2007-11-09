@@ -1,0 +1,111 @@
+#! /bin/bash
+
+mii_check() {
+    local conn_state=$(mii-tool $1 2> /dev/null)
+    local ret=$?
+    if echo $conn_state|grep "no link" &> /dev/null; then
+        if [ $ret -eq 0 ]; then
+            return 1
+        fi
+    fi
+    return 0
+}
+
+ethernet_up() {
+
+    
+    if [ ! -e /sys/class/net/$INTERFACE ]; then
+        if ! echo "$INTERFACE"|grep ":"; then
+            err "Interface $INTERFACE does not exist"
+        fi
+    fi  
+
+	if ! mii_check $INTERFACE; then
+        err "No connection available"	
+    	return 1
+    fi
+    
+    case $IP in
+    dhcp)
+        # Check if DHCP_TIMEOUT was set if not set a default value
+        [ -z $DHCP_TIMEOUT ] && DHCP_TIMEOUT=10
+
+        if checkyesno $DHCLIENT; then
+            rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
+            if ! dhclient -q -e TIMEOUT=$DHCP_TIMEOUT -pf /var/run/dhclient-${INTERFACE}.pid; then
+                err "DHCP IP lease attempt failed"
+                return 1
+            fi
+        else
+            # Clear remaining pid files. 
+            rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
+            # If using own dns, tell dhcpcd to NOT replace resolv.conf
+            [ -n $DNS1 ] && DHCP_OPTIONS="-R $DHCP_OPTIONS"
+            # Start dhcpcd
+            if ! dhcpcd -L -t $DHCP_TIMEOUT $DHCP_OPTIONS $INTERFACE; then
+                err "DHCP IP lease attempt failed"
+                return 1
+            fi 
+        fi
+        # TODO: add support for $section:ifconfig for other stuff, like mtu or mac?
+        ;;
+    static)
+        if ! ifconfig $INTERFACE $IFOPTS up; then
+            err "Could not bring interface up"
+            return 1
+        fi
+
+        # bring up the default route (gateway)
+        if [ "$GATEWAY" ]; then
+            if ! route add default gw $GATEWAY; then
+                err "Adding gateway $GATEWAY failed"
+                return 1
+            fi 
+        fi
+        ;;
+    esac
+
+    # set the hostname
+    if [ "$HOSTNAME" ]; then
+        if ! hostname $HOSTNAME; then
+            err "Cannot set hostname"
+            return 1
+        fi
+    fi
+
+    # Generate a new resolv.conf
+    if [ "$DNS1" ]; then
+        : >/etc/resolv.conf 
+        [ "$DOMAIN" ] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [ "$SEARCH" ] && echo "search $SEARCH"   >>/etc/resolv.conf
+        [ "$DNS1" ]   && echo "nameserver $DNS1" >>/etc/resolv.conf
+        [ "$DNS2" ]   && echo "nameserver $DNS2" >>/etc/resolv.conf
+    fi
+}
+
+ethernet_down() {
+    case $IP in
+    dhcp)
+        if checkyesno $DHCLIENT; then
+            if [ -f /var/run/dhclient-${INTERFACE}.pid ]; then
+                kill `cat /var/run/dhclient-${INTERFACE}.pid`
+            fi
+        else
+            if [ -f /var/run/dhcpcd-${INTERFACE}.pid ]; then
+                dhcpcd -x $INTERFACE
+            fi
+        fi
+        ;;
+    static)
+        [ "$GATEWAY" ] && route del default gw $GATEWAY
+        ;;
+    esac
+    ifconfig $INTERFACE 0.0.0.0
+}
+
+ethernet_clean_scope() {
+    unset DOMAIN SEARCH DNS1 DNS2
+    unset GATEWAY IFOPTS HOSTNAME DHCP_OPTIONS DHCP_TIMEOUT DHCLIENT
+    unset INTERFACE CONNECTION
+}
+# vim: set ts=4 et sw=4:

@@ -1,0 +1,21 @@
+#! /bin/bash
+ppp_up() {
+    [ -z "$PEER" ] && PEER="/etc/ppp/peers/provider"
+    [ -z "$PPP_TIMEOUT" ] && PPP_TIMEOUT=30
+
+    /usr/sbin/pppd call $PEER updetach child-timeout $PPP_TIMEOUT linkname $(basename $PEER)
+
+    if [ $? -ne 0 ]; then
+       err "pppd connection failed"
+       exit 1
+    fi
+}
+
+ppp_down() {
+    kill $(cat /var/run/ppp-$(basename $PEER))
+}
+
+ppp_clean_scope() {
+    unset PPP_PEER PPP_TIMEOUT    
+}
+# vim: set ts=4 et sw=4:
