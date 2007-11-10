@@ -4,8 +4,12 @@
 . /etc/rc.d/functions
 . /usr/lib/network/network.subr
 
-err() {
+err_append() {
     stat_append " - $*"
+}
+
+err() {
+		printhl "$*"
 }
 
 NETCFG_VER=2.0.0

@@ -6,7 +6,7 @@ ppp_up() {
     /usr/sbin/pppd call $PEER updetach child-timeout $PPP_TIMEOUT linkname $(basename $PEER)
 
     if [ $? -ne 0 ]; then
-       err "pppd connection failed"
+       err_append "pppd connection failed"
        exit 1
     fi
 }

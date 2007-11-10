@@ -16,12 +16,12 @@ ethernet_up() {
     
     if [ ! -e /sys/class/net/$INTERFACE ]; then
         if ! echo "$INTERFACE"|grep ":"; then
-            err "Interface $INTERFACE does not exist"
+            err_append "Interface $INTERFACE does not exist"
         fi
     fi  
 
 	if ! mii_check $INTERFACE; then
-        err "No connection available"	
+        err_append "No connection available"	
     	return 1
     fi
     
@@ -33,7 +33,7 @@ ethernet_up() {
         if checkyesno $DHCLIENT; then
             rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
             if ! dhclient -q -e TIMEOUT=$DHCP_TIMEOUT -pf /var/run/dhclient-${INTERFACE}.pid; then
-                err "DHCP IP lease attempt failed"
+                err_append "DHCP IP lease attempt failed"
                 return 1
             fi
         else
@@ -43,7 +43,7 @@ ethernet_up() {
             [ -n $DNS1 ] && DHCP_OPTIONS="-R $DHCP_OPTIONS"
             # Start dhcpcd
             if ! dhcpcd -L -t $DHCP_TIMEOUT $DHCP_OPTIONS $INTERFACE; then
-                err "DHCP IP lease attempt failed"
+                err_append "DHCP IP lease attempt failed"
                 return 1
             fi 
         fi
@@ -51,14 +51,14 @@ ethernet_up() {
         ;;
     static)
         if ! ifconfig $INTERFACE $IFOPTS up; then
-            err "Could not bring interface up"
+            err_append "Could not bring interface up"
             return 1
         fi
 
         # bring up the default route (gateway)
         if [ "$GATEWAY" ]; then
             if ! route add default gw $GATEWAY; then
-                err "Adding gateway $GATEWAY failed"
+                err_append "Adding gateway $GATEWAY failed"
                 return 1
             fi 
         fi
@@ -68,7 +68,7 @@ ethernet_up() {
     # set the hostname
     if [ "$HOSTNAME" ]; then
         if ! hostname $HOSTNAME; then
-            err "Cannot set hostname"
+            err_append "Cannot set hostname"
             return 1
         fi
     fi

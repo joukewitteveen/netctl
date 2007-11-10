@@ -5,10 +5,13 @@ PROFILE_DIR="/etc/network.d"
 ##
 # err msg
 #   output specified message
+err_append() {
+echo -n $*
+}
+
 err() {
 echo $*
 }
-
 
 ### Profile loading
 ##
@@ -88,7 +91,7 @@ profile_up()
     
     if check_iface $INTERFACE; then
         if checkyesno $CHECK; then
-            err "Interface $INTERFACE already in use"
+            err_append "Interface $INTERFACE already in use"
             stat_fail && return 1
         else
             interface_down $INTERFACE || return 1
@@ -127,7 +130,7 @@ profile_down()
     
     stat_busy "$1 down"
     if [ "$(get_iface_prof $INTERFACE)" == "external" ]; then
-        err "$interface was connected by another application"
+        err_append "$interface was connected by another application"
         stat_fail
         return 1
     fi
