@@ -25,17 +25,17 @@ load_profile() {
 #   check whether profile exists and is usable
 validate_profile()
 {
-    [ -z "$1" ] && return 1
-    if [ ! -f $PROFILE_DIR/$1 ]; then
+    [[ -z "$1" ]] && return 1
+    if [[ ! -f $PROFILE_DIR/$1 ]]; then
         err "Profile \"$1\" does not exist"
         return 1
     fi
     . $PROFILE_DIR/$1
-    if [ -z "$INTERFACE" ]; then
+    if [[ -z "$INTERFACE" ]]; then
         err "Profile missing an interface to configure"
         return 1
     fi
-    if [ ! -f $SUBR_DIR/$CONNECTION.subr ]; then
+    if [[ ! -f $SUBR_DIR/$CONNECTION.subr ]]; then
         err "$CONNECTION is not a valid connection, check spelling or look at examples"
         return 1
     fi
@@ -58,7 +58,7 @@ all_down()
 #
 all_suspend()
 {
-    [ ! -d $STATE_DIR/suspend ] && mkdir $STATE_DIR/suspend
+    [[ ! -d $STATE_DIR/suspend ]] && mkdir $STATE_DIR/suspend
 
     ls -1 $STATE_DIR/profiles/ | while read prof; do
         cp $STATE_DIR/profiles/$prof $STATE_DIR/suspend/
@@ -129,7 +129,7 @@ profile_down()
     fi
     
     stat_busy "$1 down"
-    if [ "$(get_iface_prof $INTERFACE)" == "external" ]; then
+    if [[ "$(get_iface_prof $INTERFACE)" == "external" ]]; then
         err_append "$interface was connected by another application"
         stat_fail
         return 1
@@ -168,7 +168,7 @@ interface_down()
 #   Return 1 if interface down
 #
 check_iface() {
-    [ -f $STATE_DIR/interfaces/$1 ] && return 0
+    [[ -f $STATE_DIR/interfaces/$1 ]] && return 0
     return 1
 }
 
@@ -190,7 +190,7 @@ get_iface_prof() {
 #   Return 1 if profile down
 #
 check_profile() {
-    [ -f $STATE_DIR/profiles/$1 ] && return 0
+    [[ -f $STATE_DIR/profiles/$1 ]] && return 0
     return 1
 } 
 
@@ -200,11 +200,11 @@ check_profile() {
 #   Set profile state, either up or down
 #
 set_profile() {
-    if [ "$1" == "up" ]; then
+    if [[ "$1" == "up" ]]; then
         . $PROFILE_DIR/$2
         cp $PROFILE_DIR/$2 $STATE_DIR/profiles/
         set_iface up $INTERFACE $2
-    elif [ "$1" == "down" ]; then
+    elif [[ "$1" == "down" ]]; then
         . $STATE_DIR/profiles/$2
         rm $STATE_DIR/profiles/$2
         set_iface down $INTERFACE $2
@@ -217,10 +217,10 @@ set_profile() {
 #
 set_iface() {
     PROFILE=$3
-    [ -z "$PROFILE" ] && PROFILE=external
-    if [ "$1" == "up" ]; then
+    [[ -z "$PROFILE" ]] && PROFILE=external
+    if [[ "$1" == "up" ]]; then
         echo "PROFILE=$PROFILE" > $STATE_DIR/interfaces/$2
-    elif [ "$1" == "down" ]; then
+    elif [[ "$1" == "down" ]]; then
         rm $STATE_DIR/interfaces/$2
     fi    
 }
