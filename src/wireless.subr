@@ -130,9 +130,9 @@ wireless_up() {
     wep|none)
         # 'none' security uses iwconfig, like wep, so use same code, minus keysetting.
         # Use sane default if no alternative is specified
-        if [[ "$SECURITY" = "wep" -a "$WEP_OPTS" = "" ]]; then 
+        if [[ "$SECURITY" = "wep" && "$WEP_OPTS" = "" ]]; then 
             WEP_OPTS="mode managed essid \"$ESSID\" key open $KEY"
-        elif [[ "$SECURITY" = "none" -a "$WEP_OPTS" = "" ]]; then
+        elif [[ "$SECURITY" = "none" && "$WEP_OPTS" = "" ]]; then
             WEP_OPTS="mode managed essid \"$ESSID\""
         fi 
         
