@@ -5,11 +5,11 @@ INTERFACE=eth0
 HOSTNAME=myhost
 
 # Interface Settings (use IFOPTS="dhcp" for DHCP)
-IFOPTS="192.168.0.2 netmask 255.255.255.0 broadcast 192.168.0.255"
+IP="192.168.0.2 netmask 255.255.255.0 broadcast 192.168.0.255"
 GATEWAY=192.168.0.1
 
 # DHCP Example
-#IFOPTS=dhcp
+#IP=dhcp
 #DHCP_TIMEOUT=20 # Default is 10.
 #DHCP_OPTIONS="" # Extra arguments for dhcpcd
 
