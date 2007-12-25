@@ -24,6 +24,10 @@ case "$1" in
 			/usr/bin/netcfg-menu 5
 		elif [ "$NET" ]; then
 			/usr/bin/netcfg2 $NET
+	  elif [ "${NETWORKS[0]}" = "auto" ]; then
+				if [ "${NETWORKS[1]}" ]; then
+						/usr/bin/netcfg-wireless-auto ${NETWORKS[1]}
+				fi
 		elif [ "$NETWORKS" ]; then 
 			for prof in ${NETWORKS[@]}; do
 				if [ "$prof" = "${prof#!}" ]; then
