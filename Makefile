@@ -21,7 +21,7 @@ install:
 	
 	
 install-contrib:
-	install -m744 contrib/netcfg-wireless-auto $(DESTDIR)/usr/bin
+	install -m755 contrib/netcfg-auto-wireless $(DESTDIR)/usr/bin
 
 tarball: 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
