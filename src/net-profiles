@@ -20,14 +20,16 @@ case "$1" in
 		done
 
 		# $NET env var is passed from the kernel boot line
-		if [ "$NET" = "menu" -o "$NETWORKS" = "menu" ]; then
-			/usr/bin/netcfg-menu 5
+		[ ! "$NETWORKS_MENU_TIMEOUT" ] && NETWORKS_MENU_TIMEOUT=5 
+
+		if [ "$NET" = "menu" -o "$NETWORKS" = "menu" ]; then	
+			/usr/bin/netcfg-menu $NETWORKS_MENU_TIMEOUT
 		elif [ "$NET" ]; then
 			/usr/bin/netcfg2 $NET
-	  elif [ "${NETWORKS[0]}" = "auto" ]; then
-				if [ "${NETWORKS[1]}" ]; then
-						/usr/bin/netcfg-wireless-auto ${NETWORKS[1]}
-				fi
+	  elif [ "${NETWORKS[0]}" = "auto-wireless" ]; then
+			if [ "${NETWORKS[1]}" ]; then
+				/usr/bin/netcfg-auto-wireless ${NETWORKS[1]}
+			fi
 		elif [ "$NETWORKS" ]; then 
 			for prof in ${NETWORKS[@]}; do
 				if [ "$prof" = "${prof#!}" ]; then
@@ -37,25 +39,17 @@ case "$1" in
 		fi
 		
 		add_daemon net-profiles
-
 		;;
 	stop)
 		# shutdown any profiles started by netcfg (or from NET_PROFILES in rc.conf)
-		status "Stopping Network Profiles" /usr/bin/netcfg2 -a
+		/usr/bin/netcfg2 -a
 		rm_daemon net-profiles
 		;;
 	restart)
-		$0 stop
-		/bin/sleep 1
-		$0 start
-		;;
-	hotplug_ifup|ifup|ifdown|iflist|rtup|rtdown|rtlist)
-		$1 $2
+		$0 stop; sleep 1; $0 start
 		;;
 	*)
 		echo "usage: $0 {start|stop|restart}"  
-		echo "       $0 {ifup|ifdown|iflist|rtup|rtdown|rtlist}"
 esac
 
 # vim: set ts=2 noet:
-# vim: set ts=4 et sw=4:

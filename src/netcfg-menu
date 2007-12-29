@@ -4,6 +4,7 @@
 . /etc/rc.d/functions
 . /usr/lib/network/network.subr
 
+
 # Scan all profiles
 i=0
 for prof in `find -L $PROFILE_DIR -maxdepth 1 -type f -printf "%f\n"`; do    
@@ -23,6 +24,8 @@ if [ ${#profiles} -eq 0 ]; then
 fi
 
 # if no default yet, use the first entry
+[ "$NETWORKS_MENU_DEFAULT" ] && DEFAULT="$NETWORKS_MENU_DEFAULT"
+
 [ "$DEFAULT" = "" ] && DEFAULT=${profiles[0]}
 ANSWER=$(mktemp) || exit 1
 

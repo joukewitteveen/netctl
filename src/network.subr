@@ -112,6 +112,8 @@ profile_up()
     
     set_profile up $1
     ${CONNECTION}_clean_scope
+    
+
     add_daemon net-profiles
     stat_done
 }
@@ -204,6 +206,10 @@ set_profile() {
         . $PROFILE_DIR/$2
         cp $PROFILE_DIR/$2 $STATE_DIR/profiles/
         set_iface up $INTERFACE $2
+        
+        rm $PROFILE_DIR/last 2> /dev/null
+        ln -s $PROFILE_DIR/$2 $PROFILE_DIR/last
+
     elif [[ "$1" == "down" ]]; then
         . $STATE_DIR/profiles/$2
         rm $STATE_DIR/profiles/$2
