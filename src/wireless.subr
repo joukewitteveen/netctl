@@ -65,7 +65,8 @@ list_networks()
     [[ -z "$1" ]] && return 1
     essids=$(mktemp /tmp/essid.XXXXX)
 
-    let try 0;
+    let try=0;
+    RETRIES=6;
     while [[ $try -ne $RETRIES ]]; do        
         iwlist $1 scan 2> /dev/null|grep ESSID|sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
         sleep 0.5; let try++

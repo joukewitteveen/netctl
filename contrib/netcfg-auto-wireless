@@ -19,7 +19,7 @@ wifi_auto()
         if [[ -n "$profile" ]]; then
             break # If we found a profile, use it.
         fi
-    done < "$(list_networks $IFACE)"
+    done < "$(list_networks $INTERFACE)"
     
     # If there's a profile, connect, else fail.
     if [[ -n "$profile" ]]; then
