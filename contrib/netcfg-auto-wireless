@@ -15,7 +15,7 @@ wifi_auto()
     while read essid; do
         # awfully long grep that finds a file which has: 
         # CONNECTION=wireless, ESSID=$essid, INTERFACE=$INTERFACE
-        profile=$(grep -rlP "CONNECTION=\"?wireless\"?(\n|.)*INTERFACE=\"?$INTERFACE\"?(\n|.)*ESSID=\"?$essid\"?" $PROFILE_DIR/|head -n 1)
+        profile=$(grep -rlP --exclude=/etc/network.d/last "CONNECTION=\"?wireless\"?(\n|.)*INTERFACE=\"?$INTERFACE\"?(\n|.)*ESSID=\"?$essid\"?" $PROFILE_DIR/|head -n 1)
         if [[ -n "$profile" ]]; then
             break # If we found a profile, use it.
         fi
