@@ -191,7 +191,7 @@ wireless_down() {
        fi
     wpa_cli terminate &> /dev/null 
     iwconfig $INTERFACE essid off key off &> /dev/null 
-    ifconfig $INTERFACE down
+    #ifconfig $INTERFACE down
 }
 
 wireless_clean_scope() {
