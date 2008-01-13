@@ -3,7 +3,8 @@
 
 . /usr/lib/network/network.subr
 . /usr/lib/network/wireless.subr
-
+. /etc/rc.conf
+. /etc/rc.d/functions
 # wifi_auto
 #   autoconnect wireless interface
 #   $1 - wireless interface
@@ -11,6 +12,15 @@
 wifi_auto()
 {
     INTERFACE=$1; RETRIES=6
+    stat_busy "Scanning for networks"
+
+    networks="$(list_networks $INTERFACE)"
+
+    if [[ ! "$networks" ]]; then
+        stat_append "- No networks available."
+        stat_fail
+        exit 1
+    fi
 
     while read essid; do
         # awfully long grep that finds a file which has: 
@@ -19,14 +29,16 @@ wifi_auto()
         if [[ -n "$profile" ]]; then
             break # If we found a profile, use it.
         fi
-    done < "$(list_networks $INTERFACE)"
+    done < $networks
     
     # If there's a profile, connect, else fail.
     if [[ -n "$profile" ]]; then
-        netcfg2 $(basename $profile)
-        exit $?
+        stat_done
+        netcfg2 $(basename $profile)  
+        exit $?                                                
     else
-        err "No network found"
+        stat_append "- No profiles matched the found networks"
+        stat_fail
         exit 1
     fi
 }
@@ -39,5 +51,5 @@ if [[ -z $1 ]]; then
     err "Please supply an interface to connect"
     exit 1
 fi
-
 wifi_auto $1
+  
