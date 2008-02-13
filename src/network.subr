@@ -118,7 +118,7 @@ profile_up()
     
     set_profile up $1
     ${CONNECTION}_clean_scope
-    
+    unset EXCLUSIVE 
 
     add_daemon net-profiles
     stat_done
