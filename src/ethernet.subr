@@ -85,6 +85,7 @@ ethernet_up() {
         [[ -n "$DNS1" ]]   && echo "nameserver $DNS1" >>/etc/resolv.conf
         [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
     fi
+    return 0
 }
 
 ethernet_down() {
