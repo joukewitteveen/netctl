@@ -63,6 +63,10 @@ ethernet_up() {
             fi 
         fi
         ;;
+      *)
+        err_append "Profile error: IP must be either 'dhcp' or 'static'"
+        return 1
+        ;;
     esac
 
     # set the hostname
