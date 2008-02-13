@@ -14,6 +14,7 @@ wifi_auto()
     INTERFACE=$1; RETRIES=6
     stat_busy "Scanning for networks"
 
+    ifconfig $INTERFACE up
     networks="$(list_networks $INTERFACE)"
 
     if [[ ! "$networks" ]]; then
