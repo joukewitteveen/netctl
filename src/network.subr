@@ -87,6 +87,12 @@ profile_up()
 
     check_profile $1 && err "$1 already connected" &&  return 1
 
+    # NETWORKS_EXCLUSIVE, rc.conf: Profiles are globally mutually exclusive
+    # EXCLUSIVE, network.d/profile: Individual profile is mutually exclusive
+    if checkyesno $NETWORKS_EXCLUSIVE || checkyesno $EXCLUSIVE; then
+        all_down
+    fi
+
     stat_busy "$1 up"
     
     if check_iface $INTERFACE; then
