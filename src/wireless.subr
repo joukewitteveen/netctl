@@ -119,14 +119,14 @@ wireless_up() {
     if [[ -f /var/run/wpa_supplicant_$INTERFACE.pid ]]; then
         kill $(cat /var/run/wpa_supplicant_$INTERFACE.pid)
     fi
-    
+
     if checkyesno $SCAN; then
         if ! find_essid $INTERFACE "$ESSID"; then
             err_append "Network unavailable"
             return 1
         fi 
     fi
-
+  
     case $SECURITY in
     wep|none)
         # 'none' security uses iwconfig, like wep, so use same code, minus keysetting.

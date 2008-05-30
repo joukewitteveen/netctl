@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.0.6
+VERSION=2.1.0
 
 
 install:
@@ -39,7 +39,7 @@ pkg: tarball
 	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
 
 upload: 
-	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:~/public_html/netcfg/
+	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/home/ftp/other/netcfg/
 
 clean:
 	rm *gz
