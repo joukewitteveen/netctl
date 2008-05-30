@@ -160,6 +160,24 @@ profile_down()
     stat_done
 }
 
+# Check if variable is a member of an array
+inarray()
+{
+search=$1
+shift 
+for item in $*; do
+    if [[ "$item" == "$search" ]]; then
+        return 0
+    fi
+done
+return 1
+}
+
+quirk() {
+inarray $1 ${QUIRKS[@]}
+return $?
+}
+
 # interface_down interface
 #   take interface down
 #

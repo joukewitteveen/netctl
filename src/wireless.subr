@@ -43,13 +43,13 @@ wep_check()
 # find_essid interface essid
 find_essid()
 {
-    INTERFACE=$1; ESSID=$2; RETRIES=4
+    INTERFACE=$1; ESSID=$2; RETRIES=5
     try=0;
     while [[ $try -ne $RETRIES ]]; do
         if iwlist $INTERFACE scan|sed "s/ESSID://g"|grep -q "\"$ESSID\""; then
             return 0 # network found
         fi
-        sleep 0.5
+        sleep 1
         let try++
     done
     return 1
@@ -105,21 +105,23 @@ wireless_up() {
         err_append "Interface $INTERFACE is not a wireless interface"
         return 1
     fi
-
-    # Was required by broadcom
-    # iwlist $INTERFACE scan &> /dev/null
-  
-    # Required by atheros to enable device
+ 
+    # Required by atheros and others (mac80211?) to enable device
     ifconfig $INTERFACE up 
 
+    # Hack that has been required by some broadcom
+    quirk "prescan" && iwlist $INTERFACE scan &> /dev/null
+    quirk "test" && echo "TESTWORKS!" 
     # Required by ipw3945 to properly re-associate
-    eval "iwconfig $INTERFACE mode managed essid \"$ESSID\""
+    quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\""
 
     # Kill any lingering wpa_supplicants.
     if [[ -f /var/run/wpa_supplicant_$INTERFACE.pid ]]; then
         kill $(cat /var/run/wpa_supplicant_$INTERFACE.pid)
     fi
 
+    # Default scan off as it won't see hidden networks and some hardware's scanning is dodgy
+    [[ ! "$SCAN" ]] && SCAN="no" 
     if checkyesno $SCAN; then
         if ! find_essid $INTERFACE "$ESSID"; then
             err_append "Network unavailable"
@@ -152,11 +154,8 @@ wireless_up() {
     wpa)
         local WPA_CONF=`mktemp /tmp/wpa.XXXXXXXX`
         
-        # Temporary bugfix for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
-        if ! eval iwconfig $INTERFACE mode managed essid "\"$ESSID\""; then
-            err_append "Could not set wireless configuration"
-            return 1
-        fi
+        # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
+        quirk "wpaessid" && eval iwconfig $INTERFACE mode managed essid "\"$ESSID\""
         
         # Create a random file to store configuration, make it root only. 
         chmod 600 $WPA_CONF
