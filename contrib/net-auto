@@ -1,0 +1,43 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+case "$1" in
+    start)
+        # Ensure any device renaming has occurred as intended
+        for daemon in "${DAEMONS[@]}"; do
+            if [ "$daemon" = "${daemon#!}" -a "$daemon" = "net-rename" ]; then
+                if ck_daemon net-rename; then
+                    /etc/rc.d/net-rename start
+                fi
+          fi
+        done
+
+        for network in ${AUTO_NETWORKS[@]}; do
+            case $network in
+                auto-*) # Automatic configuration, store type and get interface next
+                    auto=$network
+                    ;;
+                *) # Either interface or profile
+                    if [[ "$auto" ]]; then # Auto set, so interface
+                        /usr/bin/netcfg-$auto $network
+                        unset auto 
+                    fi
+            esac
+        done
+       
+        add_daemon net-auto
+        ;;
+    stop)
+        /usr/bin/netcfg2 -a
+        rm_daemon net-auto
+        ;;
+    restart)
+        $0 stop; sleep 1; $0 start
+        ;;
+    *)
+        echo "usage: $0 {start|stop|restart}"  
+esac
+
+# vim: set ts=4 et sw=4:
