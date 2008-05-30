@@ -127,6 +127,11 @@ wireless_up() {
         fi 
     fi
   
+    # Manually set iwconfig options
+    if [[ "$IWCONFIG" ]]; then
+        iwconfig $INTERFACE $IWCONFIG
+    fi
+
     case $SECURITY in
     wep|none)
         # 'none' security uses iwconfig, like wep, so use same code, minus keysetting.
