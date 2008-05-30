@@ -52,6 +52,7 @@ all_down()
     ls -1 $STATE_DIR/profiles/ | while read prof; do
         profile_down $prof
     done
+    rm_daemon net-profiles
 }
 
 # all_suspend
