@@ -1,5 +1,6 @@
 ### Globals
 PROFILE_DIR="/etc/network.d"
+SUBR_DIR="/usr/lib/network/"
 
 ### Messages
 ##
@@ -191,6 +192,12 @@ get_iface_prof() {
     else
         return 1
     fi
+}
+
+# list_profiles
+#  Outputs a list of all profiles
+list_profiles() {
+ find $PROFILE_DIR/ -maxdepth 1 -type f -printf "%f\n"
 }
 
 # check_profile profile

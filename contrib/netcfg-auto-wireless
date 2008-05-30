@@ -5,17 +5,17 @@
 . /usr/lib/network/wireless.subr
 . /etc/rc.conf
 . /etc/rc.d/functions
+
 # wifi_auto
 #   autoconnect wireless interface
 #   $1 - wireless interface
-
 wifi_auto()
 {
-    INTERFACE=$1; RETRIES=6
+    interface=$1; RETRIES=6
     stat_busy "Scanning for networks"
 
-    ifconfig $INTERFACE up
-    networks="$(list_networks $INTERFACE)"
+    ifconfig $interface up
+    networks="$(list_networks $interface)"
 
     if [[ ! "$networks" ]]; then
         stat_append "- No networks available."
@@ -23,25 +23,27 @@ wifi_auto()
         exit 1
     fi
 
+    # Loop through all the found essid's, then find a matching profile.
     while read essid; do
-        # awfully long grep that finds a file which has: 
-        # CONNECTION=wireless, ESSID=$essid, INTERFACE=$INTERFACE
-        profile=$(grep -rlP --exclude=/etc/network.d/last "CONNECTION=\"?wireless\"?(\n|.)*INTERFACE=\"?$INTERFACE\"?(\n|.)*ESSID=\"?$essid\"?" $PROFILE_DIR/|head -n 1)
-        if [[ -n "$profile" ]]; then
-            break # If we found a profile, use it.
-        fi
+	for network in $(list_profiles); do
+            load_profile $network
+            if [[ "$CONNECTION" = "wireless" && "$essid" = "$ESSID" && "$interface" = "$INTERFACE" ]]; then
+                found=$network
+            fi
+	    # Clear out any variables set by the profile
+	    . /usr/lib/network/${CONNECTION}.subr
+            ${CONNECTION}_clean_scope
+        done
     done < $networks
     
-    # If there's a profile, connect, else fail.
-    if [[ -n "$profile" ]]; then
-        stat_done
-        netcfg2 $(basename $profile)  
-        exit $?                                                
-    else
-        stat_append "- No profiles matched the found networks"
-        stat_fail
-        exit 1
+    if [[ "$found" ]]; then
+        netcfg2 $found
+	exit $?
     fi
+    
+    stat_append "- No profiles matched the found networks"
+    stat_fail
+    exit 1
 }
 
 if [[ $(id -u) -ne 0 ]]; then
