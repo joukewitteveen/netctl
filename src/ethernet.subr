@@ -24,12 +24,13 @@ ethernet_up() {
         err_append "No connection available"	
     	return 1
     fi
-    
+     
     case $IP in
     dhcp)
         # Check if DHCP_TIMEOUT was set if not set a default value
+        [[ ! "$DHCLIENT" && -e /sbin/dhclient ]] && DHCLIENT="yes"
         [[ -z "$DHCP_TIMEOUT" ]] && DHCP_TIMEOUT=10
-
+        
         if checkyesno $DHCLIENT; then
             rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
             if ! dhclient -q -e TIMEOUT=$DHCP_TIMEOUT -pf /var/run/dhclient-${INTERFACE}.pid; then
