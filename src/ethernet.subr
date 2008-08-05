@@ -107,6 +107,9 @@ ethernet_down() {
         ;;
     esac
     ifconfig $INTERFACE 0.0.0.0
+    
+    quirk "nodown" || ifconfig $INTERFACE down
+
 }
 
 ethernet_clean_scope() {
