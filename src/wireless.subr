@@ -144,10 +144,15 @@ wireless_up() {
             WEP_OPTS="mode managed essid \"$ESSID\""
         fi 
         
+        # Add wierd quirk for some Atheros in response to FS#10585
+        quirk "predown" && ifconfig $INTERFACE down
+
         if ! eval iwconfig $INTERFACE $WEP_OPTS; then
             err_append "Could not set wireless configuration"
             return 1
         fi
+
+        quirk "predown" && ifconfig $INTERFACE up
 
         wep_check $INTERFACE $TIMEOUT|| return 1
         ;;    
