@@ -152,6 +152,8 @@ wireless_up() {
             return 1
         fi
 
+        quirk "postsleep" && sleep 1
+        quirk "postscan" && sleep 1 && iwlist $INTERFACE scan &>/dev/null
         quirk "predown" && ifconfig $INTERFACE up
 
         wep_check $INTERFACE $TIMEOUT|| return 1
