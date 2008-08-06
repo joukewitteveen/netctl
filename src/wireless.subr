@@ -170,7 +170,9 @@ wireless_up() {
         echo "ctrl_interface_group=0" >> $WPA_CONF        
         
         # Generate configuration
-        if ! wpa_passphrase "$ESSID" "$KEY" >> $WPA_CONF; then
+        if [[ "${#KEY}" == "64" ]]; then
+            echo -e 'network={ \nssid="$ESSID" \npsk=$KEY \n}'> $WPA_CONF
+        elif ! wpa_passphrase "$ESSID" "$KEY" >> $WPA_CONF; then
             err_append "Configuration generation failed: `cat $WPA_CONF`"
             return 1
         fi
