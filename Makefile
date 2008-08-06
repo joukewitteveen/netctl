@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.1.0_B2
+VERSION=2.1.0_RC1
 
 
 install:
