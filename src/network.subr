@@ -237,6 +237,7 @@ set_profile() {
     if [[ "$1" == "up" ]]; then
         . $PROFILE_DIR/$2
         cp $PROFILE_DIR/$2 $STATE_DIR/profiles/
+        echo $2 > $STATE_DIR/last_profile
         set_iface up $INTERFACE $2
         
     elif [[ "$1" == "down" ]]; then
