@@ -60,6 +60,7 @@ all_down()
 #
 all_suspend()
 {
+    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     [[ ! -d $STATE_DIR/suspend ]] && mkdir $STATE_DIR/suspend
 
     ls -1 $STATE_DIR/profiles/ | while read prof; do
@@ -84,6 +85,8 @@ all_resume()
 #
 profile_up()
 {
+
+    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     
     load_profile $1 || return 1
 
@@ -131,6 +134,9 @@ profile_up()
 #
 profile_down()
 {
+
+    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
+    
     load_profile $1 || return 1
     
     if ! check_profile $1; then
