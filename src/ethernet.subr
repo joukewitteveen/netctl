@@ -33,7 +33,7 @@ ethernet_up() {
         
         if checkyesno $DHCLIENT; then
             rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
-            if ! dhclient -q -e TIMEOUT=$DHCP_TIMEOUT -pf /var/run/dhclient-${INTERFACE}.pid; then
+            if ! dhclient -q -e TIMEOUT=$DHCP_TIMEOUT -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
                 err_append "DHCP IP lease attempt failed"
                 return 1
             fi
