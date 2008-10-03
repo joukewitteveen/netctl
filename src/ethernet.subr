@@ -78,12 +78,19 @@ ethernet_up() {
     fi
 
     # Generate a new resolv.conf
-    if [[ -n "$DNS1" ]]; then
+    if [[ -n "$DNS1" ]] || [[ -n "$DNS" ]]; then
+
         : >/etc/resolv.conf 
         [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
         [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
         [[ -n "$DNS1" ]]   && echo "nameserver $DNS1" >>/etc/resolv.conf
         [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
+
+        if [[ -n "$DNS" ]]; then
+            for dns in ${DNS[@]}; do
+                echo "nameserver $dns" >>/etc/resolv.conf
+            done
+        fi
     fi
     return 0
 }
