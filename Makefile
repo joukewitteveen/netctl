@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.1.1
+VERSION=2.1.2
 
 install:
 	install -d $(DESTDIR)/usr/lib/network/ $(DESTDIR)/etc/network.d/examples \
