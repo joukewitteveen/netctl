@@ -41,9 +41,9 @@ ethernet_up() {
             # Clear remaining pid files. 
             rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
-            [[ -n "$DNS1" ]] && DHCP_OPTIONS="-R $DHCP_OPTIONS"
+            [[ -n "$DNS1" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
-            if ! dhcpcd -L -t $DHCP_TIMEOUT $DHCP_OPTIONS $INTERFACE; then
+            if ! dhcpcd -qL -t $DHCP_TIMEOUT $DHCP_OPTIONS $INTERFACE; then
                 err_append "DHCP IP lease attempt failed"
                 return 1
             fi 
@@ -98,7 +98,7 @@ ethernet_down() {
             fi
         else
             if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
-                dhcpcd -x $INTERFACE
+                dhcpcd -qx $INTERFACE
             fi
         fi
         ;;
