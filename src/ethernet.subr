@@ -28,7 +28,6 @@ ethernet_up() {
     case $IP in
     dhcp)
         # Check if DHCP_TIMEOUT was set if not set a default value
-        [[ ! "$DHCLIENT" && -e /sbin/dhclient ]] && DHCLIENT="yes"
         [[ -z "$DHCP_TIMEOUT" ]] && DHCP_TIMEOUT=10
         
         if checkyesno $DHCLIENT; then
