@@ -4,19 +4,19 @@
 # wpa_check interface [timeout]
 wpa_check()
 {
-    INTERFACE=$1; TIMEOUT=$2
+    local timeout=0 INTERFACE=$1 TIMEOUT=${2:-15}
     
-    [[ -z "$TIMEOUT" ]] && TIMEOUT=15
-    let timeout=0
-    while [[ $timeout -ne $TIMEOUT ]]; do
+    while [[ $timeout -lt $TIMEOUT ]]; do
+        (
         eval `wpa_cli status|grep wpa_state` 
-        [[ "$wpa_state" = "COMPLETED" ]] && return 0
+        [[ "$wpa_state" = "COMPLETED" ]] 
+        ) && return 0
         sleep 1
         let timeout++
     done
 
     wpa_cli terminate >/dev/null 2>&1
-    err_append "Wireless association failed."
+    err_append "Authentication/association failed"
     return 1 
 }
 
@@ -35,7 +35,7 @@ wep_check()
         let timeout++
     done
     
-    err_append "Wireless association failed."
+    err_append "Wireless association failed"
     return 1
 }
 
@@ -84,14 +84,12 @@ list_networks()
 
 start_wpa() 
 {
-    INTERFACE=$1; WPA_CONF=$2; WPA_OPTS=$3
-     
-    [[ "$WPA_OPTS" == "" ]] && WPA_OPTS="-Dwext"
+    INTERFACE="$1"; WPA_CONF="$2"; WPA_OPTS="$3"
 
-    wpa_supplicant -wB -P/var/run/wpa_supplicant_${INTERFACE}.pid -i${INTERFACE} -c $WPA_CONF $WPA_OPTS    
+    wpa_supplicant -wB -P/var/run/wpa_supplicant_${INTERFACE}.pid -i"${INTERFACE}" -c "$WPA_CONF" $WPA_OPTS    
     sleep 1
     
-    if [[ ! -f /var/run/wpa_supplicant_${INTERFACE}.pid ]]; then
+    if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
         err_append "wpa_supplicant did not start, possible configuration error"
         return 1
     fi
@@ -139,7 +137,7 @@ wireless_up() {
         # 'none' security uses iwconfig, like wep, so use same code, minus keysetting.
         # Use sane default if no alternative is specified
         if [[ "$SECURITY" = "wep" && "$WEP_OPTS" = "" ]]; then 
-            WEP_OPTS="mode managed essid \"$ESSID\" key open $KEY"
+            WEP_OPTS="mode managed essid \"$ESSID\" key $KEY"
         elif [[ "$SECURITY" = "none" && "$WEP_OPTS" = "" ]]; then
             WEP_OPTS="mode managed essid \"$ESSID\""
         fi 
@@ -159,12 +157,10 @@ wireless_up() {
         wep_check $INTERFACE $TIMEOUT|| return 1
         ;;    
     wpa)
-        local WPA_CONF=`mktemp /tmp/wpa.XXXXXXXX`
-        
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
         quirk "wpaessid" && eval iwconfig $INTERFACE mode managed essid "\"$ESSID\""
-        
-        # Create a random file to store configuration, make it root only. 
+         
+        local WPA_CONF="/tmp/wpa.${1// /}" # substitute spaces out
         chmod 600 $WPA_CONF
         echo "ctrl_interface=/var/run/wpa_supplicant" >> $WPA_CONF
         echo "ctrl_interface_group=0" >> $WPA_CONF        
@@ -178,12 +174,14 @@ wireless_up() {
         fi
 
         # Connect!
+        [[ "$WPA_OPTS" == "" ]] && WPA_OPTS="-Dwext"
         start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
         wpa_check $INTERFACE $TIMEOUT || return 1
         ;;
     wpa-config)
         # If user hasnt defined one, use stock config.
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
+        [[ "$WPA_OPTS" == "" ]] && WPA_OPTS="-Dwext"
         start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
         wpa_check $INTERFACE $TIMEOUT || return 1
         ;;        
@@ -203,8 +201,9 @@ wireless_down() {
         ethernet_down $1
        fi
     wpa_cli terminate &> /dev/null 
+	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
     iwconfig $INTERFACE essid off key off &> /dev/null 
-    #ifconfig $INTERFACE down
+
 }
 
 wireless_clean_scope() {

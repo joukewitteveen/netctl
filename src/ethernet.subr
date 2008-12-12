@@ -12,8 +12,6 @@ mii_check() {
 }
 
 ethernet_up() {
-
-    
     if [[ ! -e /sys/class/net/$INTERFACE ]]; then
         if ! echo "$INTERFACE"|grep ":"; then
             err_append "Interface $INTERFACE does not exist"
@@ -24,7 +22,20 @@ ethernet_up() {
         err_append "No connection available"	
     	return 1
     fi
+
+	ifconfig $INTERFACE up
      
+    if checkyesno ${8021X:-no}; then
+        . /usr/lib/network/wireless.subr
+         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
+        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
+        start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! wpa_check "$INTERFACE"; then
+            ifconfig $INTERFACE down
+            return 1
+        fi 
+    fi 
+
     case $IP in
     dhcp)
         # Check if DHCP_TIMEOUT was set if not set a default value
