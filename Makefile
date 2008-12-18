@@ -5,11 +5,11 @@ install:
 	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/etc/network.d/examples \
 	            $(DESTDIR)/var/run/network/{interfaces,profiles} \
 	            $(DESTDIR)/usr/bin/ $(DESTDIR)/etc/rc.d/ \
-				$(DESTDIR)/usr/man/{man5,man8}
+				$(DESTDIR)/usr/share/man/{man5,man8}
 	# Documentation
 	install -m644 examples/*example $(DESTDIR)/etc/network.d/examples/
 	install -m644 src/iftab $(DESTDIR)/etc/iftab
-	install -m644 man/*.8 $(DESTDIR)/usr/man/man8
+	install -m644 man/*.8 $(DESTDIR)/usr/share/man/man8
 	# Libs
 	install -m644 src/{network,wireless,8021x} $(DESTDIR)/usr/lib/network
 	install -m755 src/connections/* ${DESTDIR}/usr/lib/network/connections
