@@ -48,7 +48,7 @@ ethernet_up() {
                 return 1
             fi 
         fi
-        # TODO: add support for $section:ifconfig for other stuff, like mtu or mac?
+        [[ -n "$IFOPTS" ]] && ifconfig $INTERFACE $IFOPTS
         ;;
     static)
         if ! ifconfig $INTERFACE $IFOPTS up; then
