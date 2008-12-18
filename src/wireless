@@ -1,0 +1,61 @@
+# Uses wireless_tools, to check for association to a network.
+# wep_check interface [timeout]
+wep_check()
+{
+    INTERFACE=$1; TIMEOUT=$2
+ 
+    [[ -z "$TIMEOUT" ]] && TIMEOUT=15
+    let timeout=0
+    while [[ $timeout -ne $TIMEOUT ]]; do
+        bssid=`iwgetid $INTERFACE -ra`
+        [[ ! "$bssid" = "00:00:00:00:00:00" ]] && return 0
+        sleep 1
+        let timeout++
+    done
+    
+    err_append "Wireless association failed"
+    return 1
+}
+
+# Check if a particular network is within range
+# find_essid interface essid
+find_essid()
+{
+    INTERFACE=$1; ESSID=$2; RETRIES=5
+    try=0;
+    while [[ $try -ne $RETRIES ]]; do
+        if iwlist $INTERFACE scan|sed "s/ESSID://g"|grep -q "\"$ESSID\""; then
+            return 0 # network found
+        fi
+        sleep 1
+        let try++
+    done
+    return 1
+}
+
+# Return a filename containing a list of network ESSID's found.
+# list_networks interface
+list_networks()
+{
+    # temp file used, as keeping ESSID's with spaces in their name in arrays 
+    # is hard, obscure and kinda nasty. This is simpler and clearer.
+ 
+    [[ -z "$1" ]] && return 1
+    essids=$(mktemp /tmp/essid.XXXXX)
+
+    let try=0;
+    RETRIES=6;
+    while [[ $try -ne $RETRIES ]]; do        
+        iwlist $1 scan 2> /dev/null|grep ESSID|sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
+        sleep 0.5; let try++
+    done
+    sort -u $essids -o $essids
+  
+    # File of 0 length, ie. no ssid's.
+    if [[ ! -s $essids ]]; then
+        return 1
+    fi
+
+    echo $essids
+    return 0
+}

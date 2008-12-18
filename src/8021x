@@ -1,0 +1,32 @@
+# Uses wpa_supplicant to check for association to a network
+# wpa_check interface [timeout]
+wpa_check()
+{
+    local timeout=0 INTERFACE=$1 TIMEOUT=${2:-15}
+    
+    while [[ $timeout -lt $TIMEOUT ]]; do
+        (
+        eval `wpa_cli status|grep wpa_state` 
+        [[ "$wpa_state" = "COMPLETED" ]] 
+        ) && return 0
+        sleep 1
+        let timeout++
+    done
+
+    wpa_cli terminate >/dev/null 2>&1
+    err_append "Authentication/association failed"
+    return 1 
+}
+
+start_wpa() 
+{
+    INTERFACE="$1"; WPA_CONF="$2"; WPA_OPTS="$3"
+
+    wpa_supplicant -wB -P/var/run/wpa_supplicant_${INTERFACE}.pid -i"${INTERFACE}" -c "$WPA_CONF" $WPA_OPTS    
+    sleep 1
+    
+    if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
+        err_append "wpa_supplicant did not start, possible configuration error"
+        return 1
+    fi
+}

@@ -1,0 +1,122 @@
+#! /bin/bash
+
+
+ethernet_up() {
+    if [[ ! -e /sys/class/net/$INTERFACE ]]; then
+        if ! echo "$INTERFACE"|grep ":"; then
+            err_append "Interface $INTERFACE does not exist"
+        fi
+    fi  
+
+	if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
+        err_append "No connection available"	
+    	return 1
+    fi
+
+	ifconfig $INTERFACE up
+     
+    if checkyesno ${AUTH8021X:-no}; then 
+        . ${SUBR_DIR}/8021x
+        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
+        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
+        start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! wpa_check "$INTERFACE"; then
+            ifconfig $INTERFACE down
+            return 1
+        fi 
+    fi
+
+    case $IP in
+    dhcp)
+        # Check if DHCP_TIMEOUT was set if not set a default value
+        [[ -z "$DHCP_TIMEOUT" ]] && DHCP_TIMEOUT=10
+        
+        if checkyesno $DHCLIENT; then
+            rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
+            if ! dhclient -q -e TIMEOUT=$DHCP_TIMEOUT -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
+                err_append "DHCP IP lease attempt failed"
+                return 1
+            fi
+        else
+            # Clear remaining pid files. 
+            rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
+            # If using own dns, tell dhcpcd to NOT replace resolv.conf
+            [[ -n "$DNS1" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
+            # Start dhcpcd
+            if ! dhcpcd -qL -t $DHCP_TIMEOUT $DHCP_OPTIONS $INTERFACE; then
+                err_append "DHCP IP lease attempt failed"
+                return 1
+            fi 
+        fi
+        # TODO: add support for $section:ifconfig for other stuff, like mtu or mac?
+        ;;
+    static)
+        if ! ifconfig $INTERFACE $IFOPTS up; then
+            err_append "Could not bring interface up"
+            return 1
+        fi
+
+        # bring up the default route (gateway)
+        if [[ -n "$GATEWAY" ]]; then
+            if ! route add default gw $GATEWAY; then
+                err_append "Adding gateway $GATEWAY failed"
+                return 1
+            fi 
+        fi
+        ;;
+      *)
+        err_append "Profile error: IP must be either 'dhcp' or 'static'"
+        return 1
+        ;;
+    esac
+
+    # set the hostname
+    if [[ -n "$HOSTNAME" ]]; then
+        if ! hostname $HOSTNAME; then
+            err_append "Cannot set hostname"
+            return 1
+        fi
+    fi
+
+    # Generate a new resolv.conf
+    if [[ -n "$DNS1" ]] || [[ -n "$DNS" ]]; then
+
+        : >/etc/resolv.conf 
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+        [[ -n "$DNS1" ]]   && echo "nameserver $DNS1" >>/etc/resolv.conf
+        [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
+
+        if [[ -n "$DNS" ]]; then
+            for dns in ${DNS[@]}; do
+                echo "nameserver $dns" >>/etc/resolv.conf
+            done
+        fi
+    fi
+    return 0
+}
+
+ethernet_down() {
+    case $IP in
+    dhcp)
+        if checkyesno $DHCLIENT; then
+            if [[ -f /var/run/dhclient-${INTERFACE}.pid ]]; then
+                kill `cat /var/run/dhclient-${INTERFACE}.pid`
+            fi
+        else
+            if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
+                dhcpcd -qx $INTERFACE
+            fi
+        fi
+        ;;
+    static)
+        [[ -n "$GATEWAY" ]] && route del default gw $GATEWAY
+        ;;
+    esac
+    ifconfig $INTERFACE 0.0.0.0
+    
+    quirk "nodown" || ifconfig $INTERFACE down
+
+}
+
+# vim: set ts=4 et sw=4:

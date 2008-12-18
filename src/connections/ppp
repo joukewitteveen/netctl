@@ -1,0 +1,18 @@
+#! /bin/bash
+ppp_up() {
+    [[ -z "$PEER" ]] && PEER="provider"
+    [[ -z "$PPP_TIMEOUT" ]] && PPP_TIMEOUT=30
+
+    /usr/sbin/pppd call $PEER updetach child-timeout $PPP_TIMEOUT linkname $PEER
+
+    if [[ $? -ne 0 ]]; then
+       err_append "pppd connection failed"
+       exit 1
+    fi
+}
+
+ppp_down() {
+    kill $(head -1 /var/run/ppp-$(basename $PEER).pid)
+}
+
+# vim: set ts=4 et sw=4:

@@ -1,0 +1,119 @@
+#! /bin/bash
+
+wireless_up() {
+
+    load_profile $1
+    
+    . ${SUBR_DIR}/wireless
+
+    if [[ ! -d /sys/class/net/$INTERFACE/wireless ]]; then 
+        err_append "Interface $INTERFACE is not a wireless interface"
+        return 1
+    fi
+ 
+    # Required by atheros and others (mac80211?) to enable device
+    ifconfig $INTERFACE up 
+
+    # Hack that has been required by some broadcom
+    quirk "prescan" && iwlist $INTERFACE scan &> /dev/null
+
+    # Required by ipw3945 to properly re-associate
+    quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\""
+
+    # Kill any lingering wpa_supplicants.
+    if [[ -f /var/run/wpa_supplicant_$INTERFACE.pid ]]; then
+        kill $(cat /var/run/wpa_supplicant_$INTERFACE.pid)
+    fi
+
+    # Default scan off as it won't see hidden networks and some hardware's scanning is dodgy
+    [[ ! "$SCAN" ]] && SCAN="no" 
+    if checkyesno $SCAN; then
+        if ! find_essid $INTERFACE "$ESSID"; then
+            err_append "Network unavailable"
+            return 1
+        fi 
+    fi
+  
+    # Manually set iwconfig options
+    if [[ "$IWCONFIG" ]]; then
+        iwconfig $INTERFACE $IWCONFIG
+    fi
+
+    case $SECURITY in
+    wep|none)
+        # 'none' security uses iwconfig, like wep, so use same code, minus keysetting.
+        # Use sane default if no alternative is specified
+        if [[ "$SECURITY" = "wep" && "$WEP_OPTS" = "" ]]; then 
+            WEP_OPTS="mode managed essid \"$ESSID\" key $KEY"
+        elif [[ "$SECURITY" = "none" && "$WEP_OPTS" = "" ]]; then
+            WEP_OPTS="mode managed essid \"$ESSID\""
+        fi 
+        
+        # Add wierd quirk for some Atheros in response to FS#10585
+        quirk "predown" && ifconfig $INTERFACE down
+
+        if ! eval iwconfig $INTERFACE $WEP_OPTS; then
+            err_append "Could not set wireless configuration"
+            return 1
+        fi
+
+        quirk "postsleep" && sleep 1
+        quirk "postscan" && sleep 1 && iwlist $INTERFACE scan &>/dev/null
+        quirk "predown" && ifconfig $INTERFACE up
+
+        wep_check $INTERFACE $TIMEOUT|| return 1
+        ;;    
+    wpa)
+        . ${SUBR_DIR}/8021x
+
+        # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
+        quirk "wpaessid" && eval iwconfig $INTERFACE mode managed essid "\"$ESSID\""
+         
+        local WPA_CONF="/tmp/wpa.${1// /}" # substitute spaces out 
+        echo "ctrl_interface=/var/run/wpa_supplicant" >> $WPA_CONF
+        echo "ctrl_interface_group=0" >> $WPA_CONF        
+        chmod 600 $WPA_CONF
+        
+        # Generate configuration
+        if [[ "${#KEY}" == "64" ]]; then
+            echo -e 'network={ \nssid="$ESSID" \npsk=$KEY \n}'> $WPA_CONF
+        elif ! wpa_passphrase "$ESSID" "$KEY" >> $WPA_CONF; then
+            err_append "Configuration generation failed: `cat $WPA_CONF`"
+            return 1
+        fi
+
+        # Connect!
+        [[ "$WPA_OPTS" == "" ]] && WPA_OPTS="-Dwext"
+        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
+        wpa_check $INTERFACE $TIMEOUT || return 1
+        ;;
+    wpa-config)
+        . ${SUBR_DIR}/8021x
+        # If user hasnt defined one, use stock config.
+        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
+        [[ "$WPA_OPTS" == "" ]] && WPA_OPTS="-Dwext"
+        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
+        wpa_check $INTERFACE $TIMEOUT || return 1
+        ;;        
+    esac
+    
+    . $CONN_DIR/ethernet
+    if ! ethernet_up $1; then
+        wireless_down $1 YES
+        return 1
+    fi
+}
+ 
+wireless_down() {
+    PROFILE=$1 NOETHERNETDOWN=$2
+    if ! checkyesno $2; then
+        . $CONN_DIR/ethernet
+        ethernet_down $1
+       fi
+    wpa_cli terminate &> /dev/null 
+	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
+    iwconfig $INTERFACE essid off key off &> /dev/null 
+
+}
+
+# vim: set ts=4 et sw=4:
