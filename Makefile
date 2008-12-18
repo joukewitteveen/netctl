@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.1.3
+VERSION=2.2.0_B1
 
 install:
 	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/etc/network.d/examples \
@@ -18,32 +18,28 @@ install:
 	install -m755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
 	# Daemons
 	install -m755 src/net-profiles src/net-rename $(DESTDIR)/etc/rc.d
-	
-	
-install-contrib:
-	install -m755 contrib/netcfg-auto-wireless $(DESTDIR)/usr/bin
-	install -m755 contrib/net-auto $(DESTDIR)/etc/rc.d
+
+install-wireless:
+	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/usr/bin \
+				$(DESTDIR)/etc/rc.d
+	install -m755 src/wireless-dbus $(DESTDIR)/usr/lib/network/connections
+	install -m755 src/netcfg-auto-wireless $(DESTDIR)/usr/bin
+	install -m755 src/net-auto $(DESTDIR)/etc/rc.d
 
 tarball: 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
 	mkdir -p netcfg-$(VERSION)
-	cp -r src examples contrib man Makefile LICENSE README netcfg-$(VERSION)
+	cp -r src src-wireless examples contrib man Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
-	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
-    
-pkg: tarball
-	sed -i "s/pkgver=.*/pkgver=$(VERSION)/g" PKGBUILD
-	makepkg
-	rm -rf pkg
-	rm -rf src/netcfg-$(VERSION)*
-	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
+
 
 upload: 
-	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/home/ftp/other/netcfg/
+	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
+	#scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/home/ftp/other/netcfg/
 
 clean:
 	rm *gz
-	rm -rf netcfg-$(VERSION)
+	rm -rf netcfg-*$(VERSION)
 	rm -rf pkg
 	rm MD5SUMS*
