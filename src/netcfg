@@ -2,7 +2,7 @@
 
 . /etc/rc.conf
 . /etc/rc.d/functions
-. /usr/lib/network/network.subr
+. /usr/lib/network/network
 
 err_append() {
     stat_append " - $*"
@@ -12,10 +12,7 @@ err() {
 		printhl "$*"
 }
 
-NETCFG_VER=2.1.2
-PROFILE_DIR="/etc/network.d/"
-SUBR_DIR="/usr/lib/network/"
-STATE_DIR="/var/run/network/"
+NETCFG_VER=2.1.3
 
 version()
 {
