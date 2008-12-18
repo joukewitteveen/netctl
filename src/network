@@ -87,12 +87,14 @@ all_resume()
 #
 profile_up()
 {
-
+    ( 
+    # Keep inside subshell so that options from one profile don't cross to others
+    # exit 1 used as a subshell is effectively a new process
     [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     
-    load_profile $1 || return 1
+    load_profile $1 || exit 1
 
-    check_profile $1 && err "$1 already connected" &&  return 1
+    check_profile $1 && err "$1 already connected" &&  exit 1
 
     # NETWORKS_EXCLUSIVE, rc.conf: Profiles are globally mutually exclusive
     # EXCLUSIVE, network.d/profile: Individual profile is mutually exclusive
@@ -105,29 +107,29 @@ profile_up()
     if check_iface $INTERFACE; then
         if checkyesno $CHECK; then
             err_append "Interface $INTERFACE already in use"
-            stat_fail && return 1
+            stat_fail && exit 1
         else
-            interface_down $INTERFACE || return 1
+            interface_down $INTERFACE || exit 1
             load_profile $1 
         fi
     fi
     
    
-    eval $PRE_UP || return 1
+    eval $PRE_UP || exit 1
     
-    . $CONN_DIR/${CONNECTION}
-    if ! ${CONNECTION}_up $1; then
+    if ! ${CONN_DIR/${CONNECTION} up $1; then
         stat_fail
-        return 1
+        exit 1
     fi
     
-    eval $POST_UP || return 1
+    eval $POST_UP || exit 1
     
     set_profile up $1
     unset EXCLUSIVE 
 
     add_daemon net-profiles
     stat_done
+    ); return $? 
 }
 
 # profile_down profile
@@ -135,35 +137,36 @@ profile_up()
 #
 profile_down()
 {
-
+    (
     [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     
-    load_profile $1 || return 1
+    load_profile $1 || exit 1
     
     if ! check_profile $1; then
         err "Profile not connected" 
-        return 1
+        exit 1
     fi
     
     stat_busy "$1 down"
     if [[ "$(get_iface_prof $INTERFACE)" == "external" ]]; then
         err_append "$interface was connected by another application"
         stat_fail
-        return 1
+        exit 1
     fi
     
-    eval $PRE_DOWN || return 1
+    eval $PRE_DOWN || exit 1
     
     . $CONN_DIR/${CONNECTION}
     if ! ${CONNECTION}_down $1; then
         stat_fail
-        return 1
+        exit 1
     fi
     
-    eval $POST_DOWN || return 1
+    eval $POST_DOWN || exit 1
     
     set_profile down $1
     stat_done
+    ); return $?
 }
 
 # Check if variable is a member of an array
