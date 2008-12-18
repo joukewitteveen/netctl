@@ -1,5 +1,9 @@
 #! /bin/bash
+. /usr/lib/network/network
+
+
 ppp_up() {
+    load_profile $1
     [[ -z "$PEER" ]] && PEER="provider"
     [[ -z "$PPP_TIMEOUT" ]] && PPP_TIMEOUT=30
 
@@ -12,7 +16,10 @@ ppp_up() {
 }
 
 ppp_down() {
+    load_profile $1
     kill $(head -1 /var/run/ppp-$(basename $PEER).pid)
 }
 
+ppp_$1 $2
+exit $?
 # vim: set ts=4 et sw=4:

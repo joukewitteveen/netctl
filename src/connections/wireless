@@ -1,4 +1,5 @@
 #! /bin/bash
+. /usr/lib/network/network
 
 wireless_up() {
 
@@ -97,23 +98,23 @@ wireless_up() {
         ;;        
     esac
     
-    . $CONN_DIR/ethernet
-    if ! ethernet_up $1; then
+    if ! ${CONN_DIR}/ethernet up $1; then
         wireless_down $1 YES
         return 1
     fi
 }
  
 wireless_down() {
+    load_profile $1
     PROFILE=$1 NOETHERNETDOWN=$2
     if ! checkyesno $2; then
-        . $CONN_DIR/ethernet
-        ethernet_down $1
-       fi
+        ${CONN_DIR}/ethernet down $1    
+    fi
     wpa_cli terminate &> /dev/null 
 	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
     iwconfig $INTERFACE essid off key off &> /dev/null 
-
 }
 
+wireless_$1 $2
+exit $?
 # vim: set ts=4 et sw=4:

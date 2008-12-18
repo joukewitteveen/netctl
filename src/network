@@ -117,7 +117,7 @@ profile_up()
    
     eval $PRE_UP || exit 1
     
-    if ! ${CONN_DIR/${CONNECTION} up $1; then
+    if ! ${CONN_DIR}/${CONNECTION} up $1; then
         stat_fail
         exit 1
     fi
@@ -156,8 +156,7 @@ profile_down()
     
     eval $PRE_DOWN || exit 1
     
-    . $CONN_DIR/${CONNECTION}
-    if ! ${CONNECTION}_down $1; then
+    if ! ${CONN_DIR}/${CONNECTION} down $1; then
         stat_fail
         exit 1
     fi

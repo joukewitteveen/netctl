@@ -12,7 +12,7 @@ install:
 	install -m644 man/*.8 $(DESTDIR)/usr/man/man8
 	# Libs
 	install -m644 src/{network,wireless,8021x} $(DESTDIR)/usr/lib/network
-	install -m644 src/connections/* ${DESTDIR}/usr/lib/network/connections
+	install -m755 src/connections/* ${DESTDIR}/usr/lib/network/connections
 	# 'Binaries'
 	install -m755 src/netcfg $(DESTDIR)/usr/bin/netcfg2
 	install -m755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu

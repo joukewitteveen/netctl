@@ -1,7 +1,9 @@
 #! /bin/bash
-
+. /usr/lib/network/network
 
 ethernet_up() {
+    load_profile $1
+
     if [[ ! -e /sys/class/net/$INTERFACE ]]; then
         if ! echo "$INTERFACE"|grep ":"; then
             err_append "Interface $INTERFACE does not exist"
@@ -97,6 +99,7 @@ ethernet_up() {
 }
 
 ethernet_down() {
+    load_profile $1
     case $IP in
     dhcp)
         if checkyesno $DHCLIENT; then
@@ -119,4 +122,6 @@ ethernet_down() {
 
 }
 
+ethernet_$1 $2
+exit $?
 # vim: set ts=4 et sw=4:
