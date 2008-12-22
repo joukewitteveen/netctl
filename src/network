@@ -51,7 +51,7 @@ validate_profile()
 #
 all_down()
 {
-    ls -1 $STATE_DIR/profiles/ | while read prof; do
+    for prof in find "$STATE_DIR/profiles" -maxdepth 1 -type f; do
         profile_down $prof
     done
     rm_daemon net-profiles
@@ -65,7 +65,7 @@ all_suspend()
     [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     [[ ! -d $STATE_DIR/suspend ]] && mkdir $STATE_DIR/suspend
 
-    ls -1 $STATE_DIR/profiles/ | while read prof; do
+    for $prof in find "$STATE_DIR/profiles/" -maxdepth 1 -type f; do
         cp $STATE_DIR/profiles/$prof $STATE_DIR/suspend/
         profile_down $prof
     done
@@ -76,7 +76,7 @@ all_suspend()
 #
 all_resume()
 {
-    ls -1 $STATE_DIR/suspend/ | while read prof; do
+     for $prof in find "$STATE_DIR/suspend/" -maxdepth 1 -type f; do
         profile_up $prof
         rm $STATE_DIR/suspend/$prof
     done
