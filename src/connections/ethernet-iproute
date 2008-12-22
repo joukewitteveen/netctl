@@ -1,0 +1,119 @@
+#! /bin/bash
+. /usr/lib/network/network
+
+error()
+{
+    err_append "$*"
+    ip addr flush $INTERFACE &>/dev/null
+    quirk "nodown" || ip link set $INTERFACE down &>/dev/null 
+    exit 1
+}
+
+ethernet_up() {
+    load_profile $1
+
+    if [[ ! -e /sys/class/net/$INTERFACE ]]; then
+        if ! echo "$INTERFACE"|grep ":"; then
+            error "Interface $INTERFACE does not exist"
+        fi
+    fi  
+
+	if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
+        error "No connection available"	
+    fi
+
+	ip link set $INTERFACE up
+     
+    if checkyesno ${AUTH8021X:-no}; then 
+        . ${SUBR_DIR}/8021x
+        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
+        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
+
+        start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! wpa_check "$INTERFACE"; then
+            ip link set $INTERFACE down
+            return 1
+        fi 
+    fi
+
+    case $IP in
+    dhcp)
+        # Clear remaining pid files. 
+        rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
+
+        # If using own dns, tell dhcpcd to NOT replace resolv.conf
+        [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
+       
+        if ! dhcpcd -qL -t ${DHCP_TIMEOUT:-10} $DHCP_OPTIONS $INTERFACE; then
+            error "DHCP IP lease attempt failed"
+            return 1
+        fi
+        ;;
+    static)
+        if [[ -n "$ADDR" ]]; then
+            if ! ip addr add ${ADDR}/24 brd + dev $INTERFACE; then
+                error "Could not configure interface"
+            fi
+        fi
+        if [[ -n "$GATEWAY" ]]; then
+            if ! ip route add default via $GATEWAY; then
+                error "Adding gateway failed"
+                return 1
+            fi
+        fi
+        ;;
+      *)
+        error "Profile error: IP must be either 'dhcp' or 'static'"
+        return 1
+        ;;
+    esac
+
+    if [[ -n "$IPCFG" ]]; then
+        for line in "${IPCFG[@]}"; do
+            
+            if ! ip $line; then
+                error "Could not configure interface"
+            fi
+        done
+    fi
+
+    # Set hostname
+    if [[ -n "$HOSTNAME" ]]; then
+        if ! hostname $HOSTNAME; then
+            error "Cannot set hostname"
+            return 1
+        fi
+    fi
+
+    # Generate a new resolv.conf
+    if [[ -n "$DNS" ]]; then
+        : >/etc/resolv.conf 
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+
+        if [[ -n "$DNS" ]]; then
+            for dns in ${DNS[@]}; do
+                echo "nameserver $dns" >>/etc/resolv.conf
+            done
+        fi
+    fi
+    return 0
+}
+
+ethernet_down() {
+    load_profile $1
+
+    if [[ "$IP" == "dhcp" ]]; then
+        if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
+            dhcpcd -qx $INTERFACE
+        fi
+    fi
+
+    ip addr flush $INTERFACE
+    quirk "nodown" || ip link set $INTERFACE down
+
+}
+
+ethernet_$1 $2
+exit $?
+# vim: set ts=4 et sw=4:

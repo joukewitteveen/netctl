@@ -22,9 +22,9 @@ install:
 install-wireless:
 	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/usr/bin \
 				$(DESTDIR)/etc/rc.d
-	install -m755 src/wireless-dbus $(DESTDIR)/usr/lib/network/connections
-	install -m755 src/netcfg-auto-wireless $(DESTDIR)/usr/bin
-	install -m755 src/net-auto $(DESTDIR)/etc/rc.d
+	install -m755 src-wireless/wireless-dbus $(DESTDIR)/usr/lib/network/connections
+	install -m755 src-wireless/netcfg-auto-wireless $(DESTDIR)/usr/bin
+	install -m755 src-wireless/net-auto $(DESTDIR)/etc/rc.d
 
 tarball: 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
