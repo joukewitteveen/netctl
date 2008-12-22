@@ -9,11 +9,11 @@ STATE_DIR="/var/run/network/"
 # err msg
 #   output specified message
 err_append() {
-echo -n $*
+    stat_append " - $*"
 }
 
 err() {
-echo $*
+		printhl "$*"
 }
 
 ### Profile loading
