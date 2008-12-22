@@ -4,14 +4,6 @@
 . /etc/rc.d/functions
 . /usr/lib/network/network
 
-err_append() {
-    stat_append " - $*"
-}
-
-err() {
-		printhl "$*"
-}
-
 NETCFG_VER=2.2.0_B1
 
 version()
