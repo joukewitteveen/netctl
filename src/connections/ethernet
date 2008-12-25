@@ -4,38 +4,36 @@
 ethernet_up() {
     load_profile $1
 
-    if [[ ! -e /sys/class/net/$INTERFACE ]]; then
+    if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
         if ! echo "$INTERFACE"|grep ":"; then
-            err_append "Interface $INTERFACE does not exist"
+            err_append "interface $INTERFACE does not exist"
+            return 1
         fi
     fi  
 
-	if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
-        err_append "No connection available"	
+	if ip link show "$INTERFACE"|grep -q "NO-CARRIER"; then
+        err_append "no connection available"	
     	return 1
     fi
 
-	ifconfig $INTERFACE up
+	ifconfig "$INTERFACE" up
      
-    if checkyesno ${AUTH8021X:-no}; then 
-        . ${SUBR_DIR}/8021x
+    if checkyesno "${AUTH8021X:-no}"; then 
+        . "${SUBR_DIR}"/8021x
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
         start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
         if ! wpa_check "$INTERFACE"; then
-            ifconfig $INTERFACE down
+            ifconfig "$INTERFACE" down
             return 1
         fi 
     fi
 
     case $IP in
     dhcp)
-        # Check if DHCP_TIMEOUT was set if not set a default value
-        [[ -z "$DHCP_TIMEOUT" ]] && DHCP_TIMEOUT=10
-        
-        if checkyesno $DHCLIENT; then
+        if checkyesno "${DHCLIENT:-no}"; then
             rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
-            if ! dhclient -q -e TIMEOUT=$DHCP_TIMEOUT -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
+            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
                 err_append "DHCP IP lease attempt failed"
                 return 1
             fi
@@ -45,37 +43,37 @@ ethernet_up() {
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
             [[ -n "$DNS1" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
-            if ! dhcpcd -qL -t $DHCP_TIMEOUT $DHCP_OPTIONS $INTERFACE; then
+            if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"; then
                 err_append "DHCP IP lease attempt failed"
                 return 1
             fi 
         fi
-        [[ -n "$IFOPTS" ]] && ifconfig $INTERFACE $IFOPTS
+        [[ -n "$IFOPTS" ]] && ifconfig "$INTERFACE" $IFOPTS
         ;;
     static)
-        if ! ifconfig $INTERFACE $IFOPTS up; then
-            err_append "Could not bring interface up"
+        if ! ifconfig "$INTERFACE" $IFOPTS up; then
+            err_append "could not bring interface up"
             return 1
         fi
 
         # bring up the default route (gateway)
         if [[ -n "$GATEWAY" ]]; then
             if ! route add default gw $GATEWAY; then
-                err_append "Adding gateway $GATEWAY failed"
+                err_append "adding gateway failed"
                 return 1
             fi 
         fi
         ;;
       *)
-        err_append "Profile error: IP must be either 'dhcp' or 'static'"
+        err_append "IP must be either 'dhcp' or 'static'"
         return 1
         ;;
     esac
 
     # set the hostname
     if [[ -n "$HOSTNAME" ]]; then
-        if ! hostname $HOSTNAME; then
-            err_append "Cannot set hostname"
+        if ! hostname "$HOSTNAME"; then
+            err_append "cannot set hostname"
             return 1
         fi
     fi
@@ -90,7 +88,7 @@ ethernet_up() {
         [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
 
         if [[ -n "$DNS" ]]; then
-            for dns in ${DNS[@]}; do
+            for dns in "${DNS[@]}"; do
                 echo "nameserver $dns" >>/etc/resolv.conf
             done
         fi
@@ -102,13 +100,13 @@ ethernet_down() {
     load_profile $1
     case $IP in
     dhcp)
-        if checkyesno $DHCLIENT; then
+        if checkyesno "${DHCLIENT:-no}"; then
             if [[ -f /var/run/dhclient-${INTERFACE}.pid ]]; then
                 kill `cat /var/run/dhclient-${INTERFACE}.pid`
             fi
         else
             if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
-                dhcpcd -qx $INTERFACE
+                dhcpcd -qx "$INTERFACE"
             fi
         fi
         ;;
