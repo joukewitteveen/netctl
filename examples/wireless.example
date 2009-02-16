@@ -1,0 +1,7 @@
+CONNECTION="wireless-new"
+INTERFACE=ipw0
+SECURITY="yes"
+ESSID="Your ESSID"
+KEY="Your Key"
+# Below can be any valid ethernet option. See ethernet-*.example
+IP="dhcp"

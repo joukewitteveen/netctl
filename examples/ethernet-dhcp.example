@@ -1,0 +1,3 @@
+CONNECTION="ethernet-iproute"
+INTERFACE="eth0"
+IP="dhcp"
