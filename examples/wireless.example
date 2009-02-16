@@ -1,4 +1,4 @@
-CONNECTION="wireless-new"
+CONNECTION="wireless-dbus"
 INTERFACE=ipw0
 SECURITY="yes"
 ESSID="Your ESSID"
