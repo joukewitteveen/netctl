@@ -34,7 +34,7 @@ ethernet_up() {
         if checkyesno "${DHCLIENT:-no}"; then
             rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
             if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
-                err_append "DHCP IP lease attempt failed"
+                err_append "DHCP IP lease attempt failed."
                 return 1
             fi
         else
@@ -44,7 +44,7 @@ ethernet_up() {
             [[ -n "$DNS1" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
             if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"; then
-                err_append "DHCP IP lease attempt failed"
+                err_append "DHCP IP lease attempt failed."
                 return 1
             fi 
         fi
@@ -52,20 +52,20 @@ ethernet_up() {
         ;;
     static)
         if ! ifconfig "$INTERFACE" $IFOPTS up; then
-            err_append "could not bring interface up"
+            err_append "Bringing interface up failed."
             return 1
         fi
 
         # bring up the default route (gateway)
         if [[ -n "$GATEWAY" ]]; then
             if ! route add default gw $GATEWAY; then
-                err_append "adding gateway failed"
+                err_append "Adding gateway failed."
                 return 1
             fi 
         fi
         ;;
       *)
-        err_append "IP must be either 'dhcp' or 'static'"
+        err_append "IP=\"\" must be either 'dhcp' or 'static'."
         return 1
         ;;
     esac
@@ -73,7 +73,7 @@ ethernet_up() {
     # set the hostname
     if [[ -n "$HOSTNAME" ]]; then
         if ! hostname "$HOSTNAME"; then
-            err_append "cannot set hostname"
+            err_append "Setting hostname failed."
             return 1
         fi
     fi

@@ -11,7 +11,7 @@
 #   $1 - wireless interface
 wifi_auto()
 {
-    interface=$1; RETRIES=6
+    interface=$1; 
     stat_busy "Scanning for networks"
 
     ifconfig $interface up
@@ -37,7 +37,7 @@ wifi_auto()
     done < $networks
     
     if [[ "$found" ]]; then
-        netcfg2 $found
+        netcfg $found
 	exit $?
     fi
     

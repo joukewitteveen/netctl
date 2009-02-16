@@ -54,7 +54,6 @@ all_down()
     for prof in find "$STATE_DIR/profiles" -maxdepth 1 -type f; do
         profile_down $prof
     done
-    rm_daemon net-profiles
 }
 
 # all_suspend
@@ -127,7 +126,6 @@ profile_up()
     set_profile up $1
     unset EXCLUSIVE 
 
-    add_daemon net-profiles
     stat_done
     ); return $? 
 }

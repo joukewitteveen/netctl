@@ -14,23 +14,21 @@ case "$1" in
           fi
         done
 
-        for network in ${AUTO_NETWORKS[@]}; do
-            case $network in
-                auto-*) # Automatic configuration, store type and get interface next
-                    auto=$network
-                    ;;
-                *) # Either interface or profile
-                    if [[ "$auto" ]]; then # Auto set, so interface
-                        /usr/bin/netcfg-$auto $network
-                        unset auto 
-                    fi
-            esac
-        done
-       
-        add_daemon net-auto
+        # TODO: check if any way of using 'stacks' in bash
+        for iface in ${AUTO_NETWORKS[@]}; do
+            if [[ "${iface:0:4}" = "auto" ]]; then
+                auto=$iface
+            elif [[ "$auto" ]]; then
+                /usr/bin/netcfg-$auto $iface
+                [[ $? -eq 0 ]] && echo $iface >> /var/run/daemons/net-auto
+                unset auto
+            fi
+        done       
         ;;
     stop)
-        /usr/bin/netcfg2 -a
+        for iface in $(cat /var/run/daemons/net-auto); do
+            netcfg interface-down $iface
+        done
         rm_daemon net-auto
         ;;
     restart)

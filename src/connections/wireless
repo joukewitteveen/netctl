@@ -7,8 +7,9 @@ wireless_up() {
     
     . ${SUBR_DIR}/wireless
 
+    if [[ ! -d /sys
     if [[ ! -d /sys/class/net/$INTERFACE/wireless ]]; then 
-        err_append "Interface $INTERFACE is not a wireless interface"
+        err_append "$INTERFACE is not a valid wireless interface."
         return 1
     fi
  
@@ -30,7 +31,7 @@ wireless_up() {
     [[ ! "$SCAN" ]] && SCAN="no" 
     if checkyesno $SCAN; then
         if ! find_essid $INTERFACE "$ESSID"; then
-            err_append "Network unavailable"
+            err_append "Network not present."
             return 1
         fi 
     fi
@@ -54,15 +55,20 @@ wireless_up() {
         quirk "predown" && ifconfig $INTERFACE down
 
         if ! eval iwconfig $INTERFACE $WEP_OPTS; then
-            err_append "Could not set wireless configuration"
+            err_append "Could not set wireless configuration."
             return 1
         fi
 
         quirk "postsleep" && sleep 1
         quirk "postscan" && sleep 1 && iwlist $INTERFACE scan &>/dev/null
         quirk "predown" && ifconfig $INTERFACE up
-
-        wep_check $INTERFACE $TIMEOUT|| return 1
+        
+        # Some devices appear to not associate until DHCP is run.
+        if quirk "noacheck"; then
+            sleep ${WIRELESS_TIMEOUT:-20}
+        else
+            wep_check $INTERFACE $TIMEOUT|| return 1
+        fi
         ;;    
     wpa)
         . ${SUBR_DIR}/8021x
@@ -72,14 +78,14 @@ wireless_up() {
          
         local WPA_CONF="/tmp/wpa.${1// /}" # substitute spaces out 
         echo "ctrl_interface=/var/run/wpa_supplicant" >> $WPA_CONF
-        echo "ctrl_interface_group=0" >> $WPA_CONF        
+        echo "ctrl_interface_group=wheel" >> $WPA_CONF        
         chmod 600 $WPA_CONF
         
         # Generate configuration
         if [[ "${#KEY}" == "64" ]]; then
             echo -e 'network={ \nssid="$ESSID" \npsk=$KEY \n}'> $WPA_CONF
         elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> $WPA_CONF; then
-            err_append "Configuration generation failed: `cat $WPA_CONF`"
+            err_append "Configuration generation failed. $(cat $WPA_CONF)"
             return 1
         fi
 

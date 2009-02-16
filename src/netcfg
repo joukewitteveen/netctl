@@ -28,10 +28,7 @@ usage()
     echo "-v, --version      Output version information and exit"
 }
 
-if [ "`id -u`" != "0" ]; then
-    err "This script should be run as root."
-    exit 1
-fi
+# TODO: Re-add ROOT check and rewrite with getopts from BashFAQ
 
 case $1 in
     --version|-v) 
@@ -42,10 +39,10 @@ case $1 in
         CHECK="YES"; 
         profile_up $2;;
    clean)
-        rm /var/run/network/interfaces/*
-        rm /var/run/network/profiles/*
-        killall wpa_supplicant
-        killall dhcpcd
+        rm /var/run/network/interfaces/* 2> /dev/null
+        rm /var/run/network/profiles/* 2> /dev/null
+        killall wpa_supplicant 2> /dev/null
+        killall dhcpcd 2> /dev/null
         ;;	
     -d|down) 
         profile_down $2;;

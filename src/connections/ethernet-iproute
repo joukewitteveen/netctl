@@ -46,7 +46,6 @@ ethernet_up() {
        
         if ! dhcpcd -qL -t ${DHCP_TIMEOUT:-10} $DHCP_OPTIONS $INTERFACE; then
             error "DHCP IP lease attempt failed"
-            return 1
         fi
         ;;
     static)
@@ -58,13 +57,11 @@ ethernet_up() {
         if [[ -n "$GATEWAY" ]]; then
             if ! ip route add default via $GATEWAY; then
                 error "Adding gateway failed"
-                return 1
             fi
         fi
         ;;
       *)
         error "Profile error: IP must be either 'dhcp' or 'static'"
-        return 1
         ;;
     esac
 
@@ -81,7 +78,6 @@ ethernet_up() {
     if [[ -n "$HOSTNAME" ]]; then
         if ! hostname $HOSTNAME; then
             error "Cannot set hostname"
-            return 1
         fi
     fi
 
