@@ -118,6 +118,7 @@ wireless_down() {
     wpa_cli terminate &> /dev/null 
 	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
     iwconfig $INTERFACE essid off key off &> /dev/null 
+    ifconfig $INTERFACE down
 }
 
 wireless_$1 $2

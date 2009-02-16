@@ -116,8 +116,11 @@ ethernet_down() {
     esac
     ifconfig $INTERFACE 0.0.0.0
     
-    quirk "nodown" || ifconfig $INTERFACE down
-
+    case "$CONNECTION" in
+        ethernet|ethernet-old) 
+            quirk "nodown" || ifconfig $INTERFACE down
+            ;;
+    esac
 }
 
 ethernet_$1 $2
