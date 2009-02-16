@@ -7,7 +7,6 @@ wireless_up() {
     
     . ${SUBR_DIR}/wireless
 
-    if [[ ! -d /sys
     if [[ ! -d /sys/class/net/$INTERFACE/wireless ]]; then 
         err_append "$INTERFACE is not a valid wireless interface."
         return 1
