@@ -22,9 +22,8 @@ def read_config(config):
     options = {}
     for line in cfg:
         (var, delim, value) = line.partition('=')  
-        if not delim:
-            raise SyntaxError, 'Bad configuration file'
-        options[var] = value
+        if delim and var.lstrip()[0] != "#":
+            options[var] = value
     return options
 
 def start(profile):
@@ -78,9 +77,9 @@ def start(profile):
         driver="wext"
 
     try:
-        path = wpas.getInterface("ipw0")
+        path = wpas.getInterface(profile["INTERFACE"])
     except dbus.exceptions.DBusException:
-        path = wpas.addInterface("ipw0", {"driver":dbus.String(driver,variant_level=1)})
+        path = wpas.addInterface(profile["INTERFACE"], {"driver":dbus.String(driver,variant_level=1)})
 
     # Get interface object
     if_obj = bus.get_object(WPAS_DBUS_SERVICE, path)
