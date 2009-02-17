@@ -28,17 +28,16 @@ def read_config(config):
 
 def start(profile):
     # TODO: Add check if it's even a wireless interface
-    # Interface up...
-    try:
-        subprocess.check_call(["ifconfig", profile['INTERFACE'], "up"])
-    except CalledProcessError:
-        print " - Could not bring interface up"
-        return False
+    # Interface up - probably redundant, should be 'ip' instead.
+    #try:
+    #    subprocess.check_call(["ifconfig", profile['INTERFACE'], "up"])
+    #except subprocess.CalledProcessError:
+    #    print " - Could not bring interface up"
+    #    return False
 
-    # Manually set any iwconfig options, ignoring errors
-    if profile.has_key('IWCONFIG'):
-        subprocess.call(["iwconfig", profile['INTERFACE'], profile['IWCONFIG']])
-
+    # Manually set any iwconfig options - redundant, use custom wpa_supplicant config instead.
+    #if profile.has_key('IWCONFIG'):
+    #    subprocess.call(["iwconfig", profile['INTERFACE'], profile['IWCONFIG']])
 
     # Base arguments
     args=["wpa_supplicant", "-Bu", "-P/var/run/wpa_supplicant.pid"]
@@ -53,7 +52,7 @@ def start(profile):
             args.append("-c" + profile["WPA_CONF"])
         except KeyError:
             args.append("-c/etc/wpa_supplicant.conf")
-    elif not profile['SECURITY'] in ['yes', 'wpa', 'wep']:
+    elif not profile['SECURITY'] in ['wpa', 'wep']:
         print " - Invalid security chosen"
         return False
 
@@ -86,15 +85,22 @@ def start(profile):
     iface = dbus.Interface(if_obj, WPAS_DBUS_INTERFACES_INTERFACE);  
     
     # Connect
-    if profile['SECURITY'] in ['wpa','yes','wep']:
+
+    if profile['SECURITY'] in ['wpa','wep']:
         # Add+select the network
         path = iface.addNetwork()
         net_obj = bus.get_object(WPAS_DBUS_SERVICE, path)
         rnet = dbus.Interface(net_obj, WPAS_DBUS_NETWORKS_INTERFACE)
         iface.selectNetwork(rnet)
-        # Set the options
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), "psk": dbus.String(profile['KEY'])}, signature="sv")
-        rnet.set(opts)      
+
+        if profile['SECURITY'] == "wpa":
+            # Set the options
+            opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), "psk": dbus.String(profile['KEY'])}, signature="sv")
+        elif profile['SECURITY'] == "wep":
+            opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), "wpa_key0": dbus.String(profile['KEY'])}, signature="sv")
+
+        rnet.set(opts)
+       
 
     # Determine timeout
     try:
@@ -117,8 +123,8 @@ def start(profile):
 
     # Run ethernet and get an ip.
     try:
-        subprocess.check_call(["/usr/lib/network/connections/ethernet", "up", sys.argv[2]])
-    except CalledProcessError:
+        subprocess.check_call(["/usr/lib/network/connections/ethernet-iproute", "up", sys.argv[2]])
+    except subprocess.CalledProcessError:
         return False
     return True
   
