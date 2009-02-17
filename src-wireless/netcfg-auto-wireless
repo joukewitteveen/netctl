@@ -1,8 +1,8 @@
 #! /bin/bash
 # Originally contributed by Neuro: http://bbs.archlinux.org/viewtopic.php?pid=278148#p278148
 
-. /usr/lib/network/network.subr
-. /usr/lib/network/wireless.subr
+. /usr/lib/network/network
+. /usr/lib/network/wireless
 . /etc/rc.conf
 . /etc/rc.d/functions
 
@@ -27,12 +27,13 @@ wifi_auto()
     while read essid; do
 	for network in $(list_profiles); do
             load_profile $network
-            if [[ "$CONNECTION" = "wireless" && "$essid" = "$ESSID" && "$interface" = "$INTERFACE" ]]; then
-                found=$network
-            fi
-	    # Clear out any variables set by the profile
-	    . /usr/lib/network/${CONNECTION}.subr
-            ${CONNECTION}_clean_scope
+            case "$CONNECTION" in
+                wireless-old|wireless|wireless-dbus)
+                    if [[ "$essid" = "$ESSID" && "$interface" = "$INTERFACE" ]]; then
+                        found=$network
+                    fi
+                    ;;
+            esac
         done
     done < $networks
     

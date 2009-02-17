@@ -26,8 +26,9 @@ case "$1" in
         done       
         ;;
     stop)
+        [[ ! -e /var/run/daemons/net-auto ]] && exit 0
         for iface in $(cat /var/run/daemons/net-auto); do
-            netcfg interface-down $iface
+            netcfg iface-down $iface
         done
         rm_daemon net-auto
         ;;

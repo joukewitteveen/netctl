@@ -62,11 +62,11 @@ wireless_up() {
         quirk "postscan" && sleep 1 && iwlist $INTERFACE scan &>/dev/null
         quirk "predown" && ifconfig $INTERFACE up
         
-        # Some devices appear to not associate until DHCP is run.
-        if quirk "noacheck"; then
-            sleep ${WIRELESS_TIMEOUT:-20}
-        else
+        # Many devices appear to not associate until DHCP is run.
+        if quirk "acheck"; then
             wep_check $INTERFACE $TIMEOUT|| return 1
+        else
+            sleep ${TIMEOUT:-15}
         fi
         ;;    
     wpa)
