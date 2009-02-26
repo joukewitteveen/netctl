@@ -9,7 +9,7 @@ STATE_DIR="/var/run/network/"
 # err msg
 #   output specified message
 err_append() {
-    stat_append " - $*"
+    echo " - $*"
 }
 
 err() {
