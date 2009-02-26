@@ -51,7 +51,8 @@ validate_profile()
 #
 all_down()
 {
-    for prof in find "$STATE_DIR/profiles" -maxdepth 1 -type f; do
+    for prof in "$(find ${STATE_DIR}/profiles/ -maxdepth 1 -type f -printf '%f\n')"; do
+
         profile_down $prof
     done
 }
