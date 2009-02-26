@@ -1,0 +1,7 @@
+CONNECTION="wireless-dbus"
+DESCRIPTION="A simple WPA connection using wpa_supplicant via dbus"
+INTERFACE="wlan0"
+SECURITY="wpa"
+ESSID="MyNetwork"
+KEY="Wireless Key"
+IP="dhcp"

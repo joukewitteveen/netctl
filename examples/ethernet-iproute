@@ -1,4 +1,5 @@
 CONNECTION="ethernet-iproute"
+DESCRIPTION="A more versatile static ethernet connection using iproute"
 INTERFACE="eth0"
 IP="static"
 # Any valid iproute command can be placed in this array

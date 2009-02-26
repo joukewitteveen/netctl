@@ -11,13 +11,19 @@ ethernet_up() {
         fi
     fi  
 
+    # Connection check
 	if ip link show "$INTERFACE"|grep -q "NO-CARRIER"; then
         err_append "no connection available"	
     	return 1
     fi
 
 	ifconfig "$INTERFACE" up
-     
+    
+    # Some hardware is not immediately ready after ifconfig up
+    while ip link show $INTERFACE|grep -q "state UNKNOWN"; do
+        sleep 0.5
+    done
+
     if checkyesno "${AUTH8021X:-no}"; then 
         . "${SUBR_DIR}"/8021x
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
@@ -116,7 +122,7 @@ ethernet_down() {
     esac
     ifconfig $INTERFACE 0.0.0.0
     
-    case "$CONNECTION" in
+    case "$CONNECTION" in # Keep interface up for wireless
         ethernet|ethernet-old) 
             quirk "nodown" || ifconfig $INTERFACE down
             ;;

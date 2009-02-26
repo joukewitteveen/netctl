@@ -1,0 +1,7 @@
+CONNECTION="wireless"
+DESCRIPTION="A simple WPA encrypted wireless connection"
+INTERFACE="wlan0"
+SECURITY="wpa"
+ESSID="MyNetwork"
+KEY="WirelessKey"
+IP="dhcp" 
