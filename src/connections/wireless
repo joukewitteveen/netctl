@@ -38,6 +38,9 @@ wireless_up() {
     # Manually set iwconfig options
     [[ "$IWCONFIG" ]] && iwconfig $INTERFACE $IWCONFIG
 
+    # Set to 'none' if not set
+    [[ -z "$SECURITY" ]] && SECURITY="none"
+
     case $SECURITY in
     wep|none)
         # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
