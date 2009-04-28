@@ -11,18 +11,19 @@ ethernet_up() {
         fi
     fi  
 
-    # Connection check
-	if ip link show "$INTERFACE"|grep -q "NO-CARRIER"; then
-        err_append "no connection available"	
-    	return 1
-    fi
+    ip link set $INTERFACE up
 
-	ifconfig "$INTERFACE" up
-    
-    # Some hardware is not immediately ready after ifconfig up
-    while ip link show $INTERFACE|grep -q "state UNKNOWN"; do
+    let timeout=0
+    until ip link show $INTERFACE|grep -q "state UP"
+    do
         sleep 0.5
+        let timeout++
+        if  [[ $timeout -eq 5 ]]; then
+            err_append "No connection"
+            return 1
+        fi
     done
+    
 
     if checkyesno "${AUTH8021X:-no}"; then 
         . "${SUBR_DIR}"/8021x
