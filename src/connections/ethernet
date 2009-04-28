@@ -24,18 +24,6 @@ ethernet_up() {
         fi
     done
     
-
-    if checkyesno "${AUTH8021X:-no}"; then 
-        . "${SUBR_DIR}"/8021x
-        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
-        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
-        start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
-        if ! wpa_check "$INTERFACE"; then
-            ifconfig "$INTERFACE" down
-            return 1
-        fi 
-    fi
-
     case $IP in
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
