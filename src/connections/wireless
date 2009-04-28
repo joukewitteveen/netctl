@@ -7,11 +7,6 @@ wireless_up() {
     
     . ${SUBR_DIR}/wireless
 
-    if [[ ! -d /sys/class/net/$INTERFACE/phy80211 ]]; then 
-        err_append "$INTERFACE is not a valid wireless interface."
-        return 1
-    fi
-
     # Kill any lingering wpa_supplicants.
     if [[ -f /var/run/wpa_supplicant_$INTERFACE.pid ]]; then
         kill $(cat /var/run/wpa_supplicant_$INTERFACE.pid)

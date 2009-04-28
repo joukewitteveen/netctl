@@ -26,6 +26,25 @@ def read_config(config):
             options[var] = value
     return options
 
+
+def wep_hex2dec(key):
+    if len(key) not in [10, 26]:
+        print "Bad key"
+        raise SyntaxError
+    
+    x=0
+    new_key=[]
+    while x<len(key):
+        new_key.append(str(int(key[x:x+2],16)).zfill(3))
+        # Convert hex pair to decimal
+        #part = int(key[x:x+2],16)
+        # Convert to string with 00's filled and append
+        #new_key+=str(part).zfill(3)
+        # Increment to get next pair
+        x+=2
+
+    return new_key
+
 def start(profile):
     # TODO: Add check if it's even a wireless interface
     # Interface up - probably redundant, should be 'ip' instead.
@@ -52,7 +71,7 @@ def start(profile):
             args.append("-c" + profile["WPA_CONF"])
         except KeyError:
             args.append("-c/etc/wpa_supplicant.conf")
-    elif not profile['SECURITY'] in ['wpa', 'wep']:
+    elif not profile['SECURITY'] in ['wpa', 'wep', 'none']:
         print " - Invalid security chosen"
         return False
 
@@ -84,27 +103,42 @@ def start(profile):
     if_obj = bus.get_object(WPAS_DBUS_SERVICE, path)
     iface = dbus.Interface(if_obj, WPAS_DBUS_INTERFACES_INTERFACE);  
     
-    # Connect
-
-    if profile['SECURITY'] in ['wpa','wep']:
-        # Add+select the network
+    # Add and select the network. Networks already specified for wpa-config
+    if profile['SECURITY'] in ['wpa','wep','none']:
+        
         path = iface.addNetwork()
         net_obj = bus.get_object(WPAS_DBUS_SERVICE, path)
         rnet = dbus.Interface(net_obj, WPAS_DBUS_NETWORKS_INTERFACE)
         iface.selectNetwork(rnet)
 
-        if profile['SECURITY'] == "wpa":
-            # Set the options
-            opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), "psk": dbus.String(profile['KEY'])}, signature="sv")
-        elif profile['SECURITY'] == "wep":
-            opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), "wpa_key0": dbus.String(profile['KEY'])}, signature="sv")
 
+    if profile['SECURITY'] == "wpa":
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), 
+                                "psk": dbus.String(profile['KEY'])}, 
+                               signature="sv")
+        rnet.set(opts)
+    elif profile['SECURITY'] == "wep":
+        key=profile['KEY']
+        if key[:2] == "s:": # String key prefixed by "s:"
+            key=key[2:]
+        else: # Hex key
+            key=wep_hex2dec(key)
+        
+        print key
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']),
+                                "key_mgmt": dbus.String("NONE"),
+                                "wep_tx_keyidx": dbus.Int32(1),
+                                "wep_key0": dbus.ByteArray(key)},
+                               signature="sv")
+        rnet.set(opts)
+    elif profile['SECURITY'] == "none":
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID'])}, 
+                               signature="sv")
         rnet.set(opts)
        
-
     # Determine timeout
     try:
-        timeout = profile["TIMEOUT"]
+        timeout = int(profile["TIMEOUT"])
     except KeyError:
         timeout = 15
 
