@@ -1,0 +1,5 @@
+CONNECTION="wireless"
+DESCRIPTION="A simple opened wireless connection"
+INTERFACE="wlan0"
+ESSID="MyNetwork"
+IP="dhcp"
