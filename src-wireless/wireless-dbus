@@ -35,12 +35,7 @@ def wep_hex2dec(key):
     x=0
     new_key=[]
     while x<len(key):
-        new_key.append(str(int(key[x:x+2],16)).zfill(3))
-        # Convert hex pair to decimal
-        #part = int(key[x:x+2],16)
-        # Convert to string with 00's filled and append
-        #new_key+=str(part).zfill(3)
-        # Increment to get next pair
+        new_key.append(int(key[x:x+2],16))
         x+=2
 
     return new_key
@@ -120,15 +115,17 @@ def start(profile):
     elif profile['SECURITY'] == "wep":
         key=profile['KEY']
         if key[:2] == "s:": # String key prefixed by "s:"
-            key=key[2:]
-        else: # Hex key
+            keydbus=key[2:]
+        else: # Hex key 
             key=wep_hex2dec(key)
-        
-        print key
+            keydbus = dbus.ByteArray()
+            for l in key:
+                keydbus+=chr(l)
+
         opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']),
                                 "key_mgmt": dbus.String("NONE"),
                                 "wep_tx_keyidx": dbus.Int32(1),
-                                "wep_key0": dbus.ByteArray(key)},
+                                "wep_key0": dbus.ByteArray(keydbus)},
                                signature="sv")
         rnet.set(opts)
     elif profile['SECURITY'] == "none":
