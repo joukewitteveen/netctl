@@ -35,12 +35,14 @@ case $1 in
         version;;
     --help|-h) 
         usage;;
-    -c|check-iface)
+    -c|check-iface|up)
         CHECK="YES"; 
         profile_up $2;;
    clean)
         rm /var/run/network/interfaces/* 2> /dev/null
         rm /var/run/network/profiles/* 2> /dev/null
+				rm /var/run/network/suspend/* 2> /dev/null
+				rm /var/run/network/last_profile 2> /dev/null
         killall wpa_supplicant 2> /dev/null
         killall dhcpcd 2> /dev/null
         ;;	
@@ -50,6 +52,9 @@ case $1 in
         interface_down $2;;
     -a|all-down) 
         all_down;; 
+		-r|reconnect)
+				profile_down $2
+				profile_up $2;;
     all-resume)
         all_resume;;
     all-suspend)
