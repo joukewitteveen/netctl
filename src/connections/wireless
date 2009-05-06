@@ -20,11 +20,6 @@ wireless_up() {
 
     ifconfig $INTERFACE up 
 
-    # Some hardware is not immediately ready after ifconfig up
-    while ip link show $INTERFACE|grep -q "state UNKNOWN"; do
-        sleep 0.5
-    done
-
     quirk "prescan" && iwlist $INTERFACE scan &> /dev/null # bcm43xx
     quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\"" # ipw3945
  
