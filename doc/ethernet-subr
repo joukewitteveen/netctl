@@ -1,0 +1,54 @@
+% ETHERNET-IPROUTE netcfg manuals 
+% Arch Linux
+%
+
+# ethernet-iproute Connection manual
+## Description
+This connection method uses the iproute suite of tools and dhcpcd to gain an IP address.
+
+## Options
+INTERFACE (required)
+:    The wireless interface to configure
+IP (required)
+:   Can be either 'static' or 'dhcp'.  Static requires at least one of ADDR or IPCFG. 
+ADDR (requires IP of 'static')
+:   A single IP address to configure a static IP. For example:
+GATEWAY (requires IP of 'static')
+:   Set specified gateway
+IPCFG 
+:   Array of arguments to pass to 'ip'. The power of this options is that it allows both simple and complicated routing configurations, within the framework of netcfg.
+### DNS
+DNS
+:   Array of DNS nameservers. Simply specify the IP's of each of the DNS nameservers. 
+SEARCH
+:   "search" line for /etc/resolv.conf
+DOMAIN
+:   "domain" line for /etc/resolv.conf
+HOSTNAME
+:   Set the system hostname. Ensure any hostname is correctly referenced in /etc/hosts.
+### DHCP
+DHCP_OPTIONS
+:   String. Any extra arguments to pass to the dhcp client, presently dhcpcd.
+DHCP_TIMEOUT
+:   Integer. Maximum time to try for a DHCP IP. Default is 10 seconds.
+
+### 802.11x Authentication
+AUTH8021X 
+:   Use 802.11x authentication. Enable with 'yes'. 
+WPA_CONF (required for an AUTH8021X of 'yes' only)
+:   Path to wpa_supplicant configuration. Defaults to '/etc/wpa_supplicant.conf'
+WPA_OPTS (optional for an AUTH8021X of 'yes')
+:   Extra arguments for wpa_supplicant not specified otherwise. Any option here must specify wpa_supplicant driver. Defaults to '-Dwired'. 
+
+## Examples
+### Using ADDR and GATEWAY to set static IP and gateway
+
+    IP="static"
+    ADDR="192.168.1.23"
+    GATEWAY="192.168.1.1"
+ 
+### Using IPCFG to set a static IP and gateway with custom DNS
+
+    IP="static"
+    IPCFG=("addr add dev eth0 192.168.1.23/24 brd +" "route add default via 192.168.1.1")
+    DNS=("208.67.222.222" "208.67.220.220")

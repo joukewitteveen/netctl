@@ -1,5 +1,6 @@
 DESTDIR=
 VERSION=2.2.0_B1
+VPATH = doc
 
 install:
 	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/etc/network.d/examples \
@@ -26,6 +27,15 @@ install-wireless:
 	install -m755 src-wireless/netcfg-auto-wireless $(DESTDIR)/usr/bin
 	install -m755 src-wireless/net-auto $(DESTDIR)/etc/rc.d
 
+install-docs: docs
+	install -d $(DESTDIR)/usr/share/doc/netcfg
+	install -m644 doc/*html $(DESTDIR)/usr/share/doc/netcfg/
+	
+docs: doc/*
+	for doc in $(?); do \
+		pandoc $$doc -o $$doc.html;\
+	done
+
 tarball: 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
 	mkdir -p netcfg-$(VERSION)
@@ -36,10 +46,12 @@ tarball:
 
 upload: 
 	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
-	#scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/home/ftp/other/netcfg/
+	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/home/ftp/other/netcfg/
 
 clean:
+	rm doc/*html
 	rm *gz
 	rm -rf netcfg-*$(VERSION)
 	rm -rf pkg
 	rm MD5SUMS*
+	

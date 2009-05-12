@@ -1,0 +1,33 @@
+% WIRELESS netcfg manuals 
+% Arch Linux
+%
+
+# 'wireless' Connection manual
+## Description
+This connection method uses wireless_tools and wpa_supplicant to configure a wireless network connection. 
+
+The new 'wireless-dbus' connection method is preferred over this 
+
+This connection uses the 'ethernet' connection after successful association and thus supports all of it's options. 
+
+## Options
+INTERFACE (required)
+:   The wireless interface to configure
+SECURITY (required for security of 'wep', 'wpa' or 'wpa-config')
+:   One of 'wpa', 'wep', 'none' or 'wpa-config'. Defaults to 'none'
+KEY (required for SECURITY of 'wpa' or 'wep' only)
+:   Wireless encryption key. 
+ESSID (required)
+:   Name of network to connect to.
+TIMEOUT (optional)
+:   Time to wait for association. Defaults to 15 seconds. 
+SCAN (optional)
+:   Scan for a wireless network rather than blindly attempting to connect. Hidden SSID networks do not appear in a scan. Enable with 'yes'. Defaults to 'no'.
+IWCONFIG (optional)
+:   Arguments to pass to iwconfig before attempting to configure the connection. For example, BSSID.
+
+### WPA options  
+WPA_CONF (for SECURITY of 'wpa-config' only)
+:   Path to wpa_supplicant configuration. Defaults to '/etc/wpa_supplicant.conf'
+WPA_OPTS 
+:   Extra arguments for wpa_supplicant not specified otherwise. Any option here must specify wpa_supplicant driver. Defaults to '-Dwext'. 

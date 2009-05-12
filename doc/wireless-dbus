@@ -1,0 +1,29 @@
+% WIRELESS-DBUS netcfg manuals 
+% Arch Linux
+%
+
+# 'wireless-dbus' Connection manual 
+## Description
+This connection method uses wpa_supplicant's dbus interface to configure a wireless network connection.
+
+This connection uses the 'ethernet-iproute' connection after successful association and thus supports all of it's options. 
+
+## Options
+INTERFACE (required)
+:   The wireless interface to configure
+SECURITY (required)
+:   One of 'wpa', 'wep', 'none' or 'wpa-config'
+KEY (required for SECURITY of 'wpa' or 'wep' only)
+:   Wireless encryption key. 
+ESSID (required)
+:   Name of network to connect to.
+TIMEOUT 
+:   Time to wait for association. Defaults to 15 seconds. 
+
+### WPA options
+WPA_CONF (for SECURITY of 'wpa-config' only)
+:   Path to wpa_supplicant configuration. Defaults to '/etc/wpa_supplicant.conf'
+WPA_DRIVER 
+:   wpa_supplicant driver to be used. Defaults to 'wext' 
+WPA_OPTS 
+:   Extra arguments for wpa_supplicant not specified otherwise.
