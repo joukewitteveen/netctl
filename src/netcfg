@@ -23,7 +23,7 @@ usage()
     echo "-d, down           Take specified profile down"
     echo "-h, help           This help message"
     echo "-i, iface-down     Take down profile active on specified interface"
-		echo "-r, reconnect			 Disconnect and reconnect specified profile"
+		echo "-r, reconnect      Disconnect and reconnect specified profile"
 		echo "-u, up             Start specified profile"
     echo "-v, version        Output version information and exit"
     echo "    all-resume     Resume previously suspended profiles and reconnect them"
