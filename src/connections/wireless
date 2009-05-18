@@ -4,13 +4,19 @@
 wireless_up() {
 
     load_profile $1
-    
+    . ${SUBR_DIR}/8021x
     . ${SUBR_DIR}/wireless
 
+    # Check if interface exists
+    if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
+        if ! echo "$INTERFACE"|grep ":"; then
+            err_append "interface $INTERFACE does not exist"
+            return 1
+        fi
+    fi  
+
     # Kill any lingering wpa_supplicants.
-    if [[ -f /var/run/wpa_supplicant_$INTERFACE.pid ]]; then
-        kill $(cat /var/run/wpa_supplicant_$INTERFACE.pid)
-    fi
+    stop_wpa $INTERFACE 
 
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
@@ -57,7 +63,6 @@ wireless_up() {
         wep_check $INTERFACE $TIMEOUT||return 1
         ;;    
     wpa)
-        . ${SUBR_DIR}/8021x
 
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
         quirk "wpaessid" && eval iwconfig $INTERFACE essid "\"$ESSID\""
@@ -78,14 +83,20 @@ wireless_up() {
         # Connect!
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
         start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
-        wpa_check $INTERFACE $TIMEOUT || return 1
+        if ! wpa_check $INTERFACE $TIMEOUT; then
+            stop_wpa $INTERFACE
+            return 1
+        fi
         ;;
     wpa-config)
         . ${SUBR_DIR}/8021x 
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
         start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
-        wpa_check $INTERFACE $TIMEOUT || return 1
+        if ! wpa_check $INTERFACE $TIMEOUT; then
+            stop_wpa $INTERFACE
+            return 1
+        fi
         ;;        
     esac
     
@@ -97,11 +108,12 @@ wireless_up() {
  
 wireless_down() {
     load_profile $1
+    . ${SUBR_DIR}/8021x
     PROFILE=$1 NOETHERNETDOWN=$2
     if ! checkyesno $2; then
         ${CONN_DIR}/ethernet down $1    
     fi
-    wpa_cli terminate &> /dev/null 
+    stop_wpa $INTERFACE 
 	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
     iwconfig $INTERFACE essid off key off &> /dev/null 
     ifconfig $INTERFACE down

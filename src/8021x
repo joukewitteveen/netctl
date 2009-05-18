@@ -34,3 +34,13 @@ start_wpa()
         return 1
     fi
 }
+
+stop_wpa()
+{
+    wpa_cli terminate &> /dev/null 
+    if [[ -f /var/run/wpa_supplicant_$1.pid ]]; then
+        kill $(cat /var/run/wpa_supplicant_$1.pid) &>/dev/null &
+    fi
+}
+
+# vim: set ts=4 et sw=4 ft=sh:

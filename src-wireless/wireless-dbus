@@ -40,6 +40,13 @@ def wep_hex2dec(key):
 
     return new_key
 
+def fail(msg=None):
+    if msg:
+        print " -", msg
+    kill(int(open("/var/run/wpa_supplicant.pid").read()),SIGTERM)
+    sys.exit(1)
+
+
 def start(profile):
     # TODO: Add check if it's even a wireless interface
     # Interface up - probably redundant, should be 'ip' instead.
@@ -67,16 +74,14 @@ def start(profile):
         except KeyError:
             args.append("-c/etc/wpa_supplicant.conf")
     elif not profile['SECURITY'] in ['wpa', 'wep', 'none']:
-        print " - Invalid security chosen"
-        return False
+        fail("Invalid security chosen")
 
     # Start wpa_supplicant
     supplicant = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
     output = supplicant.communicate()[0]
     if supplicant.returncode not in [255,0]:
         print output
-        print " - Could not start wpa_supplicant"
-        return False
+        fail("Could not start wpa_supplicant")
 
     # Connect to wpa_supplicant
     bus = dbus.SystemBus()
@@ -149,25 +154,24 @@ def start(profile):
             break
         
         if n == timeout:
-            print " - Association/Authentication failed:", state
-            return False
+            fail("Association/Authentication failed:" + state)
 
     # Run ethernet and get an ip.
     try:
         subprocess.check_call(["/usr/lib/network/connections/ethernet-iproute", "up", sys.argv[2]])
     except subprocess.CalledProcessError:
-        return False
-    return True
+        fail()
+    sys.exit(0)
   
 def stop(profile):
     subprocess.call(["/usr/lib/network/connections/ethernet", "down", sys.argv[2]])
     kill(int(open("/var/run/wpa_supplicant.pid").read()),SIGTERM)
-    return True 
+    sys.exit(0)
 
 if __name__ == "__main__":
     profile = read_config("/etc/network.d/"+sys.argv[2])
  
     if sys.argv[1] == "up":
-        sys.exit(not start(profile))
+        start(profile)
     elif sys.argv[1] == "down":
-        sys.exit(not stop(profile))
+        stop(profile)
