@@ -4,7 +4,7 @@
 . /etc/rc.d/functions
 . /usr/lib/network/network
 
-NETCFG_VER=2.2.0_B1
+NETCFG_VER=2.2.0b1
 
 version()
 {
