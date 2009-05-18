@@ -39,7 +39,7 @@ docs: doc/*
 tarball: 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
 	mkdir -p netcfg-$(VERSION)
-	cp -r src src-wireless examples contrib man Makefile LICENSE README netcfg-$(VERSION)
+	cp -r src src-wireless examples man Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
 
