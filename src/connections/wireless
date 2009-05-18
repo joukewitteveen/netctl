@@ -29,7 +29,7 @@ wireless_up() {
     quirk "prescan" && iwlist $INTERFACE scan &> /dev/null # bcm43xx
     quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\"" # ipw3945
  
-    if checkyesno ${SCAN-no}; then
+    if checkyesno ${SCAN:-no}; then
         if ! find_essid $INTERFACE "$ESSID"; then
             err_append "Network not present."
             return 1
