@@ -13,7 +13,7 @@ err_append() {
 }
 
 err() {
-    printhl "$*"
+		printhl "$*"
 }
 
 ### Profile loading
@@ -64,9 +64,9 @@ all_suspend()
     [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     [[ ! -d $STATE_DIR/suspend ]] && mkdir $STATE_DIR/suspend
 
-    for prof in "$(find ${STATE_DIR}/profiles -maxdepth 1 -type f -printf '%f\n')"; do
-        cp $STATE_DIR/profiles/$prof $STATE_DIR/suspend/
-        profile_down $prof
+    for prof in $(find $STATE_DIR/profiles/ -maxdepth 1 -type f); do
+        cp $prof $STATE_DIR/suspend/
+        profile_down $(basename $prof)
     done
 }
 
@@ -75,9 +75,9 @@ all_suspend()
 #
 all_resume()
 {
-    for prof in "$(find ${STATE_DIR}/suspend/ -maxdepth 1 -type f -printf '%f\n')"; do
-        profile_up $prof
-        rm $STATE_DIR/suspend/$prof
+    for prof in $(find $STATE_DIR/suspend/ -maxdepth 1 -type f); do
+        profile_up $(basename $prof)
+        rm $prof
     done
 }
 
@@ -112,6 +112,7 @@ profile_up()
             load_profile $1 
         fi
     fi
+    
    
     eval $PRE_UP || exit 1
     
@@ -168,19 +169,19 @@ profile_down()
 # Check if variable is a member of an array
 inarray()
 {
-    search=$1
-    shift 
-    for item in $*; do
-        if [[ "$item" == "$search" ]]; then
-            return 0
-        fi
-    done
-    return 1
+search=$1
+shift 
+for item in $*; do
+    if [[ "$item" == "$search" ]]; then
+        return 0
+    fi
+done
+return 1
 }
 
 quirk() {
-     inarray $1 ${QUIRKS[@]}
-     return $?
+inarray $1 ${QUIRKS[@]}
+return $?
 }
 
 # interface_down interface
@@ -221,7 +222,7 @@ get_iface_prof() {
 # list_profiles
 #  Outputs a list of all profiles
 list_profiles() {
-    find $PROFILE_DIR/ -maxdepth 1 -type f -printf "%f\n"
+ find $PROFILE_DIR/ -maxdepth 1 -type f -printf "%f\n"
 }
 
 # check_profile profile
