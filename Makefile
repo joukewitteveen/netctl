@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.2.0b2
+VERSION=2.2.0b3
 VPATH = doc
 
 install:
