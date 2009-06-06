@@ -19,18 +19,12 @@ ethernet_up() {
     fi  
 
     ip link set $INTERFACE up
+    sleep 1
 
-    let timeout=0
-    until ip link show $INTERFACE|grep -q "state UP"
-    do
-        sleep 0.5
-        let timeout++
-        if  [[ $timeout -eq 5 ]]; then
-            error "No connection"
-            return 1
-        fi
-    done
-
+    if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
+       err_append "No connection"
+       return 1
+    fi
      
     if checkyesno ${AUTH8021X:-no}; then 
         . ${SUBR_DIR}/8021x

@@ -46,7 +46,7 @@ tarball:
 
 upload: 
 	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
-	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/home/ftp/other/netcfg/
+	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
 
 clean:
 	rm doc/*html
