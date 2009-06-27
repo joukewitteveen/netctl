@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.2.0b3
+VERSION=2.2.0
 VPATH = doc
 
 install:
@@ -41,6 +41,7 @@ tarball:
 	mkdir -p netcfg-$(VERSION)
 	cp -r src src-wireless examples man Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
+	mv netcfg-$(VERSION).tar.gz ../
 	rm -rf netcfg-$(VERSION)
 
 
