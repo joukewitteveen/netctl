@@ -69,7 +69,7 @@ wireless_up() {
          
         local WPA_CONF="/tmp/wpa.${1// /}" # substitute spaces out 
         echo "ctrl_interface=/var/run/wpa_supplicant" >> $WPA_CONF
-        echo "ctrl_interface_group=wheel" >> $WPA_CONF        
+        echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> $WPA_CONF        
         chmod 600 $WPA_CONF
         
         # Generate configuration
