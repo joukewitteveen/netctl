@@ -1,0 +1,53 @@
+<h1 id="wireless-dbus-connection-manual"
+>'wireless-dbus' Connection manual</h1
+><h2 id="description"
+>Description</h2
+><p
+>This connection method uses wpa_supplicant's dbus interface to configure a wireless network connection.</p
+><p
+>This connection uses the 'ethernet-iproute' connection after successful association and thus supports all of it's options.</p
+><h2 id="options"
+>Options</h2
+><dl
+><dt
+  >INTERFACE (required)</dt
+  ><dd
+  >The wireless interface to configure</dd
+  ><dt
+  >SECURITY (required)</dt
+  ><dd
+  >One of 'wpa', 'wep', 'none' or 'wpa-config'</dd
+  ><dt
+  >KEY (required for SECURITY of 'wpa' or 'wep' only)</dt
+  ><dd
+  >Wireless encryption key.</dd
+  ><dt
+  >ESSID (this or AP is required)</dt
+  ><dd
+  >Name of network to connect to. Note that for &quot;wireless-dbus&quot; profiles this is always a Gnu regexp (as interpreted by &quot;expr&quot;).</dd
+  ><dt
+  >AP (this or ESSID is required)</dt
+  ><dd
+  >AP of the network to connect to.</dd
+  ><dt
+  >TIMEOUT</dt
+  ><dd
+  >Time to wait for association. Defaults to 15 seconds.</dd
+  ></dl
+><h3 id="wpa-options"
+>WPA options</h3
+><dl
+><dt
+  >WPA_CONF (for SECURITY of 'wpa-config' only)</dt
+  ><dd
+  >Path to wpa_supplicant configuration. Defaults to '/etc/wpa_supplicant.conf'</dd
+  ><dt
+  >WPA_DRIVER</dt
+  ><dd
+  >wpa_supplicant driver to be used. Defaults to 'wext'</dd
+  ><dt
+  >WPA_OPTS</dt
+  ><dd
+  >Extra arguments for wpa_supplicant not specified otherwise.</dd
+  ></dl
+>

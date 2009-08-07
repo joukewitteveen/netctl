@@ -1,0 +1,68 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+. /usr/lib/pm-utils/functions
+
+[[ -f /usr/lib/network/network ]] || exit $NA
+. /usr/lib/network/network
+
+auto_resume()
+{
+	all_resume
+	sleep 2
+	# if didn't successfully resume wifi, and running net-auto daemon, then restart the daemon
+	if [[ -f /var/run/daemons/net-auto && -x /usr/bin/netcfg-auto-wireless ]]; then
+		if check_iface "$1"; then					# ret=0 when iface down and available
+			/usr/bin/netcfg-auto-wireless "$1"
+		fi
+	fi
+}
+
+
+case "$1" in
+	hibernate|suspend_hybrid|suspend)
+		report_log notice "suspending all interfaces..."
+		interface_suspend all
+		;;
+	thaw|resume)
+		if "$CONN_DIR/wireless" query wlan0 enabled; then
+			report_log notice "resuming all interfaces..."
+			auto_resume wlan0
+		else
+			report_log notice "resuming all interfaces except wireless..."
+			all_resume wlan0
+		fi
+		;;
+	
+	# radio_off and radio_on aren't actions that pm-utils will ever send
+	# but if you're able to detect the toggling of your rfkill switch with acpid,
+	# you could have your acpid handler call this script as e.g. "SCRIPT radio_off"
+	radio_off)
+		report_log notice "suspending wireless interface..."
+		interface_suspend wlan0 no
+		"$CONN_DIR/wireless" control wlan0 disable	
+		ifconfig wlan0 down
+		;;
+	radio_on)
+		report_log notice "resuming wireless interface..."
+		auto_resume wlan0
+		if [ -x /etc/pm/power.d/??wifi ]; then
+			/usr/bin/on_ac_power	# this is in pm-utils
+			case $? in
+				0)	# on ac
+					/etc/pm/power.d/??wifi false
+					;;
+				1)	# on battery
+					/etc/pm/power.d/??wifi true
+					;;
+			esac
+		fi
+		;;
+	*)
+		;;
+esac
+
+exit $?
+
+

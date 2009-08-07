@@ -1,0 +1,99 @@
+<h1 id="ethernet-iproute-connection-manual"
+>ethernet-iproute Connection manual</h1
+><h2 id="description"
+>Description</h2
+><p
+>This connection method uses the iproute suite of tools and dhcpcd to gain an IP address.</p
+><h2 id="options"
+>Options</h2
+><dl
+><dt
+  >INTERFACE (required)</dt
+  ><dd
+  >The wireless interface to configure</dd
+  ><dt
+  >IP (required)</dt
+  ><dd
+  >Can be either 'static' or 'dhcp'. Static requires at least one of ADDR or IPCFG.</dd
+  ><dt
+  >ADDR (requires IP of 'static')</dt
+  ><dd
+  >A single IP address to configure a static IP. For example:</dd
+  ><dt
+  >GATEWAY (requires IP of 'static')</dt
+  ><dd
+  >Set specified gateway</dd
+  ><dt
+  >IPCFG</dt
+  ><dd
+  >Array of arguments to pass to 'ip'. The power of this options is that it allows both simple and complicated routing configurations, within the framework of netcfg.</dd
+  ></dl
+><h3 id="dns"
+>DNS</h3
+><dl
+><dt
+  >DNS</dt
+  ><dd
+  >Array of DNS nameservers. Simply specify the IP's of each of the DNS nameservers.</dd
+  ><dt
+  >SEARCH</dt
+  ><dd
+  >&quot;search&quot; line for /etc/resolv.conf</dd
+  ><dt
+  >DOMAIN</dt
+  ><dd
+  >&quot;domain&quot; line for /etc/resolv.conf</dd
+  ><dt
+  >HOSTNAME</dt
+  ><dd
+  >Set the system hostname. Ensure any hostname is correctly referenced in /etc/hosts.</dd
+  ></dl
+><h3 id="dhcp"
+>DHCP</h3
+><dl
+><dt
+  >DHCP_OPTIONS</dt
+  ><dd
+  >String. Any extra arguments to pass to the dhcp client, presently dhcpcd.</dd
+  ><dt
+  >DHCP_TIMEOUT</dt
+  ><dd
+  >Integer. Maximum time to try for a DHCP IP. Default is 10 seconds.</dd
+  ></dl
+><h3 id="x-authentication"
+>802.11x Authentication</h3
+><dl
+><dt
+  >AUTH8021X</dt
+  ><dd
+  >Use 802.11x authentication. Enable with 'yes'.</dd
+  ><dt
+  >WPA_CONF (required for an AUTH8021X of 'yes' only)</dt
+  ><dd
+  >Path to wpa_supplicant configuration. Defaults to '/etc/wpa_supplicant.conf'</dd
+  ><dt
+  >WPA_OPTS (optional for an AUTH8021X of 'yes')</dt
+  ><dd
+  >Extra arguments for wpa_supplicant not specified otherwise. Any option here must specify wpa_supplicant driver. Defaults to '-Dwired'.</dd
+  ></dl
+><h2 id="examples"
+>Examples</h2
+><h3 id="using-addr-and-gateway-to-set-static-ip-and-gateway"
+>Using ADDR and GATEWAY to set static IP and gateway</h3
+><pre
+><code
+  >IP=&quot;static&quot;
+ADDR=&quot;192.168.1.23&quot;
+GATEWAY=&quot;192.168.1.1&quot;
+</code
+  ></pre
+><h3 id="using-ipcfg-to-set-a-static-ip-and-gateway-with-custom-dns"
+>Using IPCFG to set a static IP and gateway with custom DNS</h3
+><pre
+><code
+  >IP=&quot;static&quot;
+IPCFG=(&quot;addr add dev eth0 192.168.1.23/24 brd +&quot; &quot;route add default via 192.168.1.1&quot;)
+DNS=(&quot;208.67.222.222&quot; &quot;208.67.220.220&quot;)
+</code
+  ></pre
+>

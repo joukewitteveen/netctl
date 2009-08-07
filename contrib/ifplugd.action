@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# /etc/ifplugd/ifplugd.action script for Arch Linux
+# can replace the one that comes with extra/ifplugd
+
+# . /etc/rc.conf
+# . /etc/rc.d/functions
+
+case "$2" in
+  up)
+	if [ "${1:0:3}" == eth ]; then
+    	/usr/bin/netcfg "myethernet"	# replace with name of your desired profile
+	fi
+  ;;
+  down)
+	/usr/bin/netcfg iface-down "$1"
+	/sbin/ifconfig "$1" down		# note that we'll return 0 even if the netcfg call failed, e.g. because iface was already down
+									# hence no "failure" messages to syslog
+  ;;
+  *)
+    echo "Wrong arguments" > /dev/stderr
+	exit 1
+  ;;
+esac  
+

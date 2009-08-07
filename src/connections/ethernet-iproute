@@ -1,85 +1,102 @@
 #! /bin/bash
+
+##################################
+##
+#  /usr/lib/network/connections/ethernet-iproute
+##
+##################################
+
+. /etc/rc.conf
+. /etc/rc.d/functions
 . /usr/lib/network/network
 
-error()
-{
-    err_append "$*"
-    ip addr flush $INTERFACE &>/dev/null
-    quirk "nodown" || ip link set $INTERFACE down &>/dev/null 
+report_iproute() {
+    report_"$@"
+    ethernet_control "$INTERFACE" down
     exit 1
 }
 
 ethernet_up() {
-    load_profile $1
+    load_profile "$1"
 
-    if [[ ! -e /sys/class/net/$INTERFACE ]]; then
-        if ! echo "$INTERFACE"|grep ":"; then
-            error "Interface $INTERFACE does not exist"
+    if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
+        if ! echo "$INTERFACE" | fgrep -q ":"; then
+            report_iproute fail "Interface $INTERFACE does not exist."
         fi
     fi  
 
-    ip link set $INTERFACE up
-    sleep 1
+    report_debug ethernet_iproute_up ifup
+    ethernet_control "$INTERFACE" up
+    sleep 3
 
-    if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
-       err_append "No connection"
-       return 1
+    # if ! ethernet_query "$INTERFACE" address; then...
+    if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then  # JP: shouldn''t we include the "dev"?
+       report_iproute fail "No connection."
     fi
-     
-    if checkyesno ${AUTH8021X:-no}; then 
-        . ${SUBR_DIR}/8021x
+
+    if checkyesno "${AUTH8021X:-no}"; then 
+        . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
-
+        report_debug ethernet_iproute_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
         start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
         if ! wpa_check "$INTERFACE"; then
-            ip link set $INTERFACE down
+            ethernet_control "$INTERFACE" forcedown  # JP: forcedown ignores the nodown quirk, matching
+                                                     # what was already here in the code...do we in fact want to ignore
+                                                     # the nodown quirk here?
             return 1
         fi 
     fi
 
-    case $IP in
+    case "$IP" in
     dhcp)
         # Clear remaining pid files. 
-        rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
-
+        rm -f "/var/run/dhcpcd-$INTERFACE".{pid,cache} >/dev/null 2>&1
         # If using own dns, tell dhcpcd to NOT replace resolv.conf
         [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
-       
-        if ! dhcpcd -qL -t ${DHCP_TIMEOUT:-10} $DHCP_OPTIONS $INTERFACE; then
-            error "DHCP IP lease attempt failed"
+
+        #if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" >/dev/null 2>&1; then
+        report_debug ethernet_iproute_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
+        dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_iproute debug $(cat)
+        if [[ "$PIPESTATUS" -ne 0 ]]; then
+            report_iproute fail "Couldn't get DHCP IP lease."
         fi
         ;;
     static)
         if [[ -n "$ADDR" ]]; then
-            if ! ip addr add ${ADDR}/24 brd + dev $INTERFACE; then
-                error "Could not configure interface"
+            report_debug ethernet_iproute_up ip addr add "$ADDR/24" brd + dev "$INTERFACE"
+            if ! ip addr add "$ADDR/24" brd + dev "$INTERFACE"; then
+                report_iproute fail "Couldn't configure $INTERFACE interface."
             fi
         fi
         if [[ -n "$GATEWAY" ]]; then
-            if ! ip route add default via $GATEWAY; then
-                error "Adding gateway failed"
+            report_debug ethernet_iproute_up ip route add default via "$GATEWAY"
+            if ! ip route add default via "$GATEWAY"; then
+                
+                report_iproute fail "Couldn't add gateway $GATEWAY."
             fi
         fi
         ;;
       *)
-        error "Profile error: IP must be either 'dhcp' or 'static'"
+        report_iproute err "Profile error: must be either IP=dhcp or IP=static."
         ;;
     esac
 
     if [[ -n "$IPCFG" ]]; then
         for line in "${IPCFG[@]}"; do
             
-            if ! ip $line; then
-                error "Could not configure interface"
+            report_debug ethernet_iproute_up ip "$line"
+            if ! ip "$line"; then
+                report_iproute fail "Couldn't configure $INTERFACE interface ($line)."
             fi
         done
     fi
 
-    # Set hostname
+    # set the hostname
     if [[ -n "$HOSTNAME" ]]; then
-        if ! hostname $HOSTNAME; then
-            error "Cannot set hostname"
+        report_debug ethernet_iproute_up hostname "$HOSTNAME"
+        if ! hostname "$HOSTNAME"; then
+            report_iproute fail "Couldn't set hostname."
         fi
     fi
 
@@ -89,29 +106,132 @@ ethernet_up() {
         [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
         [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
 
-        if [[ -n "$DNS" ]]; then
-            for dns in ${DNS[@]}; do
-                echo "nameserver $dns" >>/etc/resolv.conf
-            done
-        fi
+        for dns in "${DNS[@]}"; do
+            echo "nameserver $dns" >>/etc/resolv.conf
+        done
     fi
+
+    # successfully running a new profile; erase any suspended profiles on this interface
+    local iface="$INTERFACE"
+    find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
+	| while read prof; do
+        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
+        # we just need to clear INTERFACE which is all we care about
+        unset INTERFACE
+        . "$STATE_DIR/suspend/$prof"
+        if [[ "$iface" == "$INTERFACE" ]]; then
+            rm "$STATE_DIR/suspend/$prof"
+        fi
+    done
+
     return 0
 }
 
 ethernet_down() {
-    load_profile $1
+    load_profile "$1"
 
-    if [[ "$IP" == "dhcp" ]]; then
-        if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
-            dhcpcd -qx $INTERFACE
+    if [[ "$IP" == dhcp ]]; then
+        if [[ -f "/var/run/dhcpcd-$INTERFACE.pid" ]]; then
+            report_debug ethernet_iproute_down dhcpcd -qx "$INTERFACE"
+            dhcpcd -qx "$INTERFACE" >/dev/null 2>&1
         fi
     fi
 
-    ip addr flush $INTERFACE
-    quirk "nodown" || ip link set $INTERFACE down
-
+    report_debug ethernet_iproute_down if_down
+    ethernet_control "$INTERFACE" down
 }
 
-ethernet_$1 $2
+# CONNECTION_query $INTERFACE [ profile | enabled (i.e. not rfkill-ed) | active (i.e. ifup'd) | associated | address ]
+ethernet_query() {
+    local INTERFACE="$1" REQUEST="$2"
+    # report_debug ethernet_iproute_query "$@"
+    case "$REQUEST" in
+
+        profile)
+            # return code = 1 if iface is available to be used
+            # return code = 0 if unavailable (disabled, or in use by another profile or by external config)
+            # echo "" | "disabled" | "external" | PROFILE_NAME
+            if [[ ! -f "$STATE_DIR/interfaces/$INTERFACE" ]]; then
+                # interface is up but has no registered profile
+                if ethernet_query "$INTERFACE" address; then
+                    set_iface up "$INTERFACE" external
+                    echo "external"
+                    return 0
+                fi
+                # no ip address, count as inactive
+                # should we ifconfig iface down? no, may be up for a reason
+                return 1
+
+            else    # interface is up and thinks it's running a profile
+                . "$STATE_DIR/interfaces/$INTERFACE"				# these files should only contain a PROFILE=... statement
+                case "$PROFILE" in
+                    external)
+                        echo "external"
+                        return 0
+                        ;;
+                    disabled)   # shouldn't happen for non-wireless interfaces, but leaving this here in case...
+                        # iface should be down if it's disabled
+                        ethernet_control "$INTERFACE" down
+                        echo "disabled"
+                        return 0
+                        ;;
+                    *)
+                       (  # use subshell to prevent overwriting currently loaded profile
+                            . "$STATE_DIR/profiles/$PROFILE"
+                            if ! ethernet_query "$INTERFACE" address; then
+                                report_warn "INTERFACE $INTERFACE is inactive; no longer being controlled by $PROFILE"
+                                set_profile down "$PROFILE"
+                                exit 1
+                            else
+                                echo "$PROFILE"		# associated with loaded profile
+                                exit 0
+                            fi
+                       )
+                       # return $?
+                       ;;
+                esac
+            fi
+            ;;
+
+        active)
+            ip -o link show dev "$INTERFACE" | egrep -qw '^[^>]*,UP'		# man ip is inconsistent about whether to use "dev"
+            # cat /sys/class/net/wlan0/carrier >/dev/null   # gives err if iface inactive, 0 if up but not connected to network, 1 if connected
+            ;;
+
+        address)
+            test -n "$(ip -o addr show dev "$INTERFACE" | sed -n '2p')"
+            # ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"
+            ;;
+
+        *)  return 1 ;;
+    esac
+}
+
+# CONNECTION_control $INTERFACE [ up | down | forcedown | enable | disable ]
+ethernet_control() {
+    local INTERFACE="$1" ACTION="$2"
+    #report_debug ethernet_iproute_control "$@"
+    case "$ACTION" in
+        up)
+            ip link set dev "$INTERFACE" up	2>/dev/null         # man ip is inconsistent about whether to use "dev"
+			ethernet_query "$INTERFACE" active
+            ;;
+        down|forcedown)
+            ip addr flush dev "$INTERFACE" &>/dev/null
+            if [[ "$2" = forcedown ]] || ! quirk nodown; then
+                ip link set dev "$INTERFACE" down &>/dev/null	# man ip is inconsistent about whether to use "dev"
+            fi
+            ;;
+        *) return 1
+            ;;
+    esac
+}
+
+ethernet_verify() {
+    local INTERFACE="$1"
+    # do nothing
+}
+
+ethernet_$1 "$2" "$3"
 exit $?
 # vim: set ts=4 et sw=4:

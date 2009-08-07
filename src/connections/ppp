@@ -1,25 +1,58 @@
 #! /bin/bash
+##################################
+##
+#  /usr/lib/network/connections/ppp
+##
+##################################
+
+. /etc/rc.conf
+. /etc/rc.d/functions
 . /usr/lib/network/network
 
 
 ppp_up() {
-    load_profile $1
-    [[ -z "$PEER" ]] && PEER="provider"
+    load_profile "$1"
+    [[ -z "$PEER" ]] && PEER=provider
     [[ -z "$PPP_TIMEOUT" ]] && PPP_TIMEOUT=30
 
-    /usr/sbin/pppd call $PEER updetach child-timeout $PPP_TIMEOUT linkname $PEER
-
-    if [[ $? -ne 0 ]]; then
-       err_append "pppd connection failed"
-       exit 1
+    if ! /usr/sbin/pppd call "$PEER" updetach child-timeout "$PPP_TIMEOUT" linkname "$PEER"; then
+       report_fail "Couldn't make pppd connection."
+       return 1
     fi
+
+    # wireless and wireless-dbus connections run this block when they call "ethernet up"; but ppp needs to do it itself
+    # successfully running a new profile; erase any suspended profiles on this interface
+    local interface="$INTERFACE"
+    find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
+	| while read prof; do
+        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
+        # we just need to clear INTERFACE which is all we care about
+        unset INTERFACE
+        . "$STATE_DIR/suspend/$prof"
+        if [[ "$interface" == "$INTERFACE" ]]; then
+            rm "$STATE_DIR/suspend/$prof"
+        fi
+    done
 }
 
 ppp_down() {
-    load_profile $1
-    kill $(head -1 /var/run/ppp-$(basename $PEER).pid)
+    load_profile "$1"
+    kill $(head -1 "/var/run/ppp-$(basename "$PEER").pid")
 }
 
-ppp_$1 $2
+ppp_query() {
+    "$CONN_DIR/ethernet" query "$@"
+}
+
+ppp_control() {
+    "$CONN_DIR/wireless" control "$@"
+}
+
+ppp_verify() {
+    local INTERFACE="$1"
+    # do nothing
+}
+
+ppp_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4:

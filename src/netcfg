@@ -4,7 +4,7 @@
 . /etc/rc.d/functions
 . /usr/lib/network/network
 
-NETCFG_VER=2.2.1
+NETCFG_VER=2.3.0b1
 
 version()
 {
@@ -18,45 +18,69 @@ usage()
     echo "      Start specified profile:    netcfg profile " 
     echo "      Other functions:            netcfg argument profile"
     echo "Arguments:"
+    echo "    current        Report currently running profiles"
     echo "-a, all-down       Take all active profiles down"
     echo "-c, check-iface    Do not start profile if interface is already up"
     echo "-d, down           Take specified profile down"
     echo "-h, help           This help message"
     echo "-i, iface-down     Take down profile active on specified interface"
+    echo "-l, list           List all available profiles"
 		echo "-r, reconnect      Disconnect and reconnect specified profile"
 		echo "-u, up             Start specified profile"
     echo "-v, version        Output version information and exit"
     echo "    all-resume     Resume previously suspended profiles and reconnect them"
     echo "    all-suspend    Store a list of current running profiles and suspend them"
+		exit 1
 }
 
-# TODO: Re-add ROOT check and rewrite with getopts from BashFAQ
+# TODO: rewrite with getopts from BashFAQ
 
-case $1 in
+case "$1" in
     --version|-v|version) 
-        version;;
+        version
+				exit 0;;
     --help|-h|help) 
         usage;;
+		list|-l)
+				echo "Available Profiles"
+				echo "------------------"
+				list_profiles
+				exit 0;;
+		current)
+				if [[ -d "$STATE_DIR/profiles/" ]]; then
+						ls "$STATE_DIR/profiles/"
+						exit 0
+				else
+						exit_err "No active profiles."
+				fi;;
+esac
+
+if [[ $(id -u) -gt 0 ]]; then
+		exit_stderr "This script should be run as root."
+fi
+
+case "$1" in
+
     -c|check-iface|-u|up)
-        CHECK="YES"; 
-        profile_up $2;;
+				CHECK=YES
+        profile_up "$2";;
    clean)
-        rm /var/run/network/interfaces/* 2> /dev/null
-        rm /var/run/network/profiles/* 2> /dev/null
-				rm /var/run/network/suspend/* 2> /dev/null
-				rm /var/run/network/last_profile 2> /dev/null
+				rm "$STATE_DIR/interfaces"/* 2> /dev/null
+				rm "$STATE_DIR/profiles"/* 2> /dev/null
+				rm "$STATE_DIR/suspend"/* 2> /dev/null
+				rm "$STATE_DIR/last_profile" 2> /dev/null
         killall wpa_supplicant 2> /dev/null
         killall dhcpcd 2> /dev/null
         ;;	
     -d|down) 
-        profile_down $2;;
+        profile_down "$2";;
     -i|iface-down) 
-        interface_down $2;;
+        interface_down "$2";;
     -a|all-down) 
         all_down;; 
 		-r|reconnect)
-				profile_down $2
-				profile_up $2;;
+				profile_down "$2"
+				profile_up "$2";;
     all-resume)
         all_resume;;
     all-suspend)
@@ -64,8 +88,8 @@ case $1 in
     -*|--*) 
         usage;;
     *)  
-        if [ -n "$1" ]; then
-            profile_up $1
+        if [[ -n "$1" ]]; then
+            profile_up "$1"
         else
             usage
         fi

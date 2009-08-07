@@ -1,0 +1,49 @@
+### Sample netcfg hook script showing how to declare shared settings
+#
+### These functions and variables will be available to all profiles
+### (They can be manually overridden by any profile.)
+### To install, make this executable and put it in /etc/network.d/hooks
+
+function RUNDAEMON {
+	# "RUNDAEMON daemon [ start | stop ]" will run the daemon only if it's enabled in the DAEMONS array
+	# "RUNDAEMON -f daemon [ start | stop ]" will run it no matter what
+	local enabled result
+	if [[ "$1" = "-f" ]]; then
+		enabled=1
+		shift
+	fi
+	local daemon="$1"
+	shift
+	if [[ ! -x "/etc/rc.d/$daemon" ]]; then
+		echo "DAEMON $daemon isn't executable." >&2
+		return 1
+	elif [[ "$enabled" -ne 1 ]]; then
+		for f in "${DAEMONS[@]}"; do
+			if [[ "$f" = "$daemon" || "$f" = "@$daemon" ]]; then
+				enabled=1
+				break
+			fi
+		done
+	fi
+	if [[ "$enabled" -eq 1 ]]; then
+		"/etc/rc.d/$daemon" "$@"
+		result=$?
+		stat_busy "Continuing $PROFILE..."		# else we'll get a [DONE] or [FAIL] at the end of a third blank line, after messages from $daemon
+		return $result
+	fi
+	return 1	# $daemon isn't enabled in DAEMON array
+}
+
+# Example of some things you might do in your POST_UP/PRE_DOWN scripts
+#   (In fact, I couldn't get awesome-client to work on its own in this context, I had to call a wrapper instead that
+# 	sources the file in ~/.dbus/session-bus and then exports DBUS_SESSION_BUS_ADDRESS, and then calls awesome-client.)
+#
+POST_UP='( sleep 3 && echo "mynetworkfun()" | sudo -Hu me /usr/bin/awesome-client 2>/dev/null) & RUNDAEMON netfs start'
+PRE_DOWN='RUNDAEMON netfs stop'
+POST_DOWN='( sleep 3 && echo "mynetworkfun()" | sudo -Hu me /usr/bin/awesome-client 2>/dev/null) &'
+
+# Quirks and other variables defined here will apply to all your profiles...
+QUIRKS=()
+WPA_GROUP="network"
+
+

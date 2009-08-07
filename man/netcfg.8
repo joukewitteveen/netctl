@@ -1,4 +1,4 @@
-.TH NETCFG 8 "MAY 2007" "Arch Linux" "Network Scripts"
+.TH NETCFG 8 "AUGUST 2009" "Arch Linux" "Network Scripts"
 .\" groff -man -Tascii foo.1 
 .SH NAME
 netcfg \- start/stop/control network profiles
@@ -19,10 +19,13 @@ Start the specified profile, only if it's interface is not currently up.
 .B \-d, down \fIprofile\fP
 Stop the specified profile
 .TP
+.B\-r, reconnect \fIprofile\fP
+Disconnect and reconnect the specified profile
+.TP
 .B \-i, iface-down \fBinterface\fP
 Stop the profile up on the specified interface.
 .TP
-.B \-a, all-down 
+.B \-a, all-down
 Stop all connected profiles
 .TP
 .B      all-suspend
@@ -31,19 +34,28 @@ Suspend and store the name of all active profiles.
 .B      all-resume
 Reconnect any profiles that have been suspended.
 .TP
+.B      current
+Report currently running profiles
+.TP
+.B \-l, list
+List all available profiles
+.TP
 .B \-v, --version
 Display version information and exit
 .TP
 .B \-h, --help
 Display help message and exit
 
-.SH FILES 
+.SH FILES
 .TP
 .I /usr/lib/network/
 Currently installed network profile types.
 .TP
-.I /etc/network.d/examples 
+.I /etc/network.d/examples
 Example configurations for this script
+.TP
+.I /etc/network.d/hooks
+See /usr/share/doc/netcfg/contrib for examples.
 
 .SH BUGS
 None, hopefully, but if you do find one of these elusive things, please submit at http://bugs.archlinux.org/ or email one of the authors below.
@@ -52,6 +64,6 @@ James Rayner <james@archlinux.org>
 
 Others listed in AUTHORS file in source.
 .SH SEE ALSO
-.BR ethernet (5), 
+.BR ethernet (5),
 .BR iwconfig (8),
 .BR wireless (5)

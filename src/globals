@@ -1,0 +1,118 @@
+##################################
+##
+#  /usr/lib/network/globals
+##
+##################################
+
+# JP: rather than declare these in several library files, we just declare them
+# once here, so they only need to be changed at a single point
+
+# JP: added the /etc/network.d/hooks directory
+# any +x files in that directory will be sourced when this file is sourced
+# they can override any of the utility functions defined here for custom behavior
+# (such as logging error messages to syslog, as I like to do)
+# this lets us keep netcfg simple but gives it the flexibility for users
+# to make modular use of it to do more complex things
+
+
+### Globals
+PROFILE_DIR="/etc/network.d/"
+HOOKS_DIR="$PROFILE_DIR/hooks/"
+SUBR_DIR="/usr/lib/network/"
+CONN_DIR="${SUBR_DIR}/connections/"
+STATE_DIR="/var/run/network/"
+
+
+### Logging/Error reporting
+#
+
+function report_err {
+    printhl "$*"
+}
+
+function report_warn {
+    printhl "$*"
+}
+
+function report_notify {
+	true
+}
+
+function report_debug {
+	true
+}
+
+function report_try {
+    stat_busy "$*"
+    REPORT_TRYING=1
+}
+
+function report_fail {
+    if [[ -n "$*" ]]; then
+        if [[ -n "$REPORT_TRYING" ]]; then
+            stat_append "- $*"
+            REPORT_TRYING=
+            stat_fail
+        else
+            printhl "$*"
+        fi
+    elif [[ -n "$REPORT_TRYING" ]]; then
+        REPORT_TRYING=
+        stat_fail
+    fi
+}
+
+function report_success {
+    if [[ -n "$*" ]]; then
+        stat_append "- $*"
+    fi
+    stat_done
+}
+
+### For calling scripts only; don't use in library functions
+
+function exit_stderr { echo "$*" >&2; exit 1; }
+function exit_err { report_err "$*"; exit 1; }
+function exit_fail { report_fail "$*"; exit 1; }
+
+
+
+function line_input {
+	# saves $IFS and noglob shell option (to restore them, eval the output of this function)
+	if [[ $(shopt -o noglob) =~ off ]]; then
+		printf "set +f; IFS=%q" "$IFS"
+	else
+		printf "set -f; IFS=%q" "$IFS"
+	fi
+	# now set $IFS and noglob to handle line-at-a-time input
+	set -f
+	IFS=$'\n'
+}
+
+function load_hooks() {
+	### Load any +x files in $HOOKS_DIR
+	
+	# JP: we need to process line-at-a-time input (don't want to assume path to HOOKS_DIR and its content are all single bash tokens)
+	# find ... | while read ... is no good because anything we do inside the while read ... subshell will be invisible to the outside calling context
+
+#		  # JP: this technique works in general (and is used elsewhere in the code)
+#		  # <(cmd) creates a file descriptor whose content is the stdout of cmd, which we then use as stdin by saying "< <(cmd)"
+#
+#		  # JP: HOWEVER, for reasons I don't understand, this construct can't be sourced from the Python wireless-dbus script
+#		  # Why bash can source the rest of the file but not that construct, just in that context, eludes me
+#         if [[ -d "$HOOKS_DIR" ]]; then
+#             while read h; do
+#                 source "$h"
+#             done < <(find -L "$HOOKS_DIR/" -maxdepth 1 -type f -executable)
+#         fi
+
+	# JP: this might be a more elegant way to process input line-at-a-time without a pipe, anyway
+	local h OLDIFS=$(line_input)
+	for h in $(find -L "$HOOKS_DIR/" -maxdepth 1 -type f -executable | sort); do
+		source "$h"
+	done
+	eval $OLDIFS
+}
+
+load_hooks
+

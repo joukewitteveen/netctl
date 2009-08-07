@@ -4,57 +4,58 @@
 . /etc/rc.d/functions
 . /usr/lib/network/network
 
+# JP: we'll use $STATE_DIR/menu to record what profile is being connected in this way
+rm -f "$STATE_DIR/menu"
 
 # Scan all profiles
 i=0
-for prof in `find -L $PROFILE_DIR -maxdepth 1 -type f -printf "%f\n"|sort`; do    
+while read prof; do
     # if there is a profile called "main", Use as default
-    [ "$prof" = "main" ] && DEFAULT=$prof
-    unset DESCRIPTION
-    . $PROFILE_DIR/$prof
-    profiles[$i]=$prof
-    i=$((i+1))
-    profiles[$i]=$DESCRIPTION
-    i=$((i+1))
-done
+    [[ "$prof" = main ]] && DEFAULT=main
+    unset DESCRIPTION           # JP: we cant sandbox the sourced profiles, because we need to expose the profiles array
+    . "$PROFILE_DIR/$prof"
+    profiles[$i]="$prof"
+    let i++
+    profiles[$i]="$DESCRIPTION"
+    let i++
+done < <(list_profiles | sort)  # JP: re-use list_profiles instead of duplicating it; avoid subshell we'd get by piping it to the while read...
 
-if [ ${#profiles} -eq 0 ]; then
-    echo "No profiles were found in $PROFILE_DIR"
-    return 1
+if [[ ${#profiles} -eq 0 ]]; then
+    exit_err "No profiles were found in $PROFILE_DIR"
 fi
 
+[[ -n "$NETWORKS_MENU_DEFAULT" ]] && DEFAULT="$NETWORKS_MENU_DEFAULT"
 # if no default yet, use the first entry
-[ "$NETWORKS_MENU_DEFAULT" ] && DEFAULT="$NETWORKS_MENU_DEFAULT"
-
-[ "$DEFAULT" = "" ] && DEFAULT=${profiles[0]}
-ANSWER=$(mktemp) || exit 1
+[[ -z "$DEFAULT" ]] && DEFAULT="${profiles[0]}"
+ANSWER=$(mktemp /tmp/menu.XXXXXXXX) || exit 1
 
 # Set timeout
-if [ "$1" = "" ]; then
-    TIMEOUT="0"
-else
-    TIMEOUT="$1"
-fi
+TIMEOUT="${1:-0}"       # JP: equivalent to the block that was here before
 
 # Display Dialog
-dialog --timeout $TIMEOUT --default-item $DEFAULT \
+dialog --timeout "$TIMEOUT" --default-item "$DEFAULT" \
     --menu "Select the network profile you wish to use" \
-    13 50 6 "${profiles[@]}" 2>$ANSWER
+    13 50 6 "${profiles[@]}" 2> $ANSWER
 
 ret=$?
         
 case $ret in
     1) ;; # Cancel - do nothing
     255) # timeout - use default 
-        netcfg2 $DEFAULT
+        profile_up "$DEFAULT"       # JP: use profile_up and catch $?
+        ret=$?
+        if [[ $ret -eq 0 ]]; then echo "$DEFAULT" > "$STATE_DIR/menu"; fi
         ;; 
     0)  # User selection
-        netcfg2 $(cat $ANSWER)
+        profile_up "$(cat $ANSWER)"
+        ret=$?
+        if [[ $ret -eq 0 ]]; then mv $ANSWER "$STATE_DIR/menu"; fi
         ;; 
-    *)  # Shouldnt happen
-        echo "Abnormal ret code from dialog: $ret" 
+    *)  # Shouldn't happen
+        echo "Abnormal ret code from dialog: $ret" >&2
         ;; 
 esac
-rm $ANSWER
+rm -f $ANSWER     # JP: add -f
+exit $ret           # JP: exit with caught $?
 
 # vim: set ts=4 et sw=4:

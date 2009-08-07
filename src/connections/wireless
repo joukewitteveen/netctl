@@ -1,124 +1,378 @@
 #! /bin/bash
+
+##################################
+##
+#  /usr/lib/network/connections/wireless
+##
+##################################
+
+. /etc/rc.conf
+. /etc/rc.d/functions
 . /usr/lib/network/network
 
 wireless_up() {
 
-    load_profile $1
-    . ${SUBR_DIR}/8021x
-    . ${SUBR_DIR}/wireless
+    load_profile "$1"
+    [[ -n "$2" ]] && ESSID="$2"              # JP: use the literal ESSID (though currently we only interpret wireless-dbus ESSIDs as regexps)
+
+    . "$SUBR_DIR/8021x"
+    . "$SUBR_DIR/wireless_utils"
 
     # Check if interface exists
-    if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
-        if ! echo "$INTERFACE"|grep ":"; then
-            err_append "interface $INTERFACE does not exist"
+    if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
+        if ! echo "$INTERFACE" | fgrep -q ":"; then
+            report_fail "Interface $INTERFACE does not exist."
             return 1
         fi
     fi  
 
     # Kill any lingering wpa_supplicants.
-    stop_wpa $INTERFACE 
+    report_debug wireless_up stop_wpa "$INTERFACE"
+    stop_wpa "$INTERFACE"
 
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
-    if [[ "$(iwgetid -sm $INTERFACE)" -ne "Managed" ]]; then
-        iwconfig $INTERFACE mode managed
+    if [[ $(iwgetid -sm "$INTERFACE") -ne Managed ]]; then
+        report_debug wireless_up iwconfig "$INTERFACE" mode managed
+			iwconfig "$INTERFACE" mode managed
+		fi
+
+    report_debug wireless_up ifup
+    wireless_control "$INTERFACE" up || return 1
+
+    quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
+
+
+    if quirk preessid; then # ipw3945
+        if [[ -n "$AP" ]]; then             # JP: enable use of AP
+           # JP: Since I don't undertand why the else block below is an eval, I'm not sure
+           # if this command also needs to be eval'd
+            iwconfig "$INTERFACE" mode managed ap "$AP"
+        else
+            # JP: I don't understand why this needs to be an eval. What's wrong with just:
+            # iwconfig "$INTERFACE" mode managed essid "$ESSID"
+            eval "iwconfig \"$INTERFACE\" mode managed essid \"$ESSID\""
+        fi
+
     fi
-
-    ifconfig $INTERFACE up 
-
-    quirk "prescan" && iwlist $INTERFACE scan &> /dev/null # bcm43xx
-    quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\"" # ipw3945
  
-    if checkyesno ${SCAN:-no}; then
-        if ! find_essid $INTERFACE "$ESSID"; then
-            err_append "Network not present."
+    if checkyesno "${SCAN:-no}"; then
+        report_debug wireless_up scanning
+        local OLDESSID="$ESSID"
+        if [[ -n "$AP" ]]; then
+            ESSID=$(find_ap "$INTERFACE" "$AP")
+        else
+            ESSID=$(find_essid "$INTERFACE" "$ESSID" "$CONNECTION") # JP: we could have left $3 null for default of treating ESSID as literal
+                                                                    # but instead we explicitly pass $CONNECTION
+        fi
+        if [[ $? -gt 0 ]]; then
+            report_fail "Wireless network \"$OLDESSID\" not present."
             return 1
         fi 
     fi
   
     # Manually set iwconfig options
-    [[ "$IWCONFIG" ]] && iwconfig $INTERFACE $IWCONFIG
+    if [[ -n "$IWCONFIG" ]]; then
+        report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG
+        iwconfig "$INTERFACE" $IWCONFIG
+    fi
 
     # Set to 'none' if not set
-    [[ -z "$SECURITY" ]] && SECURITY="none"
+    [[ -z "$SECURITY" ]] && SECURITY=none
 
-    case $SECURITY in
+    case "$SECURITY" in
     wep|none)
         # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
-        if [[ "$SECURITY" = "wep" ]]; then 
-            WEP_OPTS="essid \"$ESSID\" key $KEY"
-        elif [[ "$SECURITY" = "none" ]]; then
-            WEP_OPTS="essid \"$ESSID\""
-        fi 
+        if [[ -z "$WEP_OPTS" ]]; then
+            if [[ "$SECURITY" = wep ]]; then 
+                if [[ -n "$AP" ]]; then
+                    WEP_OPTS="ap \"$AP\" key $KEY"          # JP: formerly I had "...key open $KEY"; is it correct to omit the 'open'?
+                else
+                    WEP_OPTS="essid \"$ESSID\" key $KEY"          # JP: formerly I had "...key open $KEY"; is it correct to omit the 'open'?
+                fi
+            else    # SECURITY=none
+                if [[ -n "$AP" ]]; then
+                    WEP_OPTS="ap \"$AP\""
+                else
+                    WEP_OPTS="essid \"$ESSID\""
+                fi
+            fi
+        fi
               
-        quirk "predown" && ifconfig $INTERFACE down # madwifi FS#10585
+        quirk predown && wireless_control "$INTERFACE" forcedown # madwifi FS#10585
 
-        if ! eval iwconfig $INTERFACE $WEP_OPTS; then
-            err_append "Could not set wireless configuration."
+        report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
+        # JP: I don't understand why this needs to be an eval. What's wrong with just:
+        # iwconfig "$INTERFACE" $WEP_OPTS
+        if ! eval "iwconfig \"$INTERFACE\" $WEP_OPTS"; then
+            report_fail "Couldn't configure wireless."
             return 1
         fi
 
-        quirk "predown" && ifconfig $INTERFACE up # madwifi FS#10585
+
+
+        quirk predown && wireless_control "$INTERFACE" up # madwifi FS#10585
        
-        wep_check $INTERFACE $TIMEOUT||return 1
+        report_debug ethernet_up wep_check
+        wep_check "$INTERFACE" "$TIMEOUT" || return 1
         ;;    
+
     wpa)
 
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
-        quirk "wpaessid" && eval iwconfig $INTERFACE essid "\"$ESSID\""
+        if quirk wpaessid; then
+            if [[ -n "$AP" ]]; then
+               # JP: Since I don't undertand why the else block below is an eval, I'm not sure
+               # if this command also needs to be eval'd
+               iwconfig "$INTERFACE" ap "$AP"
+            else
+                # JP: I don't understand why this needs to be an eval. What's wrong with just:
+                # iwconfig "$INTERFACE" essid "$ESSID"
+               eval "iwconfig \"$INTERFACE\" essid \"$ESSID\""
+            fi
+        fi
          
-        local WPA_CONF="/tmp/wpa.${1// /}" # substitute spaces out 
-        echo "ctrl_interface=/var/run/wpa_supplicant" >> $WPA_CONF
-        echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> $WPA_CONF        
-        chmod 600 $WPA_CONF
+        local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out 
+        # make empty tmp dir with correct permissions, rename it
+		rm -rf "$WPA_CONF"
+        mv -f $(mktemp -d) "$WPA_CONF" || return 1
+        echo "ctrl_interface=/var/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
+        echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
         
         # Generate configuration
-        if [[ "${#KEY}" == "64" ]]; then
-            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> $WPA_CONF
-        elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> $WPA_CONF; then
-            err_append "Configuration generation failed. $(cat $WPA_CONF)"
+        if [[ "${#KEY}" -eq 64 ]]; then
+            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> "$WPA_CONF/wpa.conf"
+                # JP: formerly I had  { \nssid=\"$ESSID\" \nproto=WPA \nkey_mgmt=WPA-PSK \npsk=$KEY \n}
+                # JP: is what's above better?
+        elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> "$WPA_CONF/wpa.conf"; then
+            report_fail "Couldn't generate WPA configuration."
+            cat "$WPA_CONF/wpa.conf" >&2
             return 1
         fi
 
         # Connect!
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
-        if ! wpa_check $INTERFACE $TIMEOUT; then
-            stop_wpa $INTERFACE
+        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS"
+        start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS" || return 1
+        report_debug wireless_up wpa_check
+        if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
+            stop_wpa "$INTERFACE"
             return 1
         fi
         ;;
     wpa-config)
-        . ${SUBR_DIR}/8021x 
+        . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
-        if ! wpa_check $INTERFACE $TIMEOUT; then
-            stop_wpa $INTERFACE
+        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS" || return 1
+        report_debug wireless_up wpa_check
+        if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
+            stop_wpa "$INTERFACE"
             return 1
         fi
         ;;        
     esac
     
-    if ! ${CONN_DIR}/ethernet up $1; then
-        wireless_down $1 YES
+    if ! "$CONN_DIR/ethernet" up "$1"; then
+        wireless_down "$1" YES
         return 1
     fi
 }
  
+# wireless_down PROFILE [ LEAVE ifconfig up? default no ]
 wireless_down() {
-    load_profile $1
-    . ${SUBR_DIR}/8021x
-    PROFILE=$1 NOETHERNETDOWN=$2
-    if ! checkyesno $2; then
-        ${CONN_DIR}/ethernet down $1    
+    load_profile "$1"
+    . "$SUBR_DIR/8021x"
+    local PROFILE="$1" NOETHERNETDOWN="$2"      # JP: made declarations local?? also, why introduce these vars if you're not going to use them?
+    if ! checkyesno "$NOETHERNETDOWN"; then
+        "$CONN_DIR/ethernet" down "$PROFILE"
     fi
-    stop_wpa $INTERFACE 
-	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
-    iwconfig $INTERFACE essid off key off &> /dev/null 
-    ifconfig $INTERFACE down
+    report_debug wireless_down stop_wpa "$INTERFACE"
+    stop_wpa "$INTERFACE"
+	[[ "$SECURITY" == wpa ]] && rm -rf "/tmp/wpa.${PROFILE// /}" # remove tmp wpa config
+    report_debug wireless_down iwconfig "$INTERFACE" essid off key off
+    iwconfig "$INTERFACE" essid off key off &> /dev/null 
+    #wireless_control "$INTERFACE" forcedown     # this is now handled in ethernet down, isn't it?
 }
 
-wireless_$1 $2
+# CONNECTION_query $INTERFACE [ profile | enabled (i.e. not rfkill-ed) | active (i.e. ifup'd) | associated | address ] [ "" | "-iproute" ]
+# 	"query associated" also uses $4=ESSID $5=AP if known
+wireless_query() {
+    local INTERFACE="$1" REQUEST="$2" NEW="$3"
+    #report_debug wireless_query "$@"
+    case "$REQUEST" in
+
+        profile)
+            # return code = 1 if iface is available to be used
+            # return code = 0 if unavailable (disabled, or in use by another profile or by external config)
+            # echo "" | "disabled" | "external" | PROFILE_NAME
+            if [[ ! -f "$STATE_DIR/interfaces/$INTERFACE" ]]; then
+                # wireless interface is up but has no registered profile
+                if ! wireless_query "$INTERFACE" enabled "$NEW"; then
+                    wireless_control disable "$INTERFACE"  # STATE_DIR/interface should say "disabled" instead
+                    # iface should be down if it''s disabled
+                    wireless_control "$INTERFACE" down "$NEW"
+                    echo "disabled"
+                    return 0
+                fi
+                if wireless_query "$INTERFACE" address "$NEW"; then
+                    set_iface up "$INTERFACE" external
+                    echo "external"
+                    return 0
+                fi
+                # no ip address, count as inactive (even if associated)
+                # should we tell iface to de-associate if still associated?
+                # should we ifconfig iface down? no, may be up for a reason
+                return 1
+
+            else    # interface is up and thinks it's running a profile
+                . "$STATE_DIR/interfaces/$INTERFACE"				# these files should only contain a PROFILE=... statement
+                case "$PROFILE" in
+                    external)
+                        echo "external"
+                        return 0
+                        ;;
+                    disabled)
+                        # iface should be down if it's disabled
+                        wireless_control "$INTERFACE" down "$NEW"
+                        echo "disabled"
+                        return 0
+                        ;;
+                    *)
+                       (  # use subshell to prevent overwriting currently loaded profile
+                            . "$STATE_DIR/profiles/$PROFILE"
+                            if ! "$CONN_DIR/$CONNECTION" query "$INTERFACE" enabled; then
+                                report_warn "INTERFACE $INTERFACE is disabled; no longer being controlled by $PROFILE"
+                                set_profile down "$PROFILE"
+                                wireless_control disable "$INTERFACE"
+                                wireless_control "$INTERFACE" down "$NEW"
+                                echo "disabled"
+                                exit 0
+                            elif ! wireless_query "$INTERFACE" address "$NEW"; then
+                                report_warn "INTERFACE $INTERFACE is inactive; no longer being controlled by $PROFILE"
+                                set_profile down "$PROFILE"
+                                exit 1
+                            elif "$CONN_DIR/$CONNECTION" query "$INTERFACE" associated "$NEW" "$ESSID" "$AP"; then
+                                echo "$PROFILE"		# associated with loaded profile
+                                exit 0
+                            else
+                                report_warn "INTERFACE $INTERFACE no longer being controlled by $PROFILE"
+                                set_profile down "$PROFILE"
+                                set_iface up "$INTERFACE" external
+                                echo "external"
+                                exit 0
+                            fi
+                       )
+                       # return $?
+                       ;;
+                esac
+            fi
+            ;;
+
+        enabled)
+            local rfkill iftype
+            for rfkill in /sys/class/rfkill/*; do
+                if [[ -e "$rfkill/type" && -e "$rfkill/state" ]]; then
+                    iftype=$(cat "$rfkill/type")
+                    if [[ "$iftype" == wlan || "$iftype" == "${INTERFACE:0:${#INTERFACE}-1}" ]]; then # JP: don't really know what the range of values for this is
+                                                                                                    # on my machine, the INTERFACE is wlan0 and the type=wlan
+                        test $(cat "$rfkill/state") -eq 1   # state is 1 when enabled, 2 when killed
+                        return $?
+                    fi
+                fi
+            done
+#             # JP: this is easier, but I don't know if it can be relied on to stay in place...
+#             if [[ -e /sys/class/net/$INTERFACE/device/rfkill/rfkill?/state ]]; then
+#                 test $(cat /sys/class/net/$INTERFACE/device/rfkill/rfkill?/state) -eq 1
+#                 return $?
+#             fi
+            return 0    # default to enabled
+            ;;
+
+        associated)
+        #   assumed to have ip address
+        #   return 0: associated with loaded profile
+        #          1: associated with other
+        #          2: still has ip address but unassociated: can this happen?
+			local ESSID="$4" AP="$5"
+            local essid=$(iwgetid "$INTERFACE" -r) ap=$(iwgetid "$INTERFACE" -ra)
+            [[ -z "$ap" ]] && return 2
+            if [[ -n "$AP" ]]; then
+                [[ $(echo "$AP" | tr 'abcdef' 'ABCDEF') == "$ap" ]]
+                return $?
+            fi
+            case "$ESSID" in
+                #         [Rr][Oo][Aa][Mm]|[Oo][Pp][Ee][Nn])
+                #             return 0
+                #             ;;
+                *)
+                    if [[ "$NEW" == -iproute ]]; then
+                        # JP: ESSID is a regexp; we handle this here instead of in the wireless-dbus script for now
+                        expr match "$essid" "^$ESSID\$" >/dev/null
+                        return $?   # returns true if matched more than 0 chars
+                    else
+                        [[ "$ESSID" == "$essid" ]]
+                        return $?
+                    fi
+                    ;;
+            esac
+            ;;
+
+        active|address) 
+            "$CONN_DIR/ethernet$NEW" query "$INTERFACE" "$REQUEST"
+            ;;
+
+		*) return 1;;
+    esac
+}
+
+# CONNECTION_control $INTERFACE [ up | down | forcedown | enable | disable ] [ "" | "-iproute" ]
+wireless_control() {
+    local INTERFACE="$1" ACTION="$2" NEW="$3"
+    #report_debug wireless_control "$@"
+        case "$ACTION" in
+            enable)
+                [[ $(query_iface "$INTERFACE") == disabled ]] && set_iface "$INTERFACE" down
+                ;;
+            disable)
+                set_iface up "$INTERFACE" disabled
+                ;;
+            up)
+                if [[ "$NEW" = -iproute ]]; then
+                    "$CONN_DIR/ethernet-iproute" control "$INTERFACE" "$ACTION"
+                else
+                    # JP: same as ethernet control ... up
+				#ifconfig "$INTERFACE" up 2>/dev/null
+				ifconfig "$INTERFACE" up
+                    wireless_query "$INTERFACE" active
+                fi
+                ;;
+            down|forcedown)
+                if [[ "$NEW" = -iproute ]]; then
+                    "$CONN_DIR/ethernet-iproute" control "$INTERFACE" "$ACTION"
+                else
+                    # JP: differs slightly from ethernet control ... down (but I don't know whether the difference is really appropriate, I'm just preserving it from older codebase)
+                    ifconfig "$INTERFACE" 0.0.0.0
+                    if [[ "$2" = forcedown ]]; then
+                        ifconfig "$INTERFACE" down
+                    fi
+                fi
+                ;;
+            *) return 1;;
+        esac
+}
+
+wireless_verify() {
+    local INTERFACE="$1"
+    if [[ -d "/sys/class/net/$INTERFACE/phy80211" || -d "/sys/class/net/$INTERFACE/wireless" ]]; then
+        return 0
+	else
+		return 1
+	fi
+}
+
+wireless_$1 "$2" "$3" "$4" "$5" "$6"
 exit $?
 # vim: set ts=4 et sw=4:
+
