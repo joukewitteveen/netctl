@@ -1,0 +1,141 @@
+##################################
+##
+#  /usr/lib/network/wireless_utils
+##
+##################################
+ 
+# Uses wireless_tools, to check for association to a network.
+# wep_check interface [timeout]
+wep_check() {
+    local INTERFACE="$1" TIMEOUT="${2:-15}" timeout=0 bssid
+ 
+    while [[ "$timeout" -lt "$TIMEOUT" ]]; do
+        bssid=$(iwgetid "$INTERFACE" -ra)
+        [[ -n "$bssid" && "$bssid" != "00:00:00:00:00:00" ]] && return 0
+        sleep 1
+        let timeout++
+    done
+    
+    report_fail "Couldn't associate with wireless network."
+    return 1
+}
+
+# Check if a particular network is within range
+# find_essid interface essid connection (we treat ESSID as regexp when CONNECTION=wireless-dbus)
+find_essid() {
+    local INTERFACE="$1" ESSID="$2" CONNECTION="$3" RETRIES=20 try=0 res scanned
+    while [[ "$try" -lt "$RETRIES" ]]; do
+        sleep 0.5
+        let try++
+        if [[ "$CONNECTION" == wireless-dbus ]]; then
+            # JP: ESSID is a regexp
+            found=$(
+                    res=$(iwlist "$INTERFACE" scan 2>/dev/null)
+                    [[ -z "$res" ]] && exit 1
+                    # if results were non-null, process them and exit 0
+                    echo "$res" | sed -nr 's/^\s+ESSID:"([^"]*)"$/\1/p' | egrep -xm1 "$ESSID"
+                   )
+        else
+            found=$(
+                    res=$(iwlist "$INTERFACE" scan 2>/dev/null)
+                    [[ -z "$res" ]] && exit 1
+                    # if results were non-null, process them and exit 0
+                    echo "$res" | sed -nr 's/^\s+ESSID:"([^"]*)"$/\1/p' | fgrep -xm1 "$ESSID"
+                   )
+        fi && { 
+                scanned=1
+                report_debug find_essid "\"$found\""
+                # we only bother with at most 5 successful scans
+                if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
+              }
+        if [[ -n "$found" ]]; then
+            echo "$found"       # JP: echo literal ESSID
+            return 0 # network found
+        fi
+    done
+    if [[ "$scanned" -ne 1 ]]; then
+        report_debug find_essid "unable to scan"
+    fi
+    return 1
+}
+
+# Check if a particular network is within range
+# find_ap interface ap
+find_ap() {
+    local INTERFACE="$1" ap=$(echo "$2" | tr 'abcdef' 'ABCDEF') RETRIES=20 try=0 res scanned
+    while [[ "$try" -lt "$RETRIES" ]]; do
+        sleep 0.5
+        let try++
+        found=$(
+            res=$(iwlist "$INTERFACE" scan 2> /dev/null)
+            [[ -z "$res" ]] && exit 1
+            # if results were non-null, process them and exit 0
+            echo "$res" | sed -nr '/^\s+Cell .. - Address: ([[:xdigit:]:]+)$/ { s//\1/; N; s/(.*)\n\s+ESSID:"([^"]*)"$/\1\t\2/p }' \
+            | egrep -m1 "^$ap\t"
+            ) && {
+                    scanned=1
+                    report_debug find_ap "\"$found\""
+                    # we only bother with at most 5 successful scans
+                    if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
+                 }
+        if [[ -n "$found" ]]; then
+            echo "$found" | cut -f2     # JP: echo literal ESSID
+            return 0
+        fi
+    done
+    if [[ "$scanned" -ne 1 ]]; then
+        report_debug find_ap "unable to scan"
+    fi
+    return 1
+}
+
+# Return a filename containing a list of network APs and ESSIDs found (sorted by decreasing signal strength)
+# list_networks interface
+list_networks() {
+    local INTERFACE="$1" essids try=0 RETRIES=20 res scanned
+    # temp file used, as keeping ESSID's with spaces in their name in arrays 
+    # is hard, obscure and kinda nasty. This is simpler and clearer.
+ 
+    [[ -z "$INTERFACE" ]] && return 1
+    essids=$(mktemp /tmp/essid.XXXXXXXX)
+
+#     # James suggested using this, but it requires wpa_supplicant to be running
+#     wpa_cli -i "$INTERFACE" scan 2>/dev/null || { rm $essids; return 1; }
+#     sleep 0.5
+#     wpa_cli -i "$INTERFACE" scan_results > $essids 2>/dev/null || { rm $essids; return 1; }
+
+    {
+        while [[ "$try" -lt "$RETRIES" ]]; do        
+            sleep 0.5
+            let try++
+          # iwlist "$INTERFACE" scan 2> /dev/null | fgrep "ESSID" | sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
+            res=$(iwlist "$INTERFACE" scan 2> /dev/null)
+            [[ -z "$res" ]] && continue 
+            scanned=1
+            # we only bother with at most 5 successful scans
+            if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
+            echo "$res" | sed -r '1d; $ { H; ba }; 2 { h; d }; /^\s+Cell /! { H; d }; :a; x; s/\n/ /g'
+        done
+    } \
+        | sed -rne 's/.*Address: ([[:xdigit:]:]+).*ESSID:"([^"]*)".*Quality=([0-9]+).*/\1\t\3\t\1\t\2/p' \
+            -e 's/.*Address: ([[:xdigit:]:]+).*Quality=([0-9]+).*ESSID:"([^"]*)".*/\1\t\2\t\1\t\3/p' \
+        | sort -k1 -k2nr | uniq -w17 \
+        | sort -k2nr \
+        | cut -f3- > "$essids"
+    # 1. make tab-separated fields: ap, signal-strength, ap, essid (easiest way to use uniq and cut here requires ap twice)
+    # 2. eliminate duplicate aps (keeping strongest signal)
+    # 3. sort entire list by decreasing signal
+    # 4. then return tab-separated fields: ap, essid (ap needs to come first so that read can assume format is <word> <rest of line>)
+#   
+    # File of 0 length, ie. no ssid's.
+    if [[ ! -s $essids ]]; then
+        rm $essids 
+        return 1
+    fi
+
+    echo $essids
+    return 0
+}
+
+
+# vim: set ts=4 et sw=4 ft=sh:
