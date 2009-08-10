@@ -1,20 +1,5 @@
 ### Globals
-PROFILE_DIR="/etc/network.d/"
-SUBR_DIR="/usr/lib/network/"
-CONN_DIR="${SUBR_DIR}/connections/"
-STATE_DIR="/var/run/network/"
-
-### Messages
-##
-# err msg
-#   output specified message
-err_append() {
-    echo " - $*"
-}
-
-err() {
-		printhl "$*"
-}
+. /usr/lib/network/globals
 
 ### Profile loading
 ##
@@ -30,16 +15,16 @@ validate_profile()
 {
     [[ -z "$1" ]] && return 1
     if [[ ! -f $PROFILE_DIR/$1 ]]; then
-        err "Profile \"$1\" does not exist"
+        report_fail "Profile \"$1\" does not exist"
         return 1
     fi
     . $PROFILE_DIR/$1
     if [[ -z "$INTERFACE" ]]; then
-        err "Profile missing an interface to configure"
+        report_fail "Profile missing an interface to configure"
         return 1
     fi
     if [[ ! -f $CONN_DIR/$CONNECTION ]]; then
-        err "$CONNECTION is not a valid connection, check spelling or look at examples"
+        report_fail "$CONNECTION is not a valid connection, check spelling or look at examples"
         return 1
     fi
 }
@@ -93,7 +78,7 @@ profile_up()
     
     load_profile $1 || exit 1
 
-    check_profile $1 && err "$1 already connected" &&  exit 1
+    check_profile $1 && report_fail "$1 already connected" &&  exit 1
 
     # NETWORKS_EXCLUSIVE, rc.conf: Profiles are globally mutually exclusive
     # EXCLUSIVE, network.d/profile: Individual profile is mutually exclusive
@@ -101,12 +86,12 @@ profile_up()
         all_down
     fi
 
-    stat_busy "$1 up"
+    report_try "$1 up"
     
     if check_iface $INTERFACE; then
         if checkyesno $CHECK; then
             err_append "Interface $INTERFACE already in use"
-            stat_fail && exit 1
+            report_fail && exit 1
         else
             interface_down $INTERFACE || exit 1
             load_profile $1 
@@ -117,7 +102,7 @@ profile_up()
     eval $PRE_UP || exit 1
     
     if ! ${CONN_DIR}/${CONNECTION} up $1; then
-        stat_fail
+        report_fail
         exit 1
     fi
     
@@ -126,7 +111,7 @@ profile_up()
     set_profile up $1
     unset EXCLUSIVE 
 
-    stat_done
+    report_success
     ); return $? 
 }
 
@@ -141,28 +126,28 @@ profile_down()
     load_profile $1 || exit 1
     
     if ! check_profile $1; then
-        err "Profile not connected" 
+        report_fail "Profile not connected" 
         exit 1
     fi
     
-    stat_busy "$1 down"
+    report_try "$1 down"
     if [[ "$(get_iface_prof $INTERFACE)" == "external" ]]; then
         err_append "$interface was connected by another application"
-        stat_fail
+        report_fail
         exit 1
     fi
     
     eval $PRE_DOWN || exit 1
     
     if ! ${CONN_DIR}/${CONNECTION} down $1; then
-        stat_fail
+        report_fail
         exit 1
     fi
     
     eval $POST_DOWN || exit 1
     
     set_profile down $1
-    stat_done
+    report_success
     ); return $?
 }
 
@@ -265,6 +250,26 @@ set_iface() {
     elif [[ "$1" == "down" ]]; then
         rm $STATE_DIR/interfaces/$2
     fi    
+}
+
+set_interface()
+{
+    INTERFACE=$2
+    case $1 in
+        up)
+            at_interface_up
+            ip link set dev $INTERFACE up 
+            sleep ${UP_SLEEP:-2}
+        ;;
+        down)
+            at_interface_down
+            ip addr flush dev "$INTERFACE"
+            quirk nodown || ip link set dev "$INTERFACE" down
+        ;;
+        *)
+            return 1
+        ;;
+    esac
 }
 
 

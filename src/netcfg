@@ -1,7 +1,6 @@
 #!/bin/bash
 
 . /etc/rc.conf
-. /etc/rc.d/functions
 . /usr/lib/network/network
 
 NETCFG_VER=2.2.1

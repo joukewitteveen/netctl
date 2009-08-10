@@ -1,43 +1,73 @@
 #! /bin/bash
 . /usr/lib/network/network
 
+
+rfkill_from_name() {
+    local name=$1
+    for rfkill in /sys/class/rfkill/*; do
+        if [[ "$(cat $rfkill/name)" == $name ]]; then
+            echo $rfkill
+            return 0
+        fi
+    done
+    echo "none"
+    return 1
+}
+
 wireless_up() {
 
     load_profile $1
     . ${SUBR_DIR}/8021x
     . ${SUBR_DIR}/wireless
 
+    # If rfkill is specified, enable device.
+    if [[ -n "$RFKILL_NAME" ]]; then
+        path=$(rfkill_from_name $RFKILL_NAME)
+        if [[ $? -ne 0 ]]; then
+            report_fail "no rfkill switch with the name $RFKILL_NAME";
+        fi 
+        echo 1 > ${path}/state
+        sleep 1
+    fi
+
     # Check if interface exists
     if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
-        if ! echo "$INTERFACE"|grep ":"; then
-            err_append "interface $INTERFACE does not exist"
+        if ! echo "$INTERFACE"|grep -Fq ":"; then
+            report_fail "interface $INTERFACE does not exist"
             return 1
         fi
     fi  
 
     # Kill any lingering wpa_supplicants.
+    report_debug wireless_up stop_wpa "$INTERFACE"
     stop_wpa $INTERFACE 
-
+            
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
-    if [[ "$(iwgetid -sm $INTERFACE)" -ne "Managed" ]]; then
+    if [[ $(iwgetid -sm $INTERFACE) -ne Managed ]]; then
+        report_debug wireless_up iwconfig "$INTERFACE" mode managed
         iwconfig $INTERFACE mode managed
     fi
 
-    ifconfig $INTERFACE up 
+    report_debug wireless_up ifup
+    set_interface up $INTERFACE || return 1
 
     quirk "prescan" && iwlist $INTERFACE scan &> /dev/null # bcm43xx
     quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\"" # ipw3945
  
     if checkyesno ${SCAN:-no}; then
+        report_debug wireless_up scanning
         if ! find_essid $INTERFACE "$ESSID"; then
-            err_append "Network not present."
+            report_fail "Network not present."
             return 1
         fi 
     fi
   
     # Manually set iwconfig options
-    [[ "$IWCONFIG" ]] && iwconfig $INTERFACE $IWCONFIG
+    if [[ "$IWCONFIG" ]]; then
+        report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG        
+        iwconfig $INTERFACE $IWCONFIG
+    fi
 
     # Set to 'none' if not set
     [[ -z "$SECURITY" ]] && SECURITY="none"
@@ -52,15 +82,21 @@ wireless_up() {
         fi 
               
         quirk "predown" && ifconfig $INTERFACE down # madwifi FS#10585
-
+        
+        report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
         if ! eval iwconfig $INTERFACE $WEP_OPTS; then
-            err_append "Could not set wireless configuration."
+            report_fail "Could not set wireless configuration."
             return 1
         fi
 
         quirk "predown" && ifconfig $INTERFACE up # madwifi FS#10585
        
-        wep_check $INTERFACE $TIMEOUT||return 1
+        report_debug ethernet_up wep_check
+        
+        if ! wep_check $INTERFACE $TIMEOUT; then
+            report_fail "WEP Association Failed"
+            return 1
+        fi
         ;;    
     wpa)
 
@@ -76,14 +112,17 @@ wireless_up() {
         if [[ "${#KEY}" == "64" ]]; then
             echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> $WPA_CONF
         elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> $WPA_CONF; then
-            err_append "Configuration generation failed. $(cat $WPA_CONF)"
+            report_fail "Configuration generation failed. $(cat $WPA_CONF)"
             return 1
         fi
 
         # Connect!
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
+        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS"
         start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
+        report_debug wireless_up wpa_check
         if ! wpa_check $INTERFACE $TIMEOUT; then
+            report_fail "WPA Authentication/Association Failed"
             stop_wpa $INTERFACE
             return 1
         fi
@@ -92,31 +131,64 @@ wireless_up() {
         . ${SUBR_DIR}/8021x 
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
+        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! start_wpa $INTERFACE $WPA_CONF $WPA_OPTS; then
+            report_fail "wpa_supplicant did not start, possible configuration error"
+            return 1
+        fi
+        report_debug wireless_up wpa_check
         if ! wpa_check $INTERFACE $TIMEOUT; then
+            report_fail "WPA Authentication/Association Failed"
             stop_wpa $INTERFACE
             return 1
         fi
         ;;        
     esac
     
-    if ! ${CONN_DIR}/ethernet up $1; then
+    conn=ethernet
+    checkyesno ${IPROUTE:-no} && conn=ethernet-iproute
+    if ! ${CONN_DIR}/$conn up $1; then
         wireless_down $1 YES
         return 1
     fi
 }
  
 wireless_down() {
-    load_profile $1
-    . ${SUBR_DIR}/8021x
     PROFILE=$1 NOETHERNETDOWN=$2
-    if ! checkyesno $2; then
-        ${CONN_DIR}/ethernet down $1    
+    load_profile $PROFILE
+    . ${SUBR_DIR}/8021x 
+    if ! checkyesno $NOETHERNETDOWN; then
+        conn=ethernet
+        checkyesno ${IPROUTE:-no} && conn=ethernet-iproute
+        $CONN_DIR/$conn down $PROFILE  
     fi
+    report_debug wireless_down stop_wpa "$INTERFACE"
     stop_wpa $INTERFACE 
-	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
+	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${PROFILE// /}" # remove wpa config
+    report_debug wireless_down iwconfig "$INTERFACE" essid off key off
     iwconfig $INTERFACE essid off key off &> /dev/null 
-    ifconfig $INTERFACE down
+    set_interface down $INTERFACE
+    
+    # If rfkill is specified, disable device.
+    if [[ -n "$RFKILL_NAME" ]]; then
+        path=$(rfkill_from_name $RFKILL_NAME)
+        if [[ $? -ne 0 ]]; then
+            report_fail "no rfkill switch with the name $RFKILL_NAME";
+        fi 
+        echo 0 > ${path}/state
+    fi
+    
+}
+
+# Returns status of profile - is it still functional?
+wireless_status() {
+    load_profile $1
+    if [[ "$(iwgetid -r)" -ne $ESSID ]]; then
+        return 1
+    elif ! ip link show dev ra0|grep -q "state UP"; then
+        return 1
+    fi
+
 }
 
 wireless_$1 $2
