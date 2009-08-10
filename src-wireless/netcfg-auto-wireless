@@ -1,128 +1,59 @@
 #! /bin/bash
 # Originally contributed by Neuro: http://bbs.archlinux.org/viewtopic.php?pid=278148#p278148
 
+. /usr/lib/network/network
+. /usr/lib/network/wireless
 . /etc/rc.conf
 . /etc/rc.d/functions
-. /usr/lib/network/network
-. /usr/lib/network/wireless_utils
 
 # wifi_auto
 #   autoconnect wireless interface
 #   $1 - wireless interface
 wifi_auto()
 {
-	local interface="$1" connection="$2"
+    interface=$1; 
+    stat_busy "Scanning for networks"
 
-    if [[ ! -f "$CONN_DIR/$connection" ]]; then
-        exit_err "$connection is not a valid connection."
-	elif ! "$CONN_DIR/$connection" verify "$interface"; then
-		exit_err "$interface is not a wireless interface."
-	fi
+    ifconfig $interface up
+    networks="$(list_networks $interface)"
 
-    report_try "Scanning for networks"
-
-	local status=$(query_iface "$interface" "$connection")	# supply $connection as hint
-	case "$status" in
-		disabled)
-			exit_fail "INTERFACE $interface is disabled."
-			;;
-		external)
-			exit_fail "INTERFACE $interface was configured by another application."
-			;;
-		"")
-			#ifconfig "$interface" up 2>/dev/null	# $? is 255 when radio-switched-off
-			"$CONN_DIR/$connection" control "$interface" up
-			if [[ $? -gt 0 ]]; then
-				# interface is really disabled
-				"$CONN_DIR/$connection" control "$interface" disable
-				exit_fail "INTERFACE $interface is disabled."
-			fi
-			;;
-		*)
-			# interface already up and controlled by a profile
-			;;
-	esac
-
-	networks=$(list_networks "$interface")
-
-    if [[ -z "$networks" ]]; then
-		# disconnect interface if it wasn't already up
-		[[ -z "$status" ]] && "$CONN_DIR/$connection" control "$interface" forcedown
-        exit_fail "No local networks."
+    if [[ ! "$networks" ]]; then
+        stat_append "- No networks available."
+        stat_fail
+        exit 1
     fi
-
-	[[ -z "$status" ]] && "$CONN_DIR/$connection" control "$interface" down	# take iface down here so that query_iface doesn't perceive it as externally controlled
-	# unclear what should happen if $status set to an already-connected profile...?
 
     # Loop through all the found essid's, then find a matching profile.
-
-	local found_profile found_essid
-
-	# JP: add ability to use AP instead of ESSID
-	# JP: also, make ESSIDs in wireless-dbus CONNECTIONS a regexp instead of a literal
-    while read ap essid; do
-		while read network; do
-			(
-				unset CONNECTION INTERFACE AP
-				load_profile "$network"
-				case "$CONNECTION" in
-					wireless-old|wireless|wireless-dbus)
-						if [[ "$interface" = "$INTERFACE" ]]; then
-							if [[ "$ap" == "$AP" ]]; then
-								exit 2
-							elif [[ -z "$found_profile" ]]; then
-								if [[ "$CONNECTION" == wireless-dbus ]]; then
-									if expr match "$essid" "^$ESSID\$" 1>/dev/null; then
-										exit 1
-									fi
-								elif [[ "$essid" == "$ESSID" ]]; then
-									exit 1
-								fi
-							fi
-						fi
-						;;
-				esac
-				exit 0
-			)
-			case $? in
-				2) found_profile="$network"
-					found_essid="$essid"
-					break 2;;
-				1) found_profile="$network"
-					found_essid="$essid"
-				;;
-			esac
-        done < <(list_profiles)		# avoid subshell
-	done < "$networks"				# avoid subshell; list_networks returns name of a tmp file
-									# JP: now each line of that file is of format: ap essid...
+    while read essid; do
+	for network in $(list_profiles); do
+            load_profile $network
+            case "$CONNECTION" in
+                wireless-old|wireless|wireless-dbus)
+                    if [[ "$essid" = "$ESSID" && "$interface" = "$INTERFACE" ]]; then
+                        found=$network
+                    fi
+                    ;;
+            esac
+        done
+    done < $networks
     
-	rm -f "$networks"				# shouldn't we delete the tmp file?
-
-    if [[ -n "$found_profile" ]]; then
-		report_success
-		if profile_up "$found_profile" "$found_essid"; then		# we pass literal essid to profile_up as $2
-			exit 0
-		else
-
-
-
-			"$CONN_DIR/$connection" control "$interface" forcedown		# take down interface?
-			exit_fail "Couldn't connect profile $found_profile."
-		fi
-	else
-		[[ -z "$status" ]] && "$CONN_DIR/$connection" control "$interface" forcedown
-		exit_fail "No profiles matched the local networks."
+    if [[ "$found" ]]; then
+        netcfg $found
+	exit $?
     fi
     
+    stat_append "- No profiles matched the found networks"
+    stat_fail
+    exit 1
 }
 
 if [[ $(id -u) -ne 0 ]]; then
-    exit_stderr "This script should be run as root."
+    err "This script needs to be run with root priviledges"
+    exit 1
 fi
-if [[ -z "$1" ]]; then
-    exit_stderr "Must supply an interface to connect."
+if [[ -z $1 ]]; then
+    err "Please supply an interface to connect"
+    exit 1
 fi
-
-SELF=$(basename $0)
-wifi_auto "$1" "${SELF#netcfg-auto-}" # we assume this script is named netcfg-auto-CONNECTIONTYPE
-
+wifi_auto $1
+  

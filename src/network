@@ -1,253 +1,238 @@
-##################################
-##
-#  /usr/lib/network/network
-##
-##################################
+### Globals
+PROFILE_DIR="/etc/network.d/"
+SUBR_DIR="/usr/lib/network/"
+CONN_DIR="${SUBR_DIR}/connections/"
+STATE_DIR="/var/run/network/"
 
-. /usr/lib/network/globals
-
-
-### Profile listing and loading
+### Messages
 ##
-# list_profiles
-#  Outputs a list of all profiles
-list_profiles() {
-    # JP: follow aliases with -L, also skip profiles that start with '.' or end with '~' or '.conf' (so profile.conf can be the wpa.conf file for profile)
-	find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '*~' -not -name '*.conf' -not -name '.*' -printf "%f\n"
+# err msg
+#   output specified message
+err_append() {
+    echo " - $*"
 }
+
+err() {
+		printhl "$*"
+}
+
+### Profile loading
+##
 # load_profile profile
 #   source the profile
 load_profile() {
-    validate_profile "$1" || return 1
-    . "$PROFILE_DIR/$1"
+    validate_profile $1 || return 1
+    . $PROFILE_DIR/$1
 }
 # validate_profile profile
 #   check whether profile exists and is usable
-validate_profile() {
+validate_profile()
+{
     [[ -z "$1" ]] && return 1
-    if [[ ! -f "$PROFILE_DIR/$1" ]]; then
-        report_err "Profile \"$1\" does not exist."
+    if [[ ! -f $PROFILE_DIR/$1 ]]; then
+        err "Profile \"$1\" does not exist"
         return 1
     fi
-    . "$PROFILE_DIR/$1"
+    . $PROFILE_DIR/$1
     if [[ -z "$INTERFACE" ]]; then
-        report_err "Profile error: no INTERFACE to configure."
+        err "Profile missing an interface to configure"
         return 1
     fi
-    if [[ ! -f "$CONN_DIR/$CONNECTION" ]]; then
-        report_err "Profile error: $CONNECTION is not a valid connection, check spelling or look at examples."
+    if [[ ! -f $CONN_DIR/$CONNECTION ]]; then
+        err "$CONNECTION is not a valid connection, check spelling or look at examples"
         return 1
     fi
-}
-
-### Profile suspend/resume
-##
-# interface_suspend interface/all [call_profile_down? default=yes]
-#   store a list of running profiles and take them down (unless $2 is no)
-interface_suspend() {
-	report_debug interface_suspend "$@"
-
-    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles}
-    [[ ! -d "$STATE_DIR/suspend" ]] && mkdir "$STATE_DIR/suspend"
-
-    find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
-	| while read prof; do
-        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-        # we just need to clear INTERFACE which is all we care about
-        unset INTERFACE
-        . "$STATE_DIR/profiles/$prof"
-        if [[ "$1" == all || "$1" == "$INTERFACE" ]]; then
-            report_notify "suspending interface $INTERFACE with profile $prof" 
-            cp "$STATE_DIR/profiles/$prof" "$STATE_DIR/suspend/"
-            if checkyesno "${2:-yes}"; then
-				profile_down "$prof"
-            fi
-        fi
-    done
-}
-# all_suspend
-#   store a list of running profiles and take them down
-all_suspend() {
-    interface_suspend all
-}
-# all_resume
-#   resume suspended interfaces
-#   optional arguments: interfaces not to resume (e.g., because they're disabled)
-all_resume() {
-	report_debug all_resume "$@"
-
-    find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
-	| while read prof; do
-        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-        # we just need to clear INTERFACE which is all we care about
-        unset INTERFACE
-        . "$STATE_DIR/suspend/$prof"
-        if [[ $# -eq 0 || ! " $* " =~ " $INTERFACE " ]]; then
-            report_notify "resuming interface $INTERFACE with profile $prof"
-            profile_up "$prof"
-            rm -f "$STATE_DIR/suspend/$prof"   # if profile_up succeeds, it will have already removed this
-        fi
-    done
 }
 
 ### Profile up/down
 ##
-# profile_up profile [literal essid]
+# all_down
+#   take all profiles down
+#
+all_down()
+{
+    for prof in $(find ${STATE_DIR}/profiles/ -maxdepth 1 -type f -printf '%f\n'); do
+        profile_down $prof
+    done
+}
+
+# all_suspend
+#   store a list of running profiles and take them down
+#
+all_suspend()
+{
+    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
+    [[ ! -d $STATE_DIR/suspend ]] && mkdir $STATE_DIR/suspend
+
+    for prof in $(find $STATE_DIR/profiles/ -maxdepth 1 -type f); do
+        cp $prof $STATE_DIR/suspend/
+        profile_down $(basename $prof)
+    done
+}
+
+# all_suspend
+#   store a list of running profiles and take them down
+#
+all_resume()
+{
+    for prof in $(find $STATE_DIR/suspend/ -maxdepth 1 -type f); do
+        profile_up $(basename $prof)
+        rm $prof
+    done
+}
+
+# profile_up profile
 #   put all profiles up
 #
-profile_up() {
+profile_up()
+{
     ( 
     # Keep inside subshell so that options from one profile don't cross to others
-    # exit 1 used in a subshell is effectively exiting a new process
-    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
-	
-	local status PROFILE="$1"	# save PROFILE in a variable so that it's available to PREUP/POSTDOWN etc hooks
+    # exit 1 used as a subshell is effectively a new process
+    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     
-    load_profile "$PROFILE" || exit 1
+    load_profile $1 || exit 1
 
-    if check_profile "$PROFILE"; then
-        report_err "$PROFILE already connected."
-        exit 1
-    fi
+    check_profile $1 && err "$1 already connected" &&  exit 1
 
     # NETWORKS_EXCLUSIVE, rc.conf: Profiles are globally mutually exclusive
     # EXCLUSIVE, network.d/profile: Individual profile is mutually exclusive
-    if checkyesno "$NETWORKS_EXCLUSIVE" || checkyesno "$EXCLUSIVE"; then
+    if checkyesno $NETWORKS_EXCLUSIVE || checkyesno $EXCLUSIVE; then
         all_down
     fi
 
-    report_try "$PROFILE up"
+    stat_busy "$1 up"
     
-	status=$(query_iface "$INTERFACE" "$CONNECTION")
-	report_debug "status reported to profile_up as: $status"
-
-	if [[ -n "$status" && "$status" != "$PROFILE" ]]; then
-		case "$status" in
-		disabled)
-			# interface radio-switch disabled
-			report_fail "INTERFACE $INTERFACE is disabled."
-            exit 1
-			;;
-		external)
-			# interface being controlled externally
-			report_fail "INTERFACE $INTERFACE was configured by another application."
-			exit 1
-			;;
-		*)
-			# report_fail if iface in use by another profile? (default no)
-			if checkyesno "$CHECK"; then
-				report_fail "INTERFACE $INTERFACE already in use by another profile."
-				exit 1
-            elif ! ( # use subshell so interface_down -> profile_down doesn't overwrite loaded profile
-                    interface_down "$INTERFACE" "$CONNECTION"	# supply current CONNECTION-type as hint
-			); then
-                report_fail
-                exit 1
-            fi
-			;;
-	esac
-	fi
-    
-   
-
-	if ! ( eval $PRE_UP ); then		# JP: sandbox the eval so variables don't bleed into current function
-		report_debug profile_up "PRE_UP failed"
-		report_fail
-		exit 1
+    if check_iface $INTERFACE; then
+        if checkyesno $CHECK; then
+            err_append "Interface $INTERFACE already in use"
+            stat_fail && exit 1
+        else
+            interface_down $INTERFACE || exit 1
+            load_profile $1 
+        fi
     fi
     
-    if ! "$CONN_DIR/$CONNECTION" up "$PROFILE" "$2"; then
-		report_debug profile_up "connect failed"
-        report_fail
-		#  "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2" # JP: should we do this to make sure?
+   
+    eval $PRE_UP || exit 1
+    
+    if ! ${CONN_DIR}/${CONNECTION} up $1; then
+        stat_fail
         exit 1
     fi
     
-	if ! ( eval $POST_UP ); then	# JP: sandbox the eval
-		report_debug profile_up "POST_UP failed"
-		report_fail
-		# failing POST_UP will take interface down
-		"$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"
-		exit 1
-	fi
+    eval $POST_UP || exit 1
     
-    set_profile up "$PROFILE"
-    # unset EXCLUSIVE
-	report_success
+    set_profile up $1
+    unset EXCLUSIVE 
+
+    stat_done
     ); return $? 
 }
+
 # profile_down profile
 #   take profile down
 #
-profile_down() {
+profile_down()
+{
     (
-    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
+    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     
-	local status PROFILE="$1"	# save PROFILE in a variable so that it's available to PREUP/POSTDOWN etc hooks
-
-    load_profile "$PROFILE" || exit 1
-
-	status=$(query_iface "$INTERFACE" "$CONNECTION")
-	report_debug "status reported to profile_down as: $status"
+    load_profile $1 || exit 1
     
-	if [[ "$status" != "$PROFILE" ]]; then
-		# if interface not available to be controlled by netcfg, then
-		# any profiles will have been removed by check_iface
-		# else another profile is running
-        report_err "Profile wasn't connected."
-		exit 1
-	fi
-    
-    report_try "$PROFILE down"
-#     JP: the following will have already been caught by the block above...
-#     if [[ "$status" == external ]]; then
-#         report_fail "Interface $INTERFACE was configured by another application."
-#         exit 1
-#     fi
-    
-	if ! ( eval $PRE_DOWN ); then	# JP: sandbox the eval
-		report_debug profile_down "PRE_DOWN failed"
-		true	# JP: did we want failing PRE_DOWN to leave the profile active?
-		# report_fail
-		# exit 1
-	fi
-    
-    if ! "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"; then
-		report_debug profile_up "disconnect failed"
-        report_fail
+    if ! check_profile $1; then
+        err "Profile not connected" 
         exit 1
     fi
     
-	if ! ( eval $POST_DOWN ); then	# JP: sandbox the eval
-		report_debug profile_down "POST_DOWN failed"
-		report_fail
-		exit 1
-	fi
+    stat_busy "$1 down"
+    if [[ "$(get_iface_prof $INTERFACE)" == "external" ]]; then
+        err_append "$interface was connected by another application"
+        stat_fail
+        exit 1
+    fi
     
-    set_profile down "$PROFILE"
-    report_success
+    eval $PRE_DOWN || exit 1
+    
+    if ! ${CONN_DIR}/${CONNECTION} down $1; then
+        stat_fail
+        exit 1
+    fi
+    
+    eval $POST_DOWN || exit 1
+    
+    set_profile down $1
+    stat_done
     ); return $?
 }
-# all_down
-#   take all registered profiles down
-all_down() {
-    find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
-	| while read prof; do
-        profile_down "$prof"
-    done
+
+# Check if variable is a member of an array
+inarray()
+{
+search=$1
+shift 
+for item in $*; do
+    if [[ "$item" == "$search" ]]; then
+        return 0
+    fi
+done
+return 1
 }
+
+quirk() {
+inarray $1 ${QUIRKS[@]}
+return $?
+}
+
 # interface_down interface
 #   take interface down
 #
-interface_down() {
-    local status=$(query_iface "$@")	# we may not be hinting what CONNECTION type to use, e.g. when called from /usr/bin/netcfg
-	case "$status" in
-		none|disabled) return 0;;
-		external) return 1;;
-		*)	profile_down "$status";;
-	esac
+interface_down()
+{
+    local prof=$(get_iface_prof $1)
+    profile_down $prof
+    return $?
 }
 
+
+### Query functions
+##
+# check_iface interface
+#   Return 0 if interface up
+#   Return 1 if interface down
+#
+check_iface() {
+    [[ -f $STATE_DIR/interfaces/$1 ]] && return 0
+    return 1
+}
+
+# get_iface_prof interface
+#   Echo interface profile and return 0 if up
+#   Return 1 if down.
+#
+get_iface_prof() {
+    if check_iface $1; then
+        . $STATE_DIR/interfaces/$1
+        echo $PROFILE
+    else
+        return 1
+    fi
+}
+
+# list_profiles
+#  Outputs a list of all profiles
+list_profiles() {
+ find $PROFILE_DIR/ -maxdepth 1 -type f -printf "%f\n"
+}
+
+# check_profile profile
+#   Return 0 if profile up
+#   Return 1 if profile down
+#
+check_profile() {
+    [[ -f $STATE_DIR/profiles/$1 ]] && return 0
+    return 1
+} 
 
 ### Status setting functions
 ##
@@ -255,137 +240,33 @@ interface_down() {
 #   Set profile state, either up or down
 #
 set_profile() {
-    if [[ "$1" == up ]]; then
-        (   # subshell creates sandbox for sourced variables
-        . "$PROFILE_DIR/$2"
-        cp "$PROFILE_DIR/$2" "$STATE_DIR/profiles/"
-        echo "$2" > "$STATE_DIR/last_profile"
-        set_iface up "$INTERFACE" "$2"
-		)
-    elif [[ "$1" == down && -f "$STATE_DIR/profiles/$2" ]]; then
-        (   # subshell
-        . "$STATE_DIR/profiles/$2"
-        rm "$STATE_DIR/profiles/$2"
-        set_iface down "$INTERFACE" "$2"
-		)
+    if [[ "$1" == "up" ]]; then
+        . $PROFILE_DIR/$2
+        cp $PROFILE_DIR/$2 $STATE_DIR/profiles/
+        echo $2 > $STATE_DIR/last_profile
+        set_iface up $INTERFACE $2
+        
+    elif [[ "$1" == "down" ]]; then
+        . $STATE_DIR/profiles/$2
+        rm $STATE_DIR/profiles/$2
+        set_iface down $INTERFACE $2
     fi
 }
 
-# set_iface up/down interface [profile/disabled/external]
-#   Set interface status to up/down  (really up means "unavailable" (may be down & disabled) and down means "available"
+# set_iface up/down interface [profile]
+#   Set interface status to up/down
 #   optionally link it to a profile.
 #
 set_iface() {
-    local PROFILE="${3:-external}"        # JP: this is equivalent to the two-line block that was here before
-    if [[ "$1" == up ]]; then
-        echo "PROFILE=$PROFILE" > "$STATE_DIR/interfaces/$2"
-    elif [[ "$1" == down ]]; then
-        rm -f "$STATE_DIR/interfaces/$2"    # JP: add -f so we don't complain if the interface isn't up
+    PROFILE=$3
+    [[ -z "$PROFILE" ]] && PROFILE=external
+    if [[ "$1" == "up" ]]; then
+        echo "PROFILE=$PROFILE" > $STATE_DIR/interfaces/$2
+    elif [[ "$1" == "down" ]]; then
+        rm $STATE_DIR/interfaces/$2
     fi    
 }
 
-
-
-
-### Checking/querying functions
-##
-# check_iface interface
-#   Return 0 if interface up
-#   Return 1 if interface down
-#
-check_iface() {
-    [[ -f "$STATE_DIR/interfaces/$1" ]] && return 0
-        return 1
-}
-
-############################################################################
-# Note: get_iface_prof left in for compatibility with any external code that calls it
-# but in this codebase, it's superceded by query_iface
-# get_iface_prof interface
-#   Echo interface profile and return 0 if up
-#   Return 1 if down.
-#
-get_iface_prof() {
-    if check_iface "$1"; then
-        . "$STATE_DIR/interfaces/$1"
-        echo $PROFILE
-    else
-        return 1
-    fi
-}
-############################################################################
-
-# check_profile profile
-#   Return 0 if profile registered as being up
-#   Return 1 if profile not registered
-#
-check_profile() {
-    [[ -f "$STATE_DIR/profiles/$1" && ! -f "$STATE_DIR/suspend/$1" ]] && return 0
-    return 1
-}
-
-
-# query_iface interface [connection]
-#   Return 0 if interface up or otherwise unavailable for connecting
-#   Return 1 if interface down (and so free to be connected)
-#	echoes which profile controls the interface (or "external" or "disabled")
-
-query_iface() {
-	
-	local INTERFACE="$1" PROFILE connection="$2"
-
-	if [[ -z "$connection" ]]; then		# JP: the difficulty with factoring this code into the CONNECTION routines 
-										# is that we sometimes want to query/control the interface without knowing what CONNECTION type it instantiates
-										# so we supply the CONNECTION type as a hint ($2) when possible
-										# and when CONNECTION wasn't hinted, we default to wireless-dbus if iface verifies as wireless, else ethernet-iproute
-		if "$CONN_DIR/wireless-dbus" verify "$INTERFACE"; then
-			connection=wireless-dbus
-		else
-			connection=ethernet-iproute
-		fi
-	fi
-
-	if ! "$CONN_DIR/$connection" query "$INTERFACE" active; then
-		# interface is not up
-		if [[ -f "$STATE_DIR/interfaces/$INTERFACE" ]]; then	# but the interface thinks it's running a profile...
-			. "$STATE_DIR/interfaces/$INTERFACE"				# these files should only contain a PROFILE=... statement
-			if [[ "$PROFILE" == disabled ]]; then
-				echo "disabled"
-				return 0
-			elif [[ "$PROFILE" != external ]]; then
-				report_warn "INTERFACE $INTERFACE no longer being controlled by $PROFILE"
-				set_profile down "$PROFILE"
-				PROFILE=
-			fi
-			set_iface down "$INTERFACE"		# update iface status: no longer profile/external
-		fi
-		echo "$PROFILE"
-		return 1
-	else
-		"$CONN_DIR/$connection" query "$INTERFACE" profile
-		return $?
-	fi
-
-}
-
-
-### Utility functions
-##
-# Check if variable is a member of an array
-inarray() {
-	local item search="$1"
-	shift 
-	for item; do
-		if [[ "$item" == "$search" ]]; then
-			return 0
-		fi
-	done
-	return 1
-}
-
-quirk() {
-	inarray "$1" "${QUIRKS[@]}"
-}
 
 ### From FreeBSD's /etc/rc.subr
 ##
@@ -393,10 +274,11 @@ quirk() {
 #    Test $1 variable, and warn if not set to YES or NO.
 #    Return 0 if it's "yes" (et al), nonzero otherwise.
 #
-checkyesno() {
-    local _value="$1"
+checkyesno()
+{
+    _value=${1}
     #debug "checkyesno: $1 is set to $_value."
-    case "$_value" in
+    case $_value in
 
         #    "yes", "true", "on", or "1"
     [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
@@ -413,5 +295,3 @@ checkyesno() {
         ;;
     esac
 }
-
-

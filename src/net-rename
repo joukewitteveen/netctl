@@ -2,13 +2,12 @@
 
 . /etc/rc.conf
 . /etc/rc.d/functions
-. /usr/lib/network/globals
 
 case "$1" in
   start)
-    report_try "Renaming network devices"
+    stat_busy "Renaming network devices"
     ifrename -p -t
-    report_success
+    stat_done
 
     add_daemon net-rename
     ;;
@@ -18,10 +17,9 @@ case "$1" in
     /bin/true
     ;;
   restart)
-    "$0" start
+    $0 start
     ;;
   *)
-    exit_stderr "Usage: $0 {start|stop|restart}"
-    ;;
+    echo "usage: $0 {start|stop|restart}"  
 esac
 # vim: set ts=4 et sw=4:

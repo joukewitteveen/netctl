@@ -1,53 +1,45 @@
-##################################
-##
-#  /usr/lib/network/8021x
-##
-##################################
-
 # Uses wpa_supplicant to check for association to a network
 # wpa_check interface [timeout]
 wpa_check()
 {
-    local INTERFACE="$1" TIMEOUT="${2:-15}" timeout=0 
+    local timeout=0 INTERFACE=$1 TIMEOUT=${2:-15}
     
-    while [[ "$timeout" -lt "$TIMEOUT" ]]; do
+    while [[ $timeout -lt $TIMEOUT ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
-        if [[ "$timeout" -lt 2 ]]; then
-            eval $(wpa_cli -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
+        if [[ $timeout -lt 2 ]]; then
+            eval `wpa_cli status 2> /dev/null|grep wpa_state`
         else
-            eval $(wpa_cli -i "$INTERFACE" status | fgrep "wpa_state=")
+            eval `wpa_cli status|grep wpa_state` 
         fi
-        [[ "$wpa_state" = COMPLETED ]]
+        [[ "$wpa_state" = "COMPLETED" ]] 
         ) && return 0
         sleep 1
         let timeout++
     done
 
     wpa_cli terminate >/dev/null 2>&1
-    report_fail "Couldn't associate/authenticate with wireless network."
+    err_append "Authentication/association failed"
     return 1 
 }
 
 start_wpa() 
 {
-    local INTERFACE="$1" WPA_CONF="$2" WPA_OPTS="$3"
+    INTERFACE="$1"; WPA_CONF="$2"; WPA_OPTS="$3"
 
-    wpa_supplicant -B -P "/var/run/wpa_supplicant_$INTERFACE.pid" -i "$INTERFACE" -c "$WPA_CONF" $WPA_OPTS
+    wpa_supplicant -B -P/var/run/wpa_supplicant_${INTERFACE}.pid -i"${INTERFACE}" -c "$WPA_CONF" $WPA_OPTS    
     sleep 1
     
-    if [[ ! -f "/var/run/wpa_supplicant_$INTERFACE.pid" ]]; then
-        report_fail "wpa_supplicant did not start, possible configuration error"
+    if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
+        err_append "wpa_supplicant did not start, possible configuration error"
         return 1
     fi
 }
 
 stop_wpa()
 {
-    wpa_cli -i "$1" terminate &> /dev/null 
-    sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
-                    # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
-    if [[ -f "/var/run/wpa_supplicant_$1.pid" ]]; then
-        kill $(cat "/var/run/wpa_supplicant_$1.pid") &>/dev/null &
+    wpa_cli terminate &> /dev/null 
+    if [[ -f /var/run/wpa_supplicant_$1.pid ]]; then
+        kill $(cat /var/run/wpa_supplicant_$1.pid) &>/dev/null &
     fi
 }
 

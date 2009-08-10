@@ -2,17 +2,17 @@
 
 . /etc/rc.conf
 . /etc/rc.d/functions
-. /usr/lib/network/globals
 
 case "$1" in
     start)
         if ! ck_daemon net-profiles; then
-            exit_stderr "net-profiles is already running: try \"/etc/rc.d/net-profiles restart\""
+            echo "net-profiles has already been started.  Try '/etc/rc.d/net-profiles restart'"
+            exit
         fi
 
         # Ensure any device renaming has occurred as intended
         for daemon in "${DAEMONS[@]}"; do
-            if [[ "$daemon" = "${daemon#!}" && "$daemon" = net-rename ]]; then
+            if [ "$daemon" = "${daemon#!}" -a "$daemon" = "net-rename" ]; then
                 if ck_daemon net-rename; then
                     /etc/rc.d/net-rename start
                 fi
@@ -20,65 +20,40 @@ case "$1" in
         done
 
         # $NET env var is passed from the kernel boot line
-        # JP: is that true? or does $NET come from /etc/rc.conf?
-        [[ -z "$NETWORKS_MENU_TIMEOUT" ]] && NETWORKS_MENU_TIMEOUT=5 
+        [ ! "$NETWORKS_MENU_TIMEOUT" ] && NETWORKS_MENU_TIMEOUT=5 
         
-        if [[ "$NET" = menu ]]; then
-            if /usr/bin/netcfg-menu "$NETWORKS_MENU_TIMEOUT"; then
-                mv "$STATE_DIR"/{menu,net-profiles}         # JP: user may want to disconnect profile by calling net-profiles stop
-                add_daemon net-profiles
-                exit 0
-            fi
-        elif [[ -n "$NET" ]]; then
-            if /usr/bin/netcfg check-iface "$NET"; then
-                echo "$NET" > "$STATE_DIR/net-profiles"        # JP: user may want to disconnect profile by calling net-profiles stop
-                add_daemon net-profiles
-                exit 0
-            fi
-        else
+        if [[ "$NET" = "menu" ]]; then
+                /usr/bin/netcfg-menu $NETWORKS_MENU_TIMEOUT
+        elif [[ "$NET" ]]; then
+                /usr/bin/netcfg2 -c $NET
+        else 
             # No NET= passed at boot, go to NETWORKS=()
-            for network in "${NETWORKS[@]}"; do
-                case "$network" in
+            for network in ${NETWORKS[@]}; do
+                case $network in
                     menu) # Pull up menu of networks
-                        if /usr/bin/netcfg-menu "$NETWORKS_MENU_TIMEOUT"; then
-                            mv "$STATE_DIR"/{menu,net-profiles}       # JP: user may want to disconnect profile by calling net-profiles stop
-                            add_daemon net-profiles
-                            exit 0
-                        fi
-                        break   # if netcfg-menu was called but failed: exit for loop
+                        /usr/bin/netcfg-menu $NETWORKS_MENU_TIMEOUT
                         ;;
                     *) # Either interface or profile
-                        if [[ "$network" = "${network#!}" ]]; then # otherwise profile
-                            if /usr/bin/netcfg check-iface "$network"; then
-                                echo "$network" > "$STATE_DIR/net-profiles"       # JP: user may want to disconnect profile by calling net-profiles stop
-                                add_daemon net-profiles
-                                exit 0
-                            fi
-                            break   # found an enabled profile but failed to bring it up: exit for loop
+                        if [ "$network" = "${network#!}" ]; then # otherwise profile
+                            /usr/bin/netcfg2 -c $network
                         fi
                         ;;
                 esac
             done
-        fi
+        fi            
 
-        exit_err "No profile started."       # JP: don't add_daemon unless we were successful (above)
+        add_daemon net-profiles
         ;;
     stop)
-        if ck_daemon net-profiles; then
-            exit_stderr "net-profiles not running"
-        fi
-
         # shutdown any profiles started by netcfg (or from NET_PROFILES in rc.conf)
-        # JP: only attempt to disconnect the profiles we're controlling
-        cat "${state_DIR}/net-profiles" 2>/dev/null | xargs -d'\n' /usr/bin/netcfg down  # JP: use xargs in case any of the profile names contain spaces etc
-        rm -f "$STATE_DIR/net-profiles"
+        /usr/bin/netcfg2 -a
         rm_daemon net-profiles
         ;;
     restart)
-        "$0" stop; sleep 1; "$0" start
+        $0 stop; sleep 1; $0 start
         ;;
     *)
-        exit_stderr "Usage: $0 {start|stop|restart}"
+        echo "usage: $0 {start|stop|restart}"  
 esac
 
 # vim: set ts=4 et sw=4:

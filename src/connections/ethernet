@@ -1,114 +1,86 @@
 #! /bin/bash
-
-##################################
-##
-#  /usr/lib/network/connections/ethernet
-##
-##################################
-
-. /etc/rc.conf
-. /etc/rc.d/functions
 . /usr/lib/network/network
 
 ethernet_up() {
-    load_profile "$1"
+    load_profile $1
 
-    if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
-        if ! echo "$INTERFACE" | fgrep -q ":"; then
-            report_fail "Interface $INTERFACE does not exist."
+    if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
+        if ! echo "$INTERFACE"|grep ":"; then
+            err_append "interface $INTERFACE does not exist"
             return 1
         fi
     fi  
 
-    report_debug ethernet_up ifup
-    ethernet_control "$INTERFACE" up
-    sleep 3
+    ip link set $INTERFACE up
+    sleep 1
 
-    # don't think it's possible to detect carrier using ifconfig alone (at least, not without ifdown/ifupping the interface)
-    # if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then...
-    # if ! ethernet_query "$INTERFACE" address; then...
-    if [[ $(cat /sys/class/net/$INTERFACE/carrier 2>/dev/null) -ne 1 ]]; then   # gives err if iface inactive (i.e. ifdown)
-                                                                                # 0 if up but not connected to network, 1 if connected
-       report_fail "No connection."
+    if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
+       err_append "No connection"
        return 1
     fi
 
     if checkyesno "${AUTH8021X:-no}"; then 
-        . "$SUBR_DIR/8021x"
+        . "${SUBR_DIR}"/8021x
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
-        report_debug ethernet_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
         start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
         if ! wpa_check "$INTERFACE"; then
-            ethernet_control "$INTERFACE" forcedown  # JP: forcedown ignores the nodown quirk, matching
-                                                     # what was already here in the code...do we in fact want to ignore
-                                                     # the nodown quirk here?
+            ifconfig "$INTERFACE" down
             return 1
         fi 
     fi
 
-    case "$IP" in
+    case $IP in
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
-            rm -r "/var/run/dhclient-$INTERFACE.pid" >/dev/null 2>&1
-            report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-$INTERFACE.pid" "$INTERFACE"
-            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-$INTERFACE.pid" "$INTERFACE"; then
-                report_fail "Couldn't get DHCP IP lease."
+            rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
+            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
+                err_append "DHCP IP lease attempt failed."
                 return 1
             fi
         else
             # Clear remaining pid files. 
-            rm -f "/var/run/dhcpcd-$INTERFACE".{pid,cache} >/dev/null 2>&1
+            rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
-            [[ -n "$DNS1" || -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
-
-            #if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" >/dev/null 2>&1; then
-            report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
-            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug $(cat)
-            if [[ "$PIPESTATUS" -ne 0 ]]; then
-                report_fail "Couldn't get DHCP IP lease."
+            [[ -n "$DNS1" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
+            # Start dhcpcd
+            if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"; then
+                err_append "DHCP IP lease attempt failed."
                 return 1
             fi 
         fi
-        if [[ -n "$IFOPTS" ]]; then
-            report_debug ethernet_up ifup $IFOPTS
-            ifconfig "$INTERFACE" $IFOPTS
-        fi
+        [[ -n "$IFOPTS" ]] && ifconfig "$INTERFACE" $IFOPTS
         ;;
     static)
-        report_debug ethernet_up ifup $IFOPTS
         if ! ifconfig "$INTERFACE" $IFOPTS up; then
-            report_fail "Couldn't configure $INTERFACE interface."
+            err_append "Bringing interface up failed."
             return 1
         fi
 
         # bring up the default route (gateway)
         if [[ -n "$GATEWAY" ]]; then
-            report_debug ethernet_up route add default gw "$GATEWAY"
-            if ! route add default gw "$GATEWAY"; then
-                ethernet_control "$INTERFACE" down   # JP: don't we want to take the interface down if we failed (as ethernet-iproute does?)
-                report_fail "Couldn't add gateway $GATEWAY."
+            if ! route add default gw $GATEWAY; then
+                err_append "Adding gateway failed."
                 return 1
             fi 
         fi
         ;;
       *)
-        report_err "Profile error: must be either IP=dhcp or IP=static."
+        err_append "IP=\"\" must be either 'dhcp' or 'static'."
         return 1
         ;;
     esac
 
     # set the hostname
     if [[ -n "$HOSTNAME" ]]; then
-        report_debug ethernet_up hostname "$HOSTNAME"
         if ! hostname "$HOSTNAME"; then
-            report_fail "Couldn't set hostname."
+            err_append "Setting hostname failed."
             return 1
         fi
     fi
 
     # Generate a new resolv.conf
-    if [[ -n "$DNS1" || -n "$DNS" ]]; then
+    if [[ -n "$DNS1" ]] || [[ -n "$DNS" ]]; then
 
         : >/etc/resolv.conf 
         [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
@@ -122,141 +94,36 @@ ethernet_up() {
             done
         fi
     fi
-
-    # successfully running a new profile; erase any suspended profiles on this interface
-    local iface="$INTERFACE"
-    find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
-	| while read prof; do
-        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-        # we just need to clear INTERFACE which is all we care about
-        unset INTERFACE
-        . "$STATE_DIR/suspend/$prof"
-        if [[ "$iface" == "$INTERFACE" ]]; then
-            rm "$STATE_DIR/suspend/$prof"
-        fi
-    done
-
     return 0
 }
 
 ethernet_down() {
-    load_profile "$1"
-    case "$IP" in
+    load_profile $1
+    case $IP in
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
-            if [[ -f "/var/run/dhclient-$INTERFACE.pid" ]]; then
-                report_debug ethernet_down kill dhclient
-                kill $(cat "/var/run/dhclient-$INTERFACE.pid")
+            if [[ -f /var/run/dhclient-${INTERFACE}.pid ]]; then
+                kill `cat /var/run/dhclient-${INTERFACE}.pid`
             fi
         else
-            if [[ -f "/var/run/dhcpcd-$INTERFACE.pid" ]]; then
-                report_debug ethernet_down dhcpcd -qx "$INTERFACE"
-                dhcpcd -qx "$INTERFACE" >/dev/null 2>&1
+            if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
+                dhcpcd -qx "$INTERFACE"
             fi
         fi
         ;;
     static)
-        if [[ -n "$GATEWAY" ]]; then
-            report_debug ethernet_down route del default gw "$GATEWAY"
-            route del default gw "$GATEWAY"
-        fi
+        [[ -n "$GATEWAY" ]] && route del default gw $GATEWAY
         ;;
     esac
-
-    report_debug ethernet_down ifdown
-    ethernet_control "$INTERFACE" down
-}
-
-# CONNECTION_query $INTERFACE [ profile | enabled (i.e. not rfkill-ed) | active (i.e. ifup'd) | associated | address ]
-ethernet_query() {
-    local INTERFACE="$1" REQUEST="$2"
-    # report_debug ethernet_query "$@"
-    case "$REQUEST" in
-
-        # JP: this duplicates code in ethernet-iproute, but doing so was necessary to refactor these functions into the CONNECTION scripts
-        profile)
-            # return code = 1 if iface is available to be used
-            # return code = 0 if unavailable (disabled, or in use by another profile or by external config)
-            # echo "" | "disabled" | "external" | PROFILE_NAME
-            if [[ ! -f "$STATE_DIR/interfaces/$INTERFACE" ]]; then
-                # interface is up but has no registered profile
-                if ethernet_query "$INTERFACE" address; then
-                    set_iface up "$INTERFACE" external
-                    echo "external"
-                    return 0
-                fi
-                # no ip address, count as inactive
-                # should we ifconfig iface down? no, may be up for a reason
-                return 1
-
-            else    # interface is up and thinks it's running a profile
-                . "$STATE_DIR/interfaces/$INTERFACE"				# these files should only contain a PROFILE=... statement
-                case "$PROFILE" in
-                    external)
-                        echo "external"
-                        return 0
-                        ;;
-                    disabled)   # shouldn't happen for non-wireless interfaces, but leaving this here in case...
-                        # iface should be down if it's disabled
-                        ethernet_control "$INTERFACE" down
-                        echo "disabled"
-                        return 0
-                        ;;
-                    *)
-                       (  # use subshell to prevent overwriting currently loaded profile
-                            . "$STATE_DIR/profiles/$PROFILE"
-                            if ! ethernet_query "$INTERFACE" address; then
-                                report_warn "INTERFACE $INTERFACE is inactive; no longer being controlled by $PROFILE"
-                                set_profile down "$PROFILE"
-                                exit 1
-                            else
-                                echo "$PROFILE"		# associated with loaded profile
-                                exit 0
-                            fi
-                       )
-                       # return $?
-                       ;;
-                esac
-            fi
-            ;;
-
-        active)
-            ifconfig "$INTERFACE" | fgrep -qw UP 
-            # cat /sys/class/net/wlan0/carrier >/dev/null   # gives err if iface inactive, 0 if up but not connected to network, 1 if connected
-            ;;
-
-        address)
-            ifconfig "$INTERFACE" | fgrep -q addr:
-            ;;
-
-        *)  return 1 ;;
-    esac
-}
-
-# CONNECTION_control $INTERFACE [ up | down | forcedown | enable | disable ]
-ethernet_control() {
-    local INTERFACE="$1" ACTION="$2"
-    #report_debug ethernet_control "$@"
-    case "$ACTION" in
-        up) ifconfig "$INTERFACE" up 2>/dev/null
-			ethernet_query "$INTERFACE" active
-            ;;
-        down|forcedown)
-            ifconfig "$1" 0.0.0.0
-            if [[ "$2" = forcedown ]] || ! quirk nodown; then
-                ifconfig "$INTERFACE" down
-            fi
-            ;;
-        *) return 1
+    ifconfig $INTERFACE 0.0.0.0
+    
+    case "$CONNECTION" in # Keep interface up for wireless
+        ethernet|ethernet-old) 
+            quirk "nodown" || ifconfig $INTERFACE down
             ;;
     esac
 }
 
-ethernet_verify() {
-    local INTERFACE="$1"
-    # do nothing
-}
-
-ethernet_$1 "$2" "$3"
+ethernet_$1 $2
 exit $?
 # vim: set ts=4 et sw=4:

@@ -4,7 +4,7 @@ import dbus
 import shlex
 import subprocess
 from signal import SIGTERM
-from os import kill,path
+from os import kill
 from time import sleep
 
 # dbus constants.
@@ -21,20 +21,16 @@ def read_config(config):
     cfg = shlex.split(open(config, "r").read())
     options = {}
     for line in cfg:
-        (var, delim, value) = line.partition('=')
-        if delim:
-            var = var.lstrip()
-            if var[0] != '#':
-                value = value.partition("#")[0].rstrip()
-                if value[0] == value[-1] and value[0] in ('"',"'"):
-                    value=value[1:-1]
-                options[var] = value
+        (var, delim, value) = line.partition('=')  
+        if delim and var.lstrip()[0] != "#":
+            options[var] = value
     return options
 
 
 def wep_hex2dec(key):
     if len(key) not in [10, 26]:
-        fail("Profile error: invalid KEY.", report_type="err")
+        print "Bad key"
+        raise SyntaxError
     
     x=0
     new_key=[]
@@ -44,24 +40,14 @@ def wep_hex2dec(key):
 
     return new_key
 
-# JP: connect to our hookable reporting functions in /usr/lib/network/globals
-
-def report(report_type, *args):
-    report_handler.stdin.write('report_%s %s\n' % (report_type, ' '.join(map(repr,args))))
-
-def fail(msg=None, report_type="fail"):
+def fail(msg=None):
     if msg:
-        report(report_type, msg)
-    try:
-        pid = open("/var/run/wpa_supplicant.pid").read()
-    except IOError:
-        pass
-    else:
-        kill(int(pid),SIGTERM)
+        print " -", msg
+    kill(int(open("/var/run/wpa_supplicant.pid").read()),SIGTERM)
     sys.exit(1)
 
 
-def start(profile, essid):
+def start(profile):
     # TODO: Add check if it's even a wireless interface
     # Interface up - probably redundant, should be 'ip' instead.
     #try:
@@ -82,25 +68,22 @@ def start(profile, essid):
     except KeyError:
         args.append("-Dwext")
 
-    security = profile.get('SECURITY','none')
-    if security == "wpa-config":
+    if profile['SECURITY'] == "wpa-config":
         try:
             args.append("-c" + profile["WPA_CONF"])
         except KeyError:
             args.append("-c/etc/wpa_supplicant.conf")
-    elif not security in ['wpa', 'wep', 'none']:
-        fail("Profile error: invalid SECURITY.", report_type="err")
+    elif not profile['SECURITY'] in ['wpa', 'wep', 'none']:
+        fail("Invalid security chosen")
 
     # Start wpa_supplicant
-    report('debug', 'wireless_dbus', 'starting wpa_supplicant')
     supplicant = subprocess.Popen(args,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
     output = supplicant.communicate()[0]
     if supplicant.returncode not in [255,0]:
-        print >>sys.stderr, output              # JP: print to stderr
-        fail("Couldn't start wpa_supplicant.")
+        print output
+        fail("Could not start wpa_supplicant")
 
     # Connect to wpa_supplicant
-    report('debug', 'wireless_dbus', 'connecting to wpa_supplicant')
     bus = dbus.SystemBus()
     wpas_obj = bus.get_object(WPAS_DBUS_SERVICE, WPAS_DBUS_OPATH)
     wpas = dbus.Interface(wpas_obj, WPAS_DBUS_INTERFACE)
@@ -121,26 +104,20 @@ def start(profile, essid):
     iface = dbus.Interface(if_obj, WPAS_DBUS_INTERFACES_INTERFACE);  
     
     # Add and select the network. Networks already specified for wpa-config
-    if security in ['wpa','wep','none']:
-        report('debug', 'wireless_dbus', 'add and select network')
+    if profile['SECURITY'] in ['wpa','wep','none']:
         
         path = iface.addNetwork()
         net_obj = bus.get_object(WPAS_DBUS_SERVICE, path)
         rnet = dbus.Interface(net_obj, WPAS_DBUS_NETWORKS_INTERFACE)
         iface.selectNetwork(rnet)
 
-    if not essid:
-        essid = profile["ESSID"]
 
-    if security == "wpa":
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid), 
+    if profile['SECURITY'] == "wpa":
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), 
                                 "psk": dbus.String(profile['KEY'])}, 
                                signature="sv")
-        report('debug', 'wireless_dbus', 'connect to network with security=wpa')
-        # next line crashes with
-        # dbus.exceptions.DBusException: fi.epitest.hostap.WPASupplicant.InvalidOptions: Did not receive correct message arguments
         rnet.set(opts)
-    elif security == "wep":
+    elif profile['SECURITY'] == "wep":
         key=profile['KEY']
         if key[:2] == "s:": # String key prefixed by "s:"
             keydbus=key[2:]
@@ -150,17 +127,15 @@ def start(profile, essid):
             for l in key:
                 keydbus+=chr(l)
 
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid),
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']),
                                 "key_mgmt": dbus.String("NONE"),
                                 "wep_tx_keyidx": dbus.Int32(1),
                                 "wep_key0": dbus.ByteArray(keydbus)},
                                signature="sv")
-        report('debug', 'wireless_dbus', 'connect to network with security=wep')
         rnet.set(opts)
-    elif security == "none":
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid)}, 
+    elif profile['SECURITY'] == "none":
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID'])}, 
                                signature="sv")
-        report('debug', 'wireless_dbus', 'connect to network with security=none')
         rnet.set(opts)
        
     # Determine timeout
@@ -179,81 +154,24 @@ def start(profile, essid):
             break
         
         if n == timeout:
-            # fail("Association/Authentication failed:" + state)
-            fail("Couldn't associate/authenticate with wireless network.")
+            fail("Association/Authentication failed:" + state)
 
     # Run ethernet and get an ip.
     try:
-        subprocess.check_call([ETHERNET_IPROUTE, "up", sys.argv[2]])
+        subprocess.check_call(["/usr/lib/network/connections/ethernet-iproute", "up", sys.argv[2]])
     except subprocess.CalledProcessError:
         fail()
     sys.exit(0)
   
 def stop(profile):
-    ret = subprocess.call([ETHERNET_IPROUTE, "down", sys.argv[2]])
+    subprocess.call(["/usr/lib/network/connections/ethernet", "down", sys.argv[2]])
     kill(int(open("/var/run/wpa_supplicant.pid").read()),SIGTERM)
-    sys.exit(ret)
-
-def query(interface,request):
-    if request == 'profile' or request=='enabled':
-        ret = subprocess.call([WIRELESS, "query", interface, request, "-iproute"]) # JP: left some of the new query functionality in the wireless file because it's so bash-heavy
-    elif request=='associated':
-        ret = subprocess.call([WIRELESS, "query", interface, request, "-iproute", sys.argv[5], sys.argv[6]]) # JP: left some of the new query functionality in the wireless file because it's so bash-heavy
-    else:
-        ret = subprocess.call([ETHERNET_IPROUTE, "query", interface, request]) # JP: for these requests, we can call the ethernet-iproute functions directly and save some process overhead
-    sys.exit(ret)
-
-def control(interface,action):
-    if action == 'enable' or action == 'disable':
-        ret = subprocess.call([WIRELESS, "control", interface, action])
-    else:
-        ret = subprocess.call([ETHERNET_IPROUTE, "control", interface, action])    # JP: for these actions, we can call the ethernet-iproute functions directly and save some process overhead
-    sys.exit(ret)
-
-def verify(interface):
-    ret = subprocess.call([WIRELESS, "verify", interface])
-    sys.exit(ret)
+    sys.exit(0)
 
 if __name__ == "__main__":
-
-    CONN_DIR = path.abspath(path.dirname(sys.argv[0]))
-    ETHERNET_IPROUTE = path.join(CONN_DIR,"ethernet-iproute")
-    WIRELESS = path.join(CONN_DIR,"wireless")
-
-    if sys.argv[1] == "query":
-        interface,request = sys.argv[2:4]
-        query(interface,request)
-
-    elif sys.argv[1] == "control":
-        interface,action = sys.argv[2:4]
-        control(interface,action)
-    
-    elif sys.argv[1] == "verify":
-        interface = sys.argv[2]
-        verify(interface)
-    
-    else:
-        # setup bash report_* handler
-        report_handler_script = 'source /etc/rc.conf; source /etc/rc.d/functions; source %s/../globals; while read cmd args; do eval $cmd "$args"; done' % (CONN_DIR,)
-        report_handler = subprocess.Popen(report_handler_script, executable='/bin/bash', stdin=subprocess.PIPE, shell=True)
-
-        try:
-            profile_name = sys.argv[2]
-            profile = read_config("/etc/network.d/"+profile_name)
-
-            essid = sys.argv[3] if len(sys.argv)>3 else ""   # JP: pass literal ESSID as an argument, so that we can have entry in profile be a regexp
-
-            if 'INTERFACE' not in profile:
-                fail("Profile error: no INTERFACE to configure.", report_type="err")
-            
-            if sys.argv[1] == "up":
-                start(profile, essid)
-            elif sys.argv[1] == "down":
-                stop(profile)
-
-    
-        finally:
-            report_handler.stdin.close()
-            report_handler.wait()
-
-# vim: et ts=4
+    profile = read_config("/etc/network.d/"+sys.argv[2])
+ 
+    if sys.argv[1] == "up":
+        start(profile)
+    elif sys.argv[1] == "down":
+        stop(profile)
