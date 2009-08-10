@@ -19,8 +19,7 @@ ethernet_up() {
     fi  
 
     report_debug ethernet_iproute_up ifup
-    ip link set $INTERFACE up
-    sleep 2
+    set_interface up $INTERFACE
 
     if ip link show $INTERFACE|grep -Fq "NO-CARRIER"; then
        report_fail "No connection"
@@ -119,8 +118,7 @@ ethernet_down() {
     fi
     
     report_debug ethernet_iproute_down if_down
-    ip addr flush $INTERFACE
-    quirk "nodown" || ip link set $INTERFACE down
+    set_interface down $INTERFACE
 
 }
 

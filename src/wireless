@@ -32,7 +32,6 @@ find_essid() {
                 if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
               }
         if [[ -n "$found" ]]; then
-            echo "$found"       # JP: echo literal ESSID
             return 0 # network found
         fi
     done

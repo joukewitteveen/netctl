@@ -12,8 +12,7 @@ ethernet_up() {
     fi  
 
     report_debug ethernet_up ifup
-    ip link set $INTERFACE up
-    sleep 2
+    set_interface up $INTERFACE
 
     if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
        report_fail "No connection"
@@ -135,13 +134,7 @@ ethernet_down() {
     esac
     
     report_debug ethernet_down ifdown
-    ifconfig $INTERFACE 0.0.0.0
-    
-    case "$CONNECTION" in # Keep interface up for wireless
-        ethernet|ethernet-old) 
-            quirk "nodown" || ifconfig $INTERFACE down
-            ;;
-    esac
+    set_interface down $INTERFACE
 }
 
 # Returns status of profile - is it still functional?

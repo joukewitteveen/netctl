@@ -252,6 +252,26 @@ set_iface() {
     fi    
 }
 
+set_interface()
+{
+    INTERFACE=$2
+    case $1 in
+        up)
+            at_interface_up
+            ip link set dev $INTERFACE up 
+            sleep ${UP_SLEEP:-2}
+        ;;
+        down)
+            at_interface_down
+            ip addr flush dev "$INTERFACE"
+            quirk nodown || ip link set dev "$INTERFACE" down
+        ;;
+        *)
+            return 1
+        ;;
+    esac
+}
+
 
 ### From FreeBSD's /etc/rc.subr
 ##

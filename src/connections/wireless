@@ -167,7 +167,7 @@ wireless_down() {
 	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${PROFILE// /}" # remove wpa config
     report_debug wireless_down iwconfig "$INTERFACE" essid off key off
     iwconfig $INTERFACE essid off key off &> /dev/null 
-    ifconfig $INTERFACE down
+    set_interface down $INTERFACE
     
     # If rfkill is specified, disable device.
     if [[ -n "$RFKILL_NAME" ]]; then
