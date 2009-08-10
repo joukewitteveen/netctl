@@ -1,11 +1,33 @@
 #! /bin/bash
 . /usr/lib/network/network
 
+
+rfkill_from_name() {
+    local name=$1
+    for rfkill in /sys/class/rfkill/*; do
+        if [[ "$(cat $rfkill/name)" == $name ]]; then
+            echo $rfkill
+            return 0
+        fi
+    done
+    echo "none"
+    return 1
+}
+
 wireless_up() {
 
     load_profile $1
     . ${SUBR_DIR}/8021x
     . ${SUBR_DIR}/wireless
+
+    # If rfkill is specified, enable device.
+    if [[ -n "$RFKILL_NAME" ]]; then
+        path=$(rfkill_from_name $RFKILL_NAME)
+        if [[ $? -ne 0 ]]; then
+            err_append "no rfkill switch with the name $RFKILL_NAME";
+        fi 
+        echo 1 > ${path}/state
+    fi
 
     # Check if interface exists
     if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
@@ -17,7 +39,7 @@ wireless_up() {
 
     # Kill any lingering wpa_supplicants.
     stop_wpa $INTERFACE 
-
+            
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
     if [[ "$(iwgetid -sm $INTERFACE)" -ne "Managed" ]]; then
@@ -117,6 +139,27 @@ wireless_down() {
 	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config
     iwconfig $INTERFACE essid off key off &> /dev/null 
     ifconfig $INTERFACE down
+    
+    # If rfkill is specified, disable device.
+    if [[ -n "$RFKILL_NAME" ]]; then
+        path=$(rfkill_from_name $RFKILL_NAME)
+        if [[ $? -ne 0 ]]; then
+            err_append "no rfkill switch with the name $RFKILL_NAME";
+        fi 
+        echo 0 > ${path}/state
+    fi
+    
+}
+
+# Returns status of profile - is it still functional?
+wireless_status() {
+    load_profile $1
+    if [[ "$(iwgetid -r)" -ne $ESSID ]]; then
+        return 1
+    elif ! ip link show dev ra0|grep -q "state UP"; then
+        return 1
+    fi
+
 }
 
 wireless_$1 $2

@@ -124,6 +124,13 @@ ethernet_down() {
     esac
 }
 
+# Returns status of profile - is it still functional?
+ethernet_status() {
+    if ! ip link show dev ra0|grep -q "state UP"; then
+        return 1
+    fi
+}
+
 ethernet_$1 $2
 exit $?
 # vim: set ts=4 et sw=4:
