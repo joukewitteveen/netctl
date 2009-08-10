@@ -32,7 +32,7 @@ wireless_up() {
 
     # Check if interface exists
     if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
-        if ! echo "$INTERFACE"|grep ":"; then
+        if ! echo "$INTERFACE"|grep -Fq ":"; then
             report_fail "interface $INTERFACE does not exist"
             return 1
         fi
@@ -44,13 +44,13 @@ wireless_up() {
             
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
-    if [[ "$(iwgetid -sm $INTERFACE)" -ne "Managed" ]]; then
+    if [[ $(iwgetid -sm $INTERFACE) -ne Managed ]]; then
         report_debug wireless_up iwconfig "$INTERFACE" mode managed
         iwconfig $INTERFACE mode managed
     fi
 
     report_debug wireless_up ifup
-    ifconfig $INTERFACE up || return 1
+    set_interface up $INTERFACE || return 1
 
     quirk "prescan" && iwlist $INTERFACE scan &> /dev/null # bcm43xx
     quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\"" # ipw3945

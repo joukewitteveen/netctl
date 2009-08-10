@@ -2,10 +2,8 @@
 # wep_check interface [timeout]
 wep_check()
 {
-    INTERFACE=$1; TIMEOUT=$2
- 
-    [[ -z "$TIMEOUT" ]] && TIMEOUT=15
-    let timeout=0
+    local INTERFACE=$1 TIMEOUT=${2:-15} timeout=0 bssid
+
     while [[ $timeout -ne $TIMEOUT ]]; do
         bssid=`iwgetid $INTERFACE -ra`
         [[ ! "$bssid" = "00:00:00:00:00:00" ]] && return 0
@@ -17,17 +15,60 @@ wep_check()
 
 # Check if a particular network is within range
 # find_essid interface essid
-find_essid()
-{
-    INTERFACE=$1; ESSID=$2; RETRIES=5
-    try=0;
-    while [[ $try -ne $RETRIES ]]; do
-        if iwlist $INTERFACE scan|sed "s/ESSID://g"|grep -q "\"$ESSID\""; then
+find_essid() {
+    local INTERFACE="$1" ESSID="$2" RETRIES=20 try=0 res scanned
+    while [[ "$try" -lt "$RETRIES" ]]; do
+        sleep 0.5
+        let try++
+        found=$(
+            res=$(iwlist "$INTERFACE" scan 2>/dev/null)
+            [[ -z "$res" ]] && exit 1
+            # if results were non-null, process them and exit 0
+            echo "$res" | sed -nr 's/^\s+ESSID:"([^"]*)"$/\1/p' | fgrep -xm1 "$ESSID"
+           ) && { 
+                scanned=1
+                report_debug find_essid "\"$found\""
+                # we only bother with at most 5 successful scans
+                if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
+              }
+        if [[ -n "$found" ]]; then
+            echo "$found"       # JP: echo literal ESSID
             return 0 # network found
         fi
-        sleep 1
-        let try++
     done
+    if [[ "$scanned" -ne 1 ]]; then
+        report_debug find_essid "unable to scan"
+    fi
+    return 1
+}
+
+# Check if a particular network is within range
+# find_ap interface ap
+find_ap() {
+    local INTERFACE="$1" ap=$(echo "$2" | tr 'abcdef' 'ABCDEF') RETRIES=20 try=0 res scanned
+    while [[ "$try" -lt "$RETRIES" ]]; do
+        sleep 0.5
+        let try++
+        found=$(
+            res=$(iwlist "$INTERFACE" scan 2> /dev/null)
+            [[ -z "$res" ]] && exit 1
+            # if results were non-null, process them and exit 0
+            echo "$res" | sed -nr '/^\s+Cell .. - Address: ([[:xdigit:]:]+)$/ { s//\1/; N; s/(.*)\n\s+ESSID:"([^"]*)"$/\1\t\2/p }' \
+            | egrep -m1 "^$ap\t"
+            ) && {
+                    scanned=1
+                    report_debug find_ap "\"$found\""
+                    # we only bother with at most 5 successful scans
+                    if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
+                 }
+        if [[ -n "$found" ]]; then
+            echo "$found" | cut -f2     # JP: echo literal ESSID
+            return 0
+        fi
+    done
+    if [[ "$scanned" -ne 1 ]]; then
+        report_debug find_ap "unable to scan"
+    fi
     return 1
 }
 
