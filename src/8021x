@@ -16,9 +16,8 @@ wpa_check()
         sleep 1
         let timeout++
     done
-
+    echo "$wpa_state"
     wpa_cli terminate >/dev/null 2>&1
-    err_append "Authentication/association failed"
     return 1 
 }
 
@@ -30,7 +29,6 @@ start_wpa()
     sleep 1
     
     if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
-        err_append "wpa_supplicant did not start, possible configuration error"
         return 1
     fi
 }

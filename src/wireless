@@ -12,8 +12,6 @@ wep_check()
         sleep 1
         let timeout++
     done
-    
-    err_append "Wireless association failed"
     return 1
 }
 

@@ -6,16 +6,17 @@ ethernet_up() {
 
     if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
         if ! echo "$INTERFACE"|grep ":"; then
-            err_append "interface $INTERFACE does not exist"
+            report_fail "interface $INTERFACE does not exist"
             return 1
         fi
     fi  
 
+    report_debug ethernet_up ifup
     ip link set $INTERFACE up
     sleep 2
 
     if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
-       err_append "No connection"
+       report_fail "No connection"
        return 1
     fi
 
@@ -23,7 +24,11 @@ ethernet_up() {
         . "${SUBR_DIR}"/8021x
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
-        start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        report_debug ethernet_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! start_wpa $INTERFACE $WPA_CONF $WPA_OPTS; then
+            report_fail "wpa_supplicant did not start, possible configuration error"
+            return 1
+        fi
         if ! wpa_check "$INTERFACE"; then
             ifconfig "$INTERFACE" down
             return 1
@@ -34,8 +39,9 @@ ethernet_up() {
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
             rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
+            report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-$INTERFACE.pid" "$INTERFACE"
             if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
-                err_append "DHCP IP lease attempt failed."
+                report_fail "DHCP IP lease attempt failed."
                 return 1
             fi
         else
@@ -44,37 +50,44 @@ ethernet_up() {
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
             [[ -n "$DNS1" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
+            report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
             if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"; then
-                err_append "DHCP IP lease attempt failed."
+                report_fail "DHCP IP lease attempt failed."
                 return 1
             fi 
         fi
-        [[ -n "$IFOPTS" ]] && ifconfig "$INTERFACE" $IFOPTS
+        if [[ -n "$IFOPTS" ]]; then
+            report_debug ethernet_up ifup $IFOPTS    
+            ifconfig "$INTERFACE" $IFOPTS
+        fi
         ;;
     static)
+        report_debug ethernet_up ifup $IFOPTS
         if ! ifconfig "$INTERFACE" $IFOPTS up; then
-            err_append "Bringing interface up failed."
+            report_fail "Bringing interface up failed."
             return 1
         fi
 
         # bring up the default route (gateway)
         if [[ -n "$GATEWAY" ]]; then
+            report_debug ethernet_up route add default gw "$GATEWAY"
             if ! route add default gw $GATEWAY; then
-                err_append "Adding gateway failed."
+                report_fail "Adding gateway failed."
                 return 1
             fi 
         fi
         ;;
       *)
-        err_append "IP=\"\" must be either 'dhcp' or 'static'."
+        report_fail "IP=\"\" must be either 'dhcp' or 'static'."
         return 1
         ;;
     esac
 
     # set the hostname
     if [[ -n "$HOSTNAME" ]]; then
+        report_debug ethernet_up hostname "$HOSTNAME"
         if ! hostname "$HOSTNAME"; then
-            err_append "Setting hostname failed."
+            report_fail "Setting hostname failed."
             return 1
         fi
     fi
@@ -103,18 +116,25 @@ ethernet_down() {
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
             if [[ -f /var/run/dhclient-${INTERFACE}.pid ]]; then
-                kill `cat /var/run/dhclient-${INTERFACE}.pid`
+                report_debug ethernet_down kill dhclient
+                kill $(cat /var/run/dhclient-${INTERFACE}.pid)
             fi
         else
             if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
+                report_debug ethernet_down dhcpcd -qx "$INTERFACE"
                 dhcpcd -qx "$INTERFACE"
             fi
         fi
         ;;
     static)
-        [[ -n "$GATEWAY" ]] && route del default gw $GATEWAY
+        if [[ -n "$GATEWAY" ]]; then
+            report_debug ethernet_down route del default gw "$GATEWAY"
+            route del default gw $GATEWAY
+        fi
         ;;
     esac
+    
+    report_debug ethernet_down ifdown
     ifconfig $INTERFACE 0.0.0.0
     
     case "$CONNECTION" in # Keep interface up for wireless

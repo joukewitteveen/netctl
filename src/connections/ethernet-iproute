@@ -1,9 +1,9 @@
 #! /bin/bash
 . /usr/lib/network/network
 
-error()
+report_iproute()
 {
-    err_append "$*"
+    report_fail "$*"
     ip addr flush $INTERFACE &>/dev/null
     quirk "nodown" || ip link set $INTERFACE down &>/dev/null 
     exit 1
@@ -14,15 +14,16 @@ ethernet_up() {
 
     if [[ ! -e /sys/class/net/$INTERFACE ]]; then
         if ! echo "$INTERFACE"|grep ":"; then
-            error "Interface $INTERFACE does not exist"
+            report_iproute "Interface $INTERFACE does not exist"
         fi
     fi  
 
+    report_debug ethernet_iproute_up ifup
     ip link set $INTERFACE up
     sleep 2
 
-    if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
-       err_append "No connection"
+    if ip link show $INTERFACE|grep -Fq "NO-CARRIER"; then
+       report_fail "No connection"
        return 1
     fi
      
@@ -31,7 +32,11 @@ ethernet_up() {
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
 
-        start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! start_wpa $INTERFACE $WPA_CONF $WPA_OPTS; then
+            report_fail "wpa_supplicant did not start, possible configuration error"
+            return 1
+        fi
+        
         if ! wpa_check "$INTERFACE"; then
             ip link set $INTERFACE down
             return 1
@@ -45,41 +50,46 @@ ethernet_up() {
 
         # If using own dns, tell dhcpcd to NOT replace resolv.conf
         [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
-       
+        
+        report_debug ethernet_iproute_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"       
         if ! dhcpcd -qL -t ${DHCP_TIMEOUT:-10} $DHCP_OPTIONS $INTERFACE; then
-            error "DHCP IP lease attempt failed"
+            report_iproute "DHCP IP lease attempt failed"
         fi
         ;;
     static)
         if [[ -n "$ADDR" ]]; then
+            report_debug ethernet_iproute_up ip addr add "$ADDR/24" brd + dev "$INTERFACE"
             if ! ip addr add ${ADDR}/24 brd + dev $INTERFACE; then
-                error "Could not configure interface"
+                report_iproute "Could not configure interface"
             fi
         fi
         if [[ -n "$GATEWAY" ]]; then
+            report_debug ethernet_iproute_up ip route add default via "$GATEWAY"
             if ! ip route add default via $GATEWAY; then
-                error "Adding gateway failed"
+                report_iproute "Adding gateway failed"
             fi
         fi
         ;;
       *)
-        error "Profile error: IP must be either 'dhcp' or 'static'"
+        report_iproute "Profile report_iproute: IP must be either 'dhcp' or 'static'"
         ;;
     esac
 
     if [[ -n "$IPCFG" ]]; then
         for line in "${IPCFG[@]}"; do
-            
+        
+            report_debug ethernet_iproute_up ip "$line"            
             if ! ip $line; then
-                error "Could not configure interface"
+                report_iproute "Could not configure interface"
             fi
         done
     fi
 
     # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
+        report_debug ethernet_iproute_up hostname "$HOSTNAME"
         if ! hostname $HOSTNAME; then
-            error "Cannot set hostname"
+            report_iproute "Cannot set hostname"
         fi
     fi
 
@@ -103,10 +113,12 @@ ethernet_down() {
 
     if [[ "$IP" == "dhcp" ]]; then
         if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
+            report_debug ethernet_iproute_down dhcpcd -qx "$INTERFACE"
             dhcpcd -qx $INTERFACE
         fi
     fi
-
+    
+    report_debug ethernet_iproute_down if_down
     ip addr flush $INTERFACE
     quirk "nodown" || ip link set $INTERFACE down
 
