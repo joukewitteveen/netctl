@@ -115,6 +115,19 @@ profile_up()
     
     set_profile up $1
     unset EXCLUSIVE 
+    
+    # Successfully running a new profile; erase any suspended profiles on this interface
+    local iface="$INTERFACE"
+    find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
+	| while read prof; do
+        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
+        # we just need to clear INTERFACE which is all we care about
+        unset INTERFACE
+        . "$STATE_DIR/suspend/$prof"
+        if [[ "$iface" == "$INTERFACE" ]]; then
+            rm "$STATE_DIR/suspend/$prof"
+        fi
+    done
 
     report_success
     ); return $? 
