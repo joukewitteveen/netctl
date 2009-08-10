@@ -122,7 +122,9 @@ wireless_up() {
         ;;        
     esac
     
-    if ! ${CONN_DIR}/ethernet up $1; then
+    conn=ethernet
+    checkyesno ${IPROUTE:-no} && conn=ethernet-iproute
+    if ! ${CONN_DIR}/$conn up $1; then
         wireless_down $1 YES
         return 1
     fi
@@ -131,9 +133,11 @@ wireless_up() {
 wireless_down() {
     load_profile $1
     . ${SUBR_DIR}/8021x
-    PROFILE=$1 NOETHERNETDOWN=$2
-    if ! checkyesno $2; then
-        ${CONN_DIR}/ethernet down $1    
+    PROFILE=$1 NOETHERNETDOWN=$2 
+    if ! checkyesno $NOETHERNETDOWN; then
+        conn=ethernet
+        checkyesno ${IPROUTE:-no} && conn=ethernet-iproute
+        $CONN_DIR/$conn down $1  
     fi
     stop_wpa $INTERFACE 
 	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${1// /}" # remove wpa config

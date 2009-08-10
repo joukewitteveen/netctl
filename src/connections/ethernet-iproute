@@ -19,7 +19,7 @@ ethernet_up() {
     fi  
 
     ip link set $INTERFACE up
-    sleep 1
+    sleep 2
 
     if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
        err_append "No connection"
