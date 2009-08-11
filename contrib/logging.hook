@@ -82,6 +82,7 @@ function report_fail {
 function report_success {
     if [[ -n "$*" ]]; then
         stat_append "- $*"
+		REPORT_TRYING=
     fi
     report_log notice "${*:-succeeded}"
     stat_done

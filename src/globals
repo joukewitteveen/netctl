@@ -1,5 +1,4 @@
-
-# /etc/network.d/hooks directory
+# /usr/lin/networks/globals
 #
 # any +x files in /usr/lib/network/hooks and /etc/network.d/hooks
 # will be sourced when this file is.
@@ -48,14 +47,16 @@ function report_debug {
 }
 
 function report_try {
-    echo ":: $*"
+	# JP: this needs -n option
+    echo -n ":: $*"
     REPORT_TRYING=1
 }
 
 function report_fail {
     if [[ -n "$*" ]]; then
         if [[ -n "$REPORT_TRYING" ]]; then
-            echo "- $*"
+			# JP: this needs -n option
+            echo -n "- $*"
             REPORT_TRYING=
             echo "[fail]"
         else
@@ -69,7 +70,9 @@ function report_fail {
 
 function report_success {
     if [[ -n "$*" ]]; then
-        echo "- $*"
+		# JP: this needs -n option
+        echo -n "- $*"
+		REPORT_TRYING=
     fi
     echo "[done]"
 }

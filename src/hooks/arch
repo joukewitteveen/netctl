@@ -34,6 +34,7 @@ function report_fail {
 function report_success {
     if [[ -n "$*" ]]; then
         stat_append "- $*"
+		REPORT_TRYING=
     fi
     stat_done
 }
