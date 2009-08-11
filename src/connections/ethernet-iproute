@@ -102,11 +102,9 @@ ethernet_up() {
         [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
         [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
 
-        if [[ -n "$DNS" ]]; then
-            for dns in "${DNS[@]}"; do
-                echo "nameserver $dns" >>/etc/resolv.conf
-            done
-        fi
+        for dns in "${DNS[@]}"; do
+            echo "nameserver $dns" >>/etc/resolv.conf
+        done
     fi
     return 0
 }

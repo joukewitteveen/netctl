@@ -57,8 +57,12 @@ wireless_up() {
     quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
     if quirk preessid; then # ipw3945
         if [[ -n "$AP" ]]; then             # JP: enable use of AP
+           # JP: Since I don't undertand why the else block below is an eval, I'm not sure
+           # if this command also needs to be eval'd
             iwconfig "$INTERFACE" mode managed ap "$AP"
         else
+            # JP: I don't understand why this needs to be an eval. What's wrong with just:
+            # iwconfig "$INTERFACE" mode managed essid "$ESSID"
             eval "iwconfig \"$INTERFACE\" mode managed essid \"$ESSID\""
         fi
     fi
@@ -73,7 +77,7 @@ wireless_up() {
                                                                     # but instead we explicitly pass $CONNECTION
         fi
         if [[ $? -gt 0 ]]; then
-            report_fail "Network \"$OLDESSID\" not present."
+            report_fail "Wireless network \"$OLDESSID\" not present."
             return 1
         fi 
     fi
@@ -93,9 +97,9 @@ wireless_up() {
         if [[ -z "$WEP_OPTS" ]]; then
             if [[ "$SECURITY" = "wep" ]]; then
                 if [[ -n "$AP" ]]; then
-                    WEP_OPTS="ap \"$AP\" key $KEY"
+                    WEP_OPTS="ap \"$AP\" key $KEY"          # JP: formerly I had "...key open $KEY"; is it correct to omit the 'open'?
                 else
-                    WEP_OPTS="essid \"$ESSID\" key $KEY"
+                    WEP_OPTS="essid \"$ESSID\" key $KEY"          # JP: formerly I had "...key open $KEY"; is it correct to omit the 'open'?
                 fi
             elif [[ "$SECURITY" = "none" ]]; then
                 if [[ -n "$AP" ]]; then
@@ -113,6 +117,8 @@ wireless_up() {
         fi
         
         report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
+        # JP: I don't understand why this needs to be an eval. What's wrong with just:
+        # iwconfig "$INTERFACE" $WEP_OPTS
         if ! eval "iwconfig \"$INTERFACE\" $WEP_OPTS"; then
             report_fail "Could not set wireless configuration."
             return 1
@@ -133,8 +139,12 @@ wireless_up() {
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
         if quirk "wpaessid"; then
             if [[ -n "$AP" ]]; then
+               # JP: Since I don't undertand why the else block below is an eval, I'm not sure
+               # if this command also needs to be eval'd
                iwconfig "$INTERFACE" ap "$AP"
             else
+                # JP: I don't understand why this needs to be an eval. What's wrong with just:
+                # iwconfig "$INTERFACE" essid "$ESSID"
                eval "iwconfig \"$INTERFACE\" essid \"$ESSID\""
             fi
         fi
@@ -195,6 +205,7 @@ wireless_up() {
     fi
 }
  
+# wireless_down PROFILE [ LEAVE ifconfig up? default no ]
 wireless_down() {
     local PROFILE="$1" NOETHERNETDOWN="$2"
     load_profile "$PROFILE"
