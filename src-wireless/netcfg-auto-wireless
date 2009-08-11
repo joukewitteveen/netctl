@@ -9,13 +9,14 @@
 #   $1 - wireless interface
 wifi_auto()
 {
-    interface=$1; 
+    local interface="$1"
     report_try "Scanning for networks"
 
-    ifconfig $interface up
+	set_interface up "$interface"	# uses iproute methods---is it there any value to providing option to use ifconfig?
     networks="$(list_networks $interface)"
 
     if [[ ! "$networks" ]]; then
+		set_interface forcedown "$interface"
         exit_fail "- No networks available."
     fi
 
@@ -66,9 +67,11 @@ wifi_auto()
 		if profile_up "$found_profile" "$found_essid"; then		# JP: now we pass literal essid to profile_up as $2
 			exit 0
 		else
+			set_interface forcedown "$interface"
 			exit_fail "Couldn't connect profile $found_profile."
 		fi
 	else
+		set_interface forcedown "$interface"
 		exit_fail "No profiles matched the local networks."
     fi
     
@@ -81,4 +84,4 @@ if [[ -z $1 ]]; then
     exit_stderr "Please supply an interface to connect"
 fi
 wifi_auto $1
-  
+
