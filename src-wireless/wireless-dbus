@@ -21,9 +21,14 @@ def read_config(config):
     cfg = shlex.split(open(config, "r").read())
     options = {}
     for line in cfg:
-        (var, delim, value) = line.partition('=')  
-        if delim and var.lstrip()[0] != "#":
-            options[var] = value
+        (var, delim, value) = line.partition('=')
+        if delim:
+            var = var.lstrip()                                          # JP: allow assignments to be indented, as they can be when sourced
+            if var[0] != '#':
+                value = value.partition("#")[0].rstrip()                # JP: strip off comments and trailing whitespace
+                if value[0] == value[-1] and value[0] in ('"',"'"):     # JP: strip any surrounding quotes
+                    value=value[1:-1]
+                options[var] = value
     return options
 
 
