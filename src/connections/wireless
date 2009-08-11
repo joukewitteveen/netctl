@@ -75,11 +75,13 @@ wireless_up() {
     case $SECURITY in
     wep|none)
         # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
-        if [[ "$SECURITY" = "wep" ]]; then 
-            WEP_OPTS="essid \"$ESSID\" key $KEY"
-        elif [[ "$SECURITY" = "none" ]]; then
-            WEP_OPTS="essid \"$ESSID\""
-        fi 
+        if [[ -z "$WEP_OPTS" ]]; then
+            if [[ "$SECURITY" = "wep" ]]; then
+                WEP_OPTS="essid \"$ESSID\" key $KEY"
+            elif [[ "$SECURITY" = "none" ]]; then
+                WEP_OPTS="essid \"$ESSID\""
+            fi
+        fi
               
         quirk "predown" && ifconfig $INTERFACE down # madwifi FS#10585
         
