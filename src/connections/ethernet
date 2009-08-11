@@ -48,7 +48,7 @@ ethernet_up() {
             # Clear remaining pid files. 
             rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
-            [[ -n "$DNS1" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
+            [[ -n "$DNS1" || -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
             report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
             if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"; then
