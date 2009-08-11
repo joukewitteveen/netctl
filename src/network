@@ -81,12 +81,13 @@ profile_up()
 {
     ( 
     # Keep inside subshell so that options from one profile don't cross to others
-    # exit 1 used as a subshell is effectively a new process
+    # exit 1 used in a subshell is effectively exiting a new process
     [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
+	local PROFILE="$1"	# save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
     
-    load_profile $1 || exit 1
+    load_profile "$PROFILE" || exit 1
 
-    check_profile $1 && report_fail "$1 already connected" &&  exit 1
+    check_profile "$PROFILE" && report_fail "$PROFILE already connected" &&  exit 1
 
     # NETWORKS_EXCLUSIVE, rc.conf: Profiles are globally mutually exclusive
     # EXCLUSIVE, network.d/profile: Individual profile is mutually exclusive
@@ -94,7 +95,7 @@ profile_up()
         all_down
     fi
 
-    report_try "$1 up"
+    report_try "$PROFILE up"
     
     case $(check_iface $INTERFACE) in
         up)
@@ -103,7 +104,7 @@ profile_up()
                 exit 1
             else
                 interface_down $INTERFACE || exit 1
-                load_profile $1 
+                load_profile "$PROFILE" 
             fi
         ;;
         external)
@@ -112,16 +113,28 @@ profile_up()
         ;;
     esac
    
-    eval $PRE_UP || exit 1
+	if ! ( eval $PRE_UP ); then		# JP: sandbox the eval so variables don't bleed into current function
+		report_debug profile_up "PRE_UP failed"
+		report_fail
+		exit 1
+    fi
     
-    if ! ${CONN_DIR}/${CONNECTION} up $1; then
+    if ! "$CONN_DIR/$CONNECTION" up "$PROFILE" "$2"; then
+		report_debug profile_up "connect failed"
         report_fail
+		#  "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2" # JP: should we do this to make sure?
         exit 1
     fi
     
-    eval $POST_UP || exit 1
+	if ! ( eval $POST_UP ); then	# JP: sandbox the eval
+		report_debug profile_up "POST_UP failed"
+		report_fail
+		# failing POST_UP will take interface down
+		"$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"
+		exit 1
+	fi
     
-    set_profile up $1
+    set_profile up "$PROFILE"
     unset EXCLUSIVE 
     
     # Successfully running a new profile; erase any suspended profiles on this interface
@@ -149,29 +162,41 @@ profile_down()
     (
     [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     
-    load_profile $1 || exit 1
+	local PROFILE="$1"	# save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
+
+    load_profile "$PROFILE" || exit 1
     
-    if ! check_profile $1; then
+    if ! check_profile "$PROFILE"; then
         report_fail "Profile not connected" 
         exit 1
     fi
     
-    report_try "$1 down"
+    report_try "$PROFILE down"
     if [[ "$(get_iface_prof $INTERFACE)" == "external" ]]; then
         report_fail "$interface was connected by another application"
         exit 1
     fi
     
-    eval $PRE_DOWN || exit 1
+	if ! ( eval $PRE_DOWN ); then	# JP: sandbox the eval
+		report_debug profile_down "PRE_DOWN failed"
+		# true	# JP: did we want failing PRE_DOWN to leave the profile active?
+		report_fail
+		exit 1
+	fi
     
-    if ! ${CONN_DIR}/${CONNECTION} down $1; then
+    if ! "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"; then
+		report_debug profile_up "disconnect failed"
         report_fail
         exit 1
     fi
     
-    eval $POST_DOWN || exit 1
+	if ! ( eval $POST_DOWN ); then	# JP: sandbox the eval
+		report_debug profile_down "POST_DOWN failed"
+		report_fail
+		exit 1
+	fi
     
-    set_profile down $1
+    set_profile down "$PROFILE"
     report_success
     ); return $?
 }
@@ -261,15 +286,18 @@ check_profile() {
 #
 set_profile() {
     if [[ "$1" == "up" ]]; then
+        (   # subshell creates sandbox for sourced variables
         . $PROFILE_DIR/$2
         cp $PROFILE_DIR/$2 $STATE_DIR/profiles/
         echo $2 > $STATE_DIR/last_profile
         set_iface up $INTERFACE $2
-        
-    elif [[ "$1" == "down" ]]; then
+		)
+    elif [[ "$1" == "down" && -f "$STATE_DIR/profiles/$2" ]]; then    # JP: skip if profile not already up 
+        (   # subshell
         . $STATE_DIR/profiles/$2
         rm $STATE_DIR/profiles/$2
         set_iface down $INTERFACE $2
+		)
     fi
 }
 
