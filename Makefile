@@ -4,6 +4,7 @@ VPATH = doc
 
 install:
 	install -d $(DESTDIR)/usr/lib/network/{connections,hooks} $(DESTDIR)/etc/network.d/examples \
+				$(DESTDIR)/etc/network.d/hooks \
 	            $(DESTDIR)/var/run/network/{interfaces,profiles} \
 	            $(DESTDIR)/usr/bin/ $(DESTDIR)/etc/rc.d/ \
 				$(DESTDIR)/usr/share/man/{man5,man8} \
@@ -31,8 +32,9 @@ install-wireless:
 	install -m755 src-wireless/net-auto $(DESTDIR)/etc/rc.d
 
 install-docs: docs
-	install -d $(DESTDIR)/usr/share/doc/netcfg
+	install -d $(DESTDIR)/usr/share/doc/netcfg/contrib
 	install -m644 doc/*html $(DESTDIR)/usr/share/doc/netcfg/
+	install -m644 contrib/* $(DESTDIR)/usr/share/doc/netcfg/contrib/
 	
 docs: doc/*
 	for doc in $(?); do \
@@ -42,7 +44,7 @@ docs: doc/*
 tarball: 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
 	mkdir -p netcfg-$(VERSION)
-	cp -r src src-wireless examples man Makefile LICENSE README netcfg-$(VERSION)
+	cp -r src src-wireless examples contrib man Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	mv netcfg-$(VERSION).tar.gz ../
 	rm -rf netcfg-$(VERSION)

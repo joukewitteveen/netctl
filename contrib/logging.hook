@@ -1,0 +1,89 @@
+### Sample netcfg hook script for logging/debugging connections
+### To install, make this executable and put it in /etc/network.d/hooks
+
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+
+# if NETCFG_DEBUG is set, debugging messages go to stderr instead of syslog
+
+# What facility to send log messages to? if set to "", nothing will be sent to syslog
+NETCFG_LOG="${NETCFG_LOG-local0}"
+
+
+
+function report_log {
+	if [[ -n "$NETCFG_LOG" ]]; then
+		local caller level="$1"
+		shift
+		case "$0" in 
+			net-auto|netcfg-auto-*) caller=net-auto;;
+			net-profiles) caller=net-profiles;;
+			net-rename) caller=net-rename;;
+			*) caller=netcfg;;
+		esac
+		logger -p "${NETCFG_LOG}.$level" -t "$caller" -- "$*" 
+	fi
+}
+
+
+function report_err {
+    report_log err "$*"
+    printhl "$*"
+}
+
+function report_warn {
+    report_log warning "$*"
+    # printhl "$*"
+    [[ -n "$NETCFG_DEBUG" ]] && echo "DEBUG: $*" >&2
+}
+
+
+
+function report_notify {
+	report_log notice "$*"
+	# print "$*" >&2
+    [[ -n "$NETCFG_DEBUG" ]] && echo "DEBUG: $*" >&2
+}
+
+function report_debug {
+	if [[ -n "$NETCFG_DEBUG" ]]; then
+		echo "DEBUG: $*" >&2
+	else
+		report_log debug "$*"
+	fi
+}
+
+
+
+function report_try {
+    report_log notice "trying $*..."
+    stat_busy "$*"
+    REPORT_TRYING=1
+}
+
+function report_fail {
+    if [[ -n "$*" ]]; then
+        report_log err "$*"
+        if [[ -n "$REPORT_TRYING" ]]; then
+            stat_append "- $*"
+            REPORT_TRYING=
+            stat_fail
+        else
+            printhl "$*"
+        fi
+    elif [[ -n "$REPORT_TRYING" ]]; then
+        REPORT_TRYING=
+        stat_fail
+    fi
+}
+
+function report_success {
+    if [[ -n "$*" ]]; then
+        stat_append "- $*"
+    fi
+    report_log notice "${*:-succeeded}"
+    stat_done
+}
+

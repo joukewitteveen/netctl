@@ -1,4 +1,4 @@
-.TH NETCFG 8 "MAY 2007" "Arch Linux" "Network Scripts"
+.TH NETCFG 8 "AUGUST 2009" "Arch Linux" "Network Scripts"
 .\" groff -man -Tascii foo.1 
 .SH NAME
 netcfg \- start/stop/control network profiles
@@ -18,6 +18,9 @@ Start the specified profile, only if it's interface is not currently up.
 .TP
 .B \-d, down \fIprofile\fP
 Stop the specified profile
+.TP
+.B\-r, reconnect \fIprofile\fP
+Disconnect and reconnect the specified profile
 .TP
 .B \-i, iface-down \fBinterface\fP
 Stop the profile up on the specified interface.
@@ -44,6 +47,9 @@ Currently installed network profile types.
 .TP
 .I /etc/network.d/examples 
 Example configurations for this script
+.TP
+.I /etc/network.d/hooks
+See /usr/share/doc/netcfg/contrib for examples.
 
 .SH BUGS
 None, hopefully, but if you do find one of these elusive things, please submit at http://bugs.archlinux.org/ or email one of the authors below.

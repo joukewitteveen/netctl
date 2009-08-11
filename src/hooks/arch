@@ -1,3 +1,4 @@
+. /etc/rc.conf
 . /etc/rc.d/functions
 
 ### Logging/Error reporting for Arch Linux

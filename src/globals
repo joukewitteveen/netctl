@@ -4,13 +4,12 @@
 ##
 ##################################
 
-# JP:rather than declare these in several library files, we just declare them
-# once here, so they only need to be changed at a single point
-
 # /etc/network.d/hooks directory
-# any +x files in that directory will be sourced when this file is sourced
-# they can override any of the utility functions defined here for custom behavior
-# (such as logging error messages to syslog, as I like to do)
+#
+# any +x files in /usr/lib/network/hooks and /etc/network.d/hooks
+# will be sourced when this file is.
+# hook files can override any of the utility functions defined here for custom behavior
+# (such as logging error messages to syslog)
 # this lets us keep netcfg simple but gives it the flexibility for users
 # to make modular use of it to do more complex things
 
@@ -18,9 +17,20 @@
 ### Globals
 PROFILE_DIR="/etc/network.d/"
 HOOKS_DIR="/usr/lib/network/hooks/"
+USERHOOKS_DIR="$PROFILE_DIR/hooks/"
 SUBR_DIR="/usr/lib/network/"
 CONN_DIR="${SUBR_DIR}/connections/"
 STATE_DIR="/var/run/network/"
+
+
+# Interface up/down hooks
+#
+function at_interface_up {
+	true
+}
+function at_interface_down {
+	true
+}
 
 
 ### Logging/Error reporting
@@ -39,7 +49,7 @@ function report_notify {
 }
 
 function report_debug {
-	[[ -n $NETCFG_DEBUG ]] && echo "DEBUG: $*"
+	[[ -n "$NETCFG_DEBUG" ]] && echo "DEBUG: $*"
 }
 
 function report_try {
@@ -69,23 +79,22 @@ function report_success {
     echo "[done]"
 }
 
-function at_interface_up {
-	true
-}
-function at_interface_down {
-	true
-}
-
 ### For calling scripts only; don't use in library functions
 function exit_stderr { echo "$*" >&2; exit 1; }
 function exit_err { report_err "$*"; exit 1; }
 function exit_fail { report_fail "$*"; exit 1; }
 
+
 function load_hooks() {
-	### Load any +x files in $HOOKS_DIR
+	### Load any +x files in $HOOKS_DIR and $USERHOOKS_DIR
 	local hook
-	for hook in $(find -L "$HOOKS_DIR/" -maxdepth 1 -type f -executable | sort); do
-		source "$hook"
+	for hook in $(find -L "$HOOKS_DIR/" "$USERHOOKS_DIR/$hook" -maxdepth 1 -type f -executable -printf '%P\n' | sort -u); do
+		# if there's an executable hook of this name in USERHOOKS_DIR, we only load it
+		if [ -x "$USERHOOKS_DIR/$hook" ]; then
+			source "$USERHOOKS_DIR/$hook"
+		else
+			source "$HOOKS_DIR/$hook"
+		fi
 	done
 }
 
