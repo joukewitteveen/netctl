@@ -82,26 +82,48 @@ find_ap() {
     return 1
 }
 
-# Return a filename containing a list of network ESSID's found.
+# Return a filename containing a list of network APs and ESSIDs found (sorted by decreasing signal strength)
 # list_networks interface
 list_networks()
 {
+    local INTERFACE="$1" essids try=0 RETRIES=20 res scanned
     # temp file used, as keeping ESSID's with spaces in their name in arrays 
     # is hard, obscure and kinda nasty. This is simpler and clearer.
  
-    [[ -z "$1" ]] && return 1
-    essids=$(mktemp /tmp/essid.XXXXX)
+    [[ -z "$INTERFACE" ]] && return 1
+    essids=$(mktemp /tmp/essid.XXXXXXXX)
 
-    let try=0;
-    RETRIES=6;
-    while [[ $try -ne $RETRIES ]]; do        
-        iwlist $1 scan 2> /dev/null | fgrep ESSID | sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
-        sleep 0.5; let try++
+#     # James suggested using this, but it requires wpa_supplicant to be running
+#     wpa_cli -i "$INTERFACE" scan 2>/dev/null || { rm $essids; return 1; }
+#     sleep 0.5
+#     wpa_cli -i "$INTERFACE" scan_results > $essids 2>/dev/null || { rm $essids; return 1; }
+
+    {
+    while [[ "$try" -lt "$RETRIES" ]]; do        
+            sleep 0.5
+            let try++
+          # iwlist "$INTERFACE" scan 2> /dev/null | fgrep "ESSID" | sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
+            res=$(iwlist "$INTERFACE" scan 2> /dev/null)
+            [[ -z "$res" ]] && continue 
+            scanned=1
+            # we only bother with at most 5 successful scans
+            if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
+            echo "$res" | sed -r '1d; $ { H; ba }; 2 { h; d }; /^\s+Cell /! { H; d }; :a; x; s/\n/ /g'
     done
-    sort -u $essids -o $essids
+    } \
+        | sed -rne 's/.*Address: ([[:xdigit:]:]+).*ESSID:"([^"]*)".*Quality=([0-9]+).*/\1\t\3\t\1\t\2/p' \
+            -e 's/.*Address: ([[:xdigit:]:]+).*Quality=([0-9]+).*ESSID:"([^"]*)".*/\1\t\2\t\1\t\3/p' \
+        | sort -k1 -k2nr | uniq -w17 \
+        | sort -k2nr \
+        | cut -f3- > "$essids"
+    # 1. make tab-separated fields: ap, signal-strength, ap, essid (easiest way to use uniq and cut here requires ap twice)
+    # 2. eliminate duplicate aps (keeping strongest signal)
+    # 3. sort entire list by decreasing signal
+    # 4. then return tab-separated fields: ap, essid (ap needs to come first so that read can assume format is <word> <rest of line>)
   
     # File of 0 length, ie. no ssid's.
     if [[ ! -s $essids ]]; then
+        rm -f $essids 
         return 1
     fi
 
