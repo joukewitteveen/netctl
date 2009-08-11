@@ -63,10 +63,10 @@ case "$1" in
         CHECK="YES"; 
         profile_up $2;;
    clean)
-        rm /var/run/network/interfaces/* 2> /dev/null
-        rm /var/run/network/profiles/* 2> /dev/null
-				rm /var/run/network/suspend/* 2> /dev/null
-				rm /var/run/network/last_profile 2> /dev/null
+				rm "$STATE_DIR/interfaces"/* 2> /dev/null
+				rm "$STATE_DIR/profiles"/* 2> /dev/null
+				rm "$STATE_DIR/suspend"/* 2> /dev/null
+				rm "$STATE_DIR/last_profile" 2> /dev/null
         killall wpa_supplicant 2> /dev/null
         killall dhcpcd 2> /dev/null
         ;;	
