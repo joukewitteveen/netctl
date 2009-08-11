@@ -12,7 +12,7 @@ ethernet_up() {
     fi  
 
     report_debug ethernet_up ifup
-    set_interface up $INTERFACE
+    set_interface up "$INTERFACE"
 
     if ip link show $INTERFACE| fgrep -q "NO-CARRIER"; then
        report_fail "No connection"
@@ -29,7 +29,9 @@ ethernet_up() {
             return 1
         fi
         if ! wpa_check "$INTERFACE"; then
-            ifconfig "$INTERFACE" down
+            # ignore quirk nodown---is that appropriate?
+            # this adds a flush call as well---is that appropriate?
+            set_interface forcedown "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
         fi 
@@ -73,6 +75,10 @@ ethernet_up() {
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_up route add default gw "$GATEWAY"
             if ! route add default gw $GATEWAY; then
+                # JP: don't we want to add this to all the aborts?
+                # ignore quirk nodown---is that appropriate?
+                # this adds a flush call as well---is that appropriate?
+                set_interface forcedown "$INTERFACE"
                 report_fail "Adding gateway $GATEWAY failed."
                 return 1
             fi 
@@ -136,7 +142,9 @@ ethernet_down() {
     esac
     
     report_debug ethernet_down ifdown
-    set_interface down $INTERFACE
+    # ignore quirk nodown---is that appropriate?
+    # this adds a flush call as well---is that appropriate?
+    set_interface forcedown "$INTERFACE"
 }
 
 # Returns status of profile - is it still functional?

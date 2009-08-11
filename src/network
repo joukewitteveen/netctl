@@ -336,17 +336,19 @@ set_iface() {
 
 set_interface()
 {
-    INTERFACE=$2
-    case $1 in
+    INTERFACE="$2"
+    case "$1" in
         up)
             at_interface_up
-            ip link set dev $INTERFACE up 
-            sleep ${UP_SLEEP:-2}
+            ip link set dev "$INTERFACE" up
+            sleep "${UP_SLEEP:-2}"
         ;;
-        down)
+        down|forcedown)
             at_interface_down
-            ip addr flush dev "$INTERFACE"
-            quirk nodown || ip link set dev "$INTERFACE" down
+            ip addr flush dev "$INTERFACE" &>/dev/null
+            if ! quirk nodown || [ "$1" = forcedown ]; then
+ 				ip link set dev "$INTERFACE" down &>/dev/null
+			fi
         ;;
         *)
             return 1

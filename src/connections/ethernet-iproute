@@ -4,8 +4,7 @@
 report_iproute()
 {
     report_fail "$*"
-    ip addr flush $INTERFACE &>/dev/null
-    quirk "nodown" || ip link set $INTERFACE down &>/dev/null 
+    set_interface down "$INTERFACE"
     exit 1
 }
 
@@ -19,9 +18,9 @@ ethernet_up() {
     fi  
 
     report_debug ethernet_iproute_up ifup
-    set_interface up $INTERFACE
+    set_interface up "$INTERFACE"
 
-    if ip link show $INTERFACE | fgrep -q "NO-CARRIER"; then
+    if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
        report_iproute "No connection"
     fi
      
@@ -37,7 +36,9 @@ ethernet_up() {
         fi
         
         if ! wpa_check "$INTERFACE"; then
-            ip link set $INTERFACE down
+            # ignore quirk nodown---is that appropriate? or should we just use report_iproute?
+            # this adds a flush call as well---is that appropriate?
+            set_interface forcedown "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
         fi 
@@ -120,7 +121,9 @@ ethernet_down() {
     fi
     
     report_debug ethernet_iproute_down if_down
-    set_interface down $INTERFACE
+    # ignore quirk nodown---is that appropriate?
+    # this adds a flush call as well---is that appropriate?
+    set_interface forcedown "$INTERFACE"
 
 }
 

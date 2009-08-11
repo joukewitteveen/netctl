@@ -52,7 +52,7 @@ wireless_up() {
     fi
 
     report_debug wireless_up ifup
-    set_interface up $INTERFACE || return 1
+    set_interface up "$INTERFACE" || return 1
     ## wireless_control "$INTERFACE" up || return 1
 
     quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
@@ -107,7 +107,11 @@ wireless_up() {
             fi
         fi
               
-        quirk "predown" && ifconfig $INTERFACE down # madwifi FS#10585
+        if quirk "predown"; then # madwifi FS#10585
+            # ignore quirk nodown---is that appropriate?
+            # this adds a flush call as well---is that appropriate?
+            set_interface forcedown "$INTERFACE"
+        fi
         
         report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
         if ! eval iwconfig $INTERFACE $WEP_OPTS; then
@@ -115,7 +119,9 @@ wireless_up() {
             return 1
         fi
 
-        quirk "predown" && ifconfig $INTERFACE up # madwifi FS#10585
+        if quirk "predown"; then # madwifi FS#10585
+           set_interface up "$INTERFACE"
+        fi
        
         report_debug ethernet_up wep_check
         if ! wep_check $INTERFACE $TIMEOUT; then
@@ -202,7 +208,10 @@ wireless_down() {
 	[[ "$SECURITY" == "wpa" ]] && rm -rf "/tmp/wpa.${PROFILE// /}" # remove tmp wpa config
     report_debug wireless_down iwconfig "$INTERFACE" essid off key off
     iwconfig $INTERFACE essid off key off &> /dev/null 
-    set_interface down $INTERFACE
+    # respects quirk nodown---is that appropriate?
+    # wasn't this already called in ethernet_down? but does the call there respect quirk nodown?
+    # this adds a flush call as well---is that appropriate?
+    set_interface down "$INTERFACE"
     
     # If rfkill is specified, disable device.
     if [[ -n "$RFKILL_NAME" ]]; then
