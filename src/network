@@ -311,7 +311,7 @@ set_iface() {
     if [[ "$1" == "up" ]]; then
         echo "PROFILE=$PROFILE" > $STATE_DIR/interfaces/$2
     elif [[ "$1" == "down" ]]; then
-        rm $STATE_DIR/interfaces/$2
+        rm -f "$STATE_DIR/interfaces/$2"    # JP: add -f so we don't complain if the interface isn't up
     fi    
 }
 
