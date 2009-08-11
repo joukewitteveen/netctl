@@ -27,7 +27,7 @@ case "$1" in
                 exit 0
             fi
         elif [[ -n "$NET" ]]; then
-            if /usr/bin/netcfg2 -c "$NET"; then
+            if /usr/bin/netcfg2 check-iface "$NET"; then
                 echo "$NET" > "$STATE_DIR/net-profiles"        # JP: user may want to disconnect profile by calling net-profiles stop
                 add_daemon net-profiles
                 exit 0
@@ -46,7 +46,7 @@ case "$1" in
                         ;;
                     *) # Either interface or profile
                         if [[ "$network" = "${network#!}" ]]; then # otherwise profile
-                            if /usr/bin/netcfg2 -c "$network"; then
+                            if /usr/bin/netcfg2 check-iface "$network"; then
                                 echo "$network" > "$STATE_DIR/net-profiles"       # JP: user may want to disconnect profile by calling net-profiles stop
                                 add_daemon net-profiles
                                 exit 0
