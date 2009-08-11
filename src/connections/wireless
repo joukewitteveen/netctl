@@ -40,7 +40,7 @@ wireless_up() {
 
     # Kill any lingering wpa_supplicants.
     report_debug wireless_up stop_wpa "$INTERFACE"
-    stop_wpa $INTERFACE 
+    stop_wpa "$INTERFACE"
             
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
@@ -92,7 +92,6 @@ wireless_up() {
         quirk "predown" && ifconfig $INTERFACE up # madwifi FS#10585
        
         report_debug ethernet_up wep_check
-        
         if ! wep_check $INTERFACE $TIMEOUT; then
             report_fail "WEP Association Failed"
             return 1
@@ -118,12 +117,14 @@ wireless_up() {
 
         # Connect!
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS"
-        start_wpa $INTERFACE $WPA_CONF $WPA_OPTS || return 1
+        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! start_wpa $INTERFACE $WPA_CONF $WPA_OPTS; then
+            report_fail "wpa_supplicant did not start, possible configuration error"
+            return 1
+        fi
         report_debug wireless_up wpa_check
-        if ! wpa_check $INTERFACE $TIMEOUT; then
+        if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
             report_fail "WPA Authentication/Association Failed"
-            stop_wpa $INTERFACE
             return 1
         fi
         ;;
@@ -132,14 +133,13 @@ wireless_up() {
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
         report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
-        if ! start_wpa $INTERFACE $WPA_CONF $WPA_OPTS; then
+        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
             return 1
         fi
         report_debug wireless_up wpa_check
-        if ! wpa_check $INTERFACE $TIMEOUT; then
+        if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
             report_fail "WPA Authentication/Association Failed"
-            stop_wpa $INTERFACE
             return 1
         fi
         ;;        

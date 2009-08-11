@@ -7,9 +7,9 @@ wpa_check()
     while [[ $timeout -lt $TIMEOUT ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if [[ $timeout -lt 2 ]]; then
-            eval `wpa_cli status 2> /dev/null|grep wpa_state`
+            eval $(wpa_cli -i "$INTERFACE" status 2> /dev/null | grep wpa_state)
         else
-            eval `wpa_cli status|grep wpa_state` 
+            eval $(wpa_cli -i "$INTERFACE" status | grep wpa_state)
         fi
         [[ "$wpa_state" = "COMPLETED" ]] 
         ) && return 0
@@ -17,15 +17,19 @@ wpa_check()
         let timeout++
     done
     echo "$wpa_state"
-    wpa_cli terminate >/dev/null 2>&1
+    # wpa_cli -i "$INTERFACE" terminate >/dev/null 2>&1   # callers sometimes called stop_wpa, which does more but seems redundant
+                                                        # termination should either be handled properly here, or by callers
+    stop_wpa "$INTERFACE"
     return 1 
 }
 
 start_wpa() 
 {
-    INTERFACE="$1"; WPA_CONF="$2"; WPA_OPTS="$3"
+    local INTERFACE="$1" WPA_CONF="$2"
+    shift 2
+    local WPA_OPTS="$*"
 
-    wpa_supplicant -B -P/var/run/wpa_supplicant_${INTERFACE}.pid -i"${INTERFACE}" -c "$WPA_CONF" $WPA_OPTS    
+    wpa_supplicant -B -P "/var/run/wpa_supplicant_${INTERFACE}.pid" -i "${INTERFACE}" -c "$WPA_CONF" $WPA_OPTS
     sleep 1
     
     if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
@@ -35,9 +39,11 @@ start_wpa()
 
 stop_wpa()
 {
-    wpa_cli terminate &> /dev/null 
-    if [[ -f /var/run/wpa_supplicant_$1.pid ]]; then
-        kill $(cat /var/run/wpa_supplicant_$1.pid) &>/dev/null &
+    wpa_cli -i "$1" terminate &> /dev/null 
+    sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
+                    # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
+    if [[ -f "/var/run/wpa_supplicant_$1.pid" ]]; then
+        kill $(cat "/var/run/wpa_supplicant_$1.pid") &>/dev/null &
     fi
 }
 

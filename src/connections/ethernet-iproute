@@ -31,13 +31,15 @@ ethernet_up() {
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
 
-        if ! start_wpa $INTERFACE $WPA_CONF $WPA_OPTS; then
+        report_debug ethernet_iproute_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
             return 1
         fi
         
         if ! wpa_check "$INTERFACE"; then
             ip link set $INTERFACE down
+            report_fail "WPA Authentication/Association Failed"
             return 1
         fi 
     fi
