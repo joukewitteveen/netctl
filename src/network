@@ -43,34 +43,53 @@ all_down()
     done
 }
 
-# all_suspend
-#   store a list of running profiles and take them down
-#
-all_suspend()
+# interface_suspend interface/all [call_profile_down? default=yes]
+#   store a list of running profiles and take them down (unless $2 is "no")
+interface_suspend() 
 {
-    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
-    [[ ! -d $STATE_DIR/suspend ]] && mkdir $STATE_DIR/suspend
+	report_debug interface_suspend "$@"
+
+    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles}
+    [[ ! -d "$STATE_DIR/suspend" ]] && mkdir "$STATE_DIR/suspend"
 
     find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
 	| while read prof; do
         # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-		report_notify "suspending profile $prof" 
-		cp "$STATE_DIR/profiles/$prof" "$STATE_DIR/suspend/"
-        profile_down "$prof"
+        # we just need to clear INTERFACE which is all we care about
+        unset INTERFACE
+        . "$STATE_DIR/profiles/$prof"
+        if [[ "$1" == all || "$1" == "$INTERFACE" ]]; then
+            report_notify "suspending interface $INTERFACE with profile $prof" 
+			cp "$STATE_DIR/profiles/$prof" "$STATE_DIR/suspend/"
+            if checkyesno "${2:-yes}"; then
+				profile_down "$prof"
+            fi
+        fi
     done
 }
 
+# all_suspend
+#   store a list of running profiles and take them down
+all_suspend() {
+    interface_suspend all
+}
 # all_resume
 #   resume suspended interfaces
+#   optional arguments: interfaces not to resume (e.g., because they're disabled)
 all_resume()
 {
 	report_debug all_resume "$@"
     find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
 	| while read prof; do
         # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-		report_notify "resuming profile $prof"
+        # we just need to clear INTERFACE which is all we care about
+        unset INTERFACE
+        . "$STATE_DIR/suspend/$prof"
+        if [[ $# -eq 0 || ! " $* " =~ " $INTERFACE " ]]; then
+            report_notify "resuming interface $INTERFACE with profile $prof"
 		profile_up "$prof"
-		rm -f "$STATE_DIR/suspend/$prof"   # if profile_up succeeds, it will have already removed this
+            rm -f "$STATE_DIR/suspend/$prof"   # if profile_up succeeds, it will have already removed this
+        fi
     done
 }
 
@@ -82,7 +101,7 @@ profile_up()
     ( 
     # Keep inside subshell so that options from one profile don't cross to others
     # exit 1 used in a subshell is effectively exiting a new process
-    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
+    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
 	local PROFILE="$1"	# save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
     
     load_profile "$PROFILE" || exit 1
@@ -160,7 +179,7 @@ profile_up()
 profile_down()
 {
     (
-    [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
+    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
     
 	local PROFILE="$1"	# save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
 
@@ -271,11 +290,11 @@ list_profiles() {
 	find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '*~' -not -name '*.conf' -not -name '.*' -printf "%f\n"
 }
 # check_profile profile
-#   Return 0 if profile up
-#   Return 1 if profile down
+#   Return 0 if profile registered as being up
+#   Return 1 if profile not registered
 #
 check_profile() {
-    [[ -f $STATE_DIR/profiles/$1 ]] && return 0
+    [[ -f $STATE_DIR/profiles/$1 && ! -f "$STATE_DIR/suspend/$1" ]] && return 0
     return 1
 } 
 
