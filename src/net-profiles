@@ -1,13 +1,11 @@
 #!/bin/bash
 
-. /etc/rc.conf
-. /etc/rc.d/functions
+. /usr/lib/network/globals
 
 case "$1" in
     start)
         if ! ck_daemon net-profiles; then
-            echo "net-profiles has already been started.  Try '/etc/rc.d/net-profiles restart'"
-            exit
+            exit_stderr "net-profiles has already been started.  Try '/etc/rc.d/net-profiles restart'"
         fi
 
         # Ensure any device renaming has occurred as intended
@@ -53,7 +51,7 @@ case "$1" in
         $0 stop; sleep 1; $0 start
         ;;
     *)
-        echo "usage: $0 {start|stop|restart}"  
+        exit_stderr "Usage: $0 {start|stop|restart}"
 esac
 
 # vim: set ts=4 et sw=4:

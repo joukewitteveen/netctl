@@ -1,5 +1,6 @@
 ### Globals
 . /usr/lib/network/globals
+# will load hooks and they in turn will load /etc/rc.d/functions if they need to
 
 ### Profile loading
 ##
