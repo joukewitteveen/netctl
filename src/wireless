@@ -6,7 +6,7 @@ wep_check()
 
     while [[ $timeout -ne $TIMEOUT ]]; do
         bssid=`iwgetid $INTERFACE -ra`
-        [[ ! "$bssid" = "00:00:00:00:00:00" ]] && return 0
+        [[ -n "$bssid" && "$bssid" != "00:00:00:00:00:00" ]] && return 0
         sleep 1
         let timeout++
     done
