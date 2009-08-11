@@ -33,12 +33,13 @@ validate_profile()
 ### Profile up/down
 ##
 # all_down
-#   take all profiles down
-#
+#   take all registered profiles down
 all_down()
 {
-    for prof in $(find ${STATE_DIR}/profiles/ -maxdepth 1 -type f -printf '%f\n'); do
-        profile_down $prof
+    find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
+	| while read prof; do
+		# the pipe to while read... creates a subshell
+        profile_down "$prof"
     done
 }
 
@@ -50,20 +51,26 @@ all_suspend()
     [[ ! -d $STATE_DIR ]] && mkdir -p $STATE_DIR/{interfaces,profiles}
     [[ ! -d $STATE_DIR/suspend ]] && mkdir $STATE_DIR/suspend
 
-    for prof in $(find $STATE_DIR/profiles/ -maxdepth 1 -type f); do
-        cp $prof $STATE_DIR/suspend/
-        profile_down $(basename $prof)
+    find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
+	| while read prof; do
+        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
+		report_notify "suspending profile $prof" 
+		cp "$STATE_DIR/profiles/$prof" "$STATE_DIR/suspend/"
+        profile_down "$prof"
     done
 }
 
-# all_suspend
-#   store a list of running profiles and take them down
-#
+# all_resume
+#   resume suspended interfaces
 all_resume()
 {
-    for prof in $(find $STATE_DIR/suspend/ -maxdepth 1 -type f); do
-        profile_up $(basename $prof)
-        rm $prof
+	report_debug all_resume "$@"
+    find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
+	| while read prof; do
+        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
+		report_notify "resuming profile $prof"
+		profile_up "$prof"
+		rm -f "$STATE_DIR/suspend/$prof"   # if profile_up succeeds, it will have already removed this
     done
 }
 
@@ -235,9 +242,9 @@ get_iface_prof() {
 # list_profiles
 #  Outputs a list of all profiles
 list_profiles() {
- find $PROFILE_DIR/ -maxdepth 1 -type f -printf "%f\n"
+    # JP: follow aliases with -L, also skip profiles that start with '.' or end with '~' or '.conf' (so profile.conf can be the wpa.conf file for profile)
+	find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '*~' -not -name '*.conf' -not -name '.*' -printf "%f\n"
 }
-
 # check_profile profile
 #   Return 0 if profile up
 #   Return 1 if profile down

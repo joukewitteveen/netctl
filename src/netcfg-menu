@@ -5,16 +5,17 @@
 
 # Scan all profiles
 i=0
-for prof in `find -L $PROFILE_DIR -maxdepth 1 -type f -printf "%f\n"|sort`; do    
+# JP: change for prof to while read prof to avoid assumption that profile names are always single tokens (no spaces etc.)
+while read prof; do
     # if there is a profile called "main", Use as default
     [ "$prof" = "main" ] && DEFAULT=$prof
-    unset DESCRIPTION
+    unset DESCRIPTION           # JP: we can''t sandbox the sourced profiles, because we need to expose profiles[]
     . $PROFILE_DIR/$prof
     profiles[$i]=$prof
     i=$((i+1))
-    profiles[$i]=$DESCRIPTION
+    profiles[$i]="$DESCRIPTION" # JP: this will usually have spaces and must be quoted
     i=$((i+1))
-done
+done < <(list_profiles | sort)  # JP: re-use list_profiles instead of duplicating it; avoid subshell we'd get by piping it to the while read...
 
 if [ ${#profiles} -eq 0 ]; then
     exit_err "No profiles were found in $PROFILE_DIR"
