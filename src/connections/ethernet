@@ -51,7 +51,8 @@ ethernet_up() {
             [[ -n "$DNS1" || -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
             report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
-            if ! dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"; then
+            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug $(cat)
+            if [[ "$PIPESTATUS" -ne 0 ]]; then
                 report_fail "DHCP IP lease attempt failed."
                 return 1
             fi 
@@ -72,7 +73,7 @@ ethernet_up() {
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_up route add default gw "$GATEWAY"
             if ! route add default gw $GATEWAY; then
-                report_fail "Adding gateway failed."
+                report_fail "Adding gateway $GATEWAY failed."
                 return 1
             fi 
         fi
@@ -122,7 +123,7 @@ ethernet_down() {
         else
             if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
                 report_debug ethernet_down dhcpcd -qx "$INTERFACE"
-                dhcpcd -qx "$INTERFACE"
+                dhcpcd -qx "$INTERFACE" &>/dev/null
             fi
         fi
         ;;

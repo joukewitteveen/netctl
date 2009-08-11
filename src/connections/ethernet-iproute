@@ -22,8 +22,7 @@ ethernet_up() {
     set_interface up $INTERFACE
 
     if ip link show $INTERFACE | fgrep -q "NO-CARRIER"; then
-       report_fail "No connection"
-       return 1
+       report_iproute "No connection"
     fi
      
     if checkyesno ${AUTH8021X:-no}; then 
@@ -53,7 +52,8 @@ ethernet_up() {
         [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
         
         report_debug ethernet_iproute_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"       
-        if ! dhcpcd -qL -t ${DHCP_TIMEOUT:-10} $DHCP_OPTIONS $INTERFACE; then
+        dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug $(cat)
+        if [[ "$PIPESTATUS" -ne 0 ]]; then
             report_iproute "DHCP IP lease attempt failed"
         fi
         ;;
@@ -67,12 +67,12 @@ ethernet_up() {
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_iproute_up ip route add default via "$GATEWAY"
             if ! ip route add default via $GATEWAY; then
-                report_iproute "Adding gateway failed"
+                report_iproute "Adding gateway $GATEWAY failed"
             fi
         fi
         ;;
       *)
-        report_iproute "Profile report_iproute: IP must be either 'dhcp' or 'static'"
+        report_iproute "Profile error: IP must be either 'dhcp' or 'static'"
         ;;
     esac
 
@@ -81,7 +81,7 @@ ethernet_up() {
         
             report_debug ethernet_iproute_up ip "$line"            
             if ! ip $line; then
-                report_iproute "Could not configure interface"
+                report_iproute "Could not configure interface ($line)."
             fi
         done
     fi
@@ -115,7 +115,7 @@ ethernet_down() {
     if [[ "$IP" == "dhcp" ]]; then
         if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
             report_debug ethernet_iproute_down dhcpcd -qx "$INTERFACE"
-            dhcpcd -qx $INTERFACE
+            dhcpcd -qx "$INTERFACE" &>/dev/null
         fi
     fi
     
