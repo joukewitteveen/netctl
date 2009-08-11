@@ -16,11 +16,11 @@ rfkill_from_name() {
 
 wireless_up() {
 
-    load_profile $1
+    load_profile "$1"
     [[ -n "$2" ]] && ESSID="$2"              # JP: use the literal ESSID (though currently we only interpret wireless-dbus ESSIDs as regexps)
 
-    . ${SUBR_DIR}/8021x
-    . ${SUBR_DIR}/wireless
+    . "${SUBR_DIR}/8021x"
+    . "${SUBR_DIR}/wireless"
 
     # If rfkill is specified, enable device.
     if [[ -n "$RFKILL_NAME" ]]; then
@@ -46,9 +46,9 @@ wireless_up() {
             
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
-    if [[ $(iwgetid -sm $INTERFACE) -ne Managed ]]; then
+    if [[ $(iwgetid -sm "$INTERFACE") -ne Managed ]]; then
         report_debug wireless_up iwconfig "$INTERFACE" mode managed
-        iwconfig $INTERFACE mode managed
+        iwconfig "$INTERFACE" mode managed
     fi
 
     report_debug wireless_up ifup
@@ -63,7 +63,7 @@ wireless_up() {
         fi
     fi
  
-    if checkyesno ${SCAN:-no}; then
+    if checkyesno "${SCAN:-no}"; then
         report_debug wireless_up scanning
         local OLDESSID="$ESSID"
         if [[ -n "$AP" ]]; then
@@ -81,13 +81,13 @@ wireless_up() {
     # Manually set iwconfig options
     if [[ "$IWCONFIG" ]]; then
         report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG        
-        iwconfig $INTERFACE $IWCONFIG
+        iwconfig "$INTERFACE" $IWCONFIG
     fi
 
     # Set to 'none' if not set
     [[ -z "$SECURITY" ]] && SECURITY="none"
 
-    case $SECURITY in
+    case "$SECURITY" in
     wep|none)
         # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
         if [[ -z "$WEP_OPTS" ]]; then
@@ -123,7 +123,7 @@ wireless_up() {
         fi
        
         report_debug ethernet_up wep_check
-        if ! wep_check $INTERFACE $TIMEOUT; then
+        if ! wep_check "$INTERFACE" "$TIMEOUT"; then
             report_fail "WEP Association Failed"
             return 1
         fi
@@ -169,7 +169,7 @@ wireless_up() {
         fi
         ;;
     wpa-config)
-        . ${SUBR_DIR}/8021x 
+        . "${SUBR_DIR}/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
         report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
@@ -186,27 +186,27 @@ wireless_up() {
     esac
     
     conn=ethernet
-    checkyesno ${IPROUTE:-no} && conn=ethernet-iproute
-    if ! ${CONN_DIR}/$conn up $1; then
-        wireless_down $1 YES
+    checkyesno "${IPROUTE:-no}" && conn=ethernet-iproute
+    if ! "${CONN_DIR}/$conn" up "$1"; then
+        wireless_down "$1" YES
         return 1
     fi
 }
  
 wireless_down() {
-    PROFILE=$1 NOETHERNETDOWN=$2
-    load_profile $PROFILE
-    . ${SUBR_DIR}/8021x 
-    if ! checkyesno $NOETHERNETDOWN; then
+    local PROFILE="$1" NOETHERNETDOWN="$2"
+    load_profile "$PROFILE"
+    . "${SUBR_DIR}/8021x"
+    if ! checkyesno "$NOETHERNETDOWN"; then
         conn=ethernet
-        checkyesno ${IPROUTE:-no} && conn=ethernet-iproute
-        $CONN_DIR/$conn down $PROFILE  
+        checkyesno "${IPROUTE:-no}" && conn=ethernet-iproute
+        "$CONN_DIR/$conn" down "$PROFILE"
     fi
     report_debug wireless_down stop_wpa "$INTERFACE"
-    stop_wpa $INTERFACE 
+    stop_wpa "$INTERFACE"
 	[[ "$SECURITY" == "wpa" ]] && rm -rf "/tmp/wpa.${PROFILE// /}" # remove tmp wpa config
     report_debug wireless_down iwconfig "$INTERFACE" essid off key off
-    iwconfig $INTERFACE essid off key off &> /dev/null 
+    iwconfig "$INTERFACE" essid off key off &> /dev/null 
     # respects quirk nodown---is that appropriate?
     # wasn't this already called in ethernet_down? but does the call there respect quirk nodown?
     # this adds a flush call as well---is that appropriate?
@@ -214,11 +214,11 @@ wireless_down() {
     
     # If rfkill is specified, disable device.
     if [[ -n "$RFKILL_NAME" ]]; then
-        path=$(rfkill_from_name $RFKILL_NAME)
+        path=$(rfkill_from_name "$RFKILL_NAME")
         if [[ $? -ne 0 ]]; then
             report_fail "no rfkill switch with the name $RFKILL_NAME";
         fi 
-        echo 0 > ${path}/state
+        echo 0 > "${path}/state"
     fi
     
 }

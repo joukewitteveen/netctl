@@ -2,7 +2,7 @@
 . /usr/lib/network/network
 
 ethernet_up() {
-    load_profile $1
+    load_profile "$1"
 
     if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
         if ! echo "$INTERFACE"| fgrep ":"; then
@@ -15,7 +15,7 @@ ethernet_up() {
     set_interface up-old "$INTERFACE"
 
     # don't think it's possible to detect carrier using ifconfig alone (at least, not without ifdown/ifupping the interface)
-    if [[ $(cat /sys/class/net/$INTERFACE/carrier 2>/dev/null) -ne 1 ]]; then   # gives err if iface inactive (i.e. ifdown)
+    if [[ $(cat "/sys/class/net/$INTERFACE/carrier" 2>/dev/null) -ne 1 ]]; then   # gives err if iface inactive (i.e. ifdown)
        report_fail "No connection"
        return 1
     fi
@@ -38,18 +38,18 @@ ethernet_up() {
         fi 
     fi
 
-    case $IP in
+    case "$IP" in
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
-            rm -r /var/run/dhclient-${INTERFACE}.pid >/dev/null 2>&1
+            rm -r "/var/run/dhclient-${INTERFACE}.pid" >/dev/null 2>&1
             report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-$INTERFACE.pid" "$INTERFACE"
-            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf /var/run/dhclient-${INTERFACE}.pid $INTERFACE; then
+            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-${INTERFACE}.pid" "$INTERFACE"; then
                 report_fail "DHCP IP lease attempt failed."
                 return 1
             fi
         else
             # Clear remaining pid files. 
-            rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
+            rm -f "/var/run/dhcpcd-${INTERFACE}".{pid,cache} >/dev/null 2>&1
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
             [[ -n "$DNS1" || -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
@@ -75,7 +75,7 @@ ethernet_up() {
         # bring up the default route (gateway)
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_up route add default gw "$GATEWAY"
-            if ! route add default gw $GATEWAY; then
+            if ! route add default gw "$GATEWAY"; then
                 # JP: don't we want to add this to all the aborts?
                 # ignore quirk nodown---is that appropriate?
                 # this adds a flush call as well---is that appropriate?
@@ -119,16 +119,16 @@ ethernet_up() {
 }
 
 ethernet_down() {
-    load_profile $1
-    case $IP in
+    load_profile "$1"
+    case "$IP" in
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
-            if [[ -f /var/run/dhclient-${INTERFACE}.pid ]]; then
+            if [[ -f "/var/run/dhclient-${INTERFACE}.pid" ]]; then
                 report_debug ethernet_down kill dhclient
-                kill $(cat /var/run/dhclient-${INTERFACE}.pid)
+                kill $(cat "/var/run/dhclient-${INTERFACE}.pid")
             fi
         else
-            if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
+            if [[ -f "/var/run/dhcpcd-${INTERFACE}.pid" ]]; then
                 report_debug ethernet_down dhcpcd -qx "$INTERFACE"
                 dhcpcd -qx "$INTERFACE" &>/dev/null
             fi
@@ -137,7 +137,7 @@ ethernet_down() {
     static)
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_down route del default gw "$GATEWAY"
-            route del default gw $GATEWAY
+            route del default gw "$GATEWAY"
         fi
         ;;
     esac
@@ -155,6 +155,6 @@ ethernet_status() {
     fi
 }
 
-ethernet_$1 $2
+ethernet_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4:

@@ -2,9 +2,9 @@
 # wpa_check interface [timeout]
 wpa_check()
 {
-    local timeout=0 INTERFACE=$1 TIMEOUT=${2:-15}
+    local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}"
     
-    while [[ $timeout -lt $TIMEOUT ]]; do
+    while [[ $timeout -lt "$TIMEOUT" ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if [[ $timeout -lt 2 ]]; then
             eval $(wpa_cli -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
@@ -29,7 +29,7 @@ start_wpa()
     shift 2
     local WPA_OPTS="$*"
 
-    wpa_supplicant -B -P "/var/run/wpa_supplicant_${INTERFACE}.pid" -i "${INTERFACE}" -c "$WPA_CONF" $WPA_OPTS
+    wpa_supplicant -B -P "/var/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -c "$WPA_CONF" $WPA_OPTS
     sleep 1
     
     if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then

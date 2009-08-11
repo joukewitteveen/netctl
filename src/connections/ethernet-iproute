@@ -9,9 +9,9 @@ report_iproute()
 }
 
 ethernet_up() {
-    load_profile $1
+    load_profile "$1"
 
-    if [[ ! -e /sys/class/net/$INTERFACE ]]; then
+    if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
         if ! echo "$INTERFACE" | fgrep -q ":"; then
             report_iproute "Interface $INTERFACE does not exist"
         fi
@@ -24,8 +24,8 @@ ethernet_up() {
        report_iproute "No connection"
     fi
      
-    if checkyesno ${AUTH8021X:-no}; then 
-        . ${SUBR_DIR}/8021x
+    if checkyesno "${AUTH8021X:-no}"; then 
+        . "${SUBR_DIR}/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
 
@@ -44,10 +44,10 @@ ethernet_up() {
         fi 
     fi
 
-    case $IP in
+    case "$IP" in
     dhcp)
         # Clear remaining pid files. 
-        rm -f /var/run/dhcpcd-${INTERFACE}.{pid,cache} >/dev/null 2>&1
+        rm -f "/var/run/dhcpcd-${INTERFACE}".{pid,cache} >/dev/null 2>&1
 
         # If using own dns, tell dhcpcd to NOT replace resolv.conf
         [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
@@ -61,13 +61,13 @@ ethernet_up() {
     static)
         if [[ -n "$ADDR" ]]; then
             report_debug ethernet_iproute_up ip addr add "$ADDR/24" brd + dev "$INTERFACE"
-            if ! ip addr add ${ADDR}/24 brd + dev $INTERFACE; then
+            if ! ip addr add "${ADDR}/24" brd + dev "$INTERFACE"; then
                 report_iproute "Could not configure interface"
             fi
         fi
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_iproute_up ip route add default via "$GATEWAY"
-            if ! ip route add default via $GATEWAY; then
+            if ! ip route add default via "$GATEWAY"; then
                 report_iproute "Adding gateway $GATEWAY failed"
             fi
         fi
@@ -90,7 +90,7 @@ ethernet_up() {
     # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
         report_debug ethernet_iproute_up hostname "$HOSTNAME"
-        if ! hostname $HOSTNAME; then
+        if ! hostname "$HOSTNAME"; then
             report_iproute "Cannot set hostname"
         fi
     fi
@@ -102,7 +102,7 @@ ethernet_up() {
         [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
 
         if [[ -n "$DNS" ]]; then
-            for dns in ${DNS[@]}; do
+            for dns in "${DNS[@]}"; do
                 echo "nameserver $dns" >>/etc/resolv.conf
             done
         fi
@@ -111,10 +111,10 @@ ethernet_up() {
 }
 
 ethernet_down() {
-    load_profile $1
+    load_profile "$1"
 
     if [[ "$IP" == "dhcp" ]]; then
-        if [[ -f /var/run/dhcpcd-${INTERFACE}.pid ]]; then
+        if [[ -f "/var/run/dhcpcd-${INTERFACE}.pid" ]]; then
             report_debug ethernet_iproute_down dhcpcd -qx "$INTERFACE"
             dhcpcd -qx "$INTERFACE" &>/dev/null
         fi
@@ -134,6 +134,6 @@ ethernet_status() {
     fi
 }
 
-ethernet_$1 $2
+ethernet_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4:

@@ -3,11 +3,11 @@
 
 
 ppp_up() {
-    load_profile $1
+    load_profile "$1"
     [[ -z "$PEER" ]] && PEER="provider"
     [[ -z "$PPP_TIMEOUT" ]] && PPP_TIMEOUT=30
 
-    /usr/sbin/pppd call $PEER updetach child-timeout $PPP_TIMEOUT linkname $PEER
+    /usr/sbin/pppd call "$PEER" updetach child-timeout "$PPP_TIMEOUT" linkname "$PEER"
 
     if [[ $? -ne 0 ]]; then
        report_fail "Couldn't make pppd connection."
@@ -16,10 +16,10 @@ ppp_up() {
 }
 
 ppp_down() {
-    load_profile $1
-    kill $(head -1 /var/run/ppp-$(basename $PEER).pid)
+    load_profile "$1"
+    kill $(head -1 "/var/run/ppp-$(basename $PEER).pid")
 }
 
-ppp_$1 $2
+ppp_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4:

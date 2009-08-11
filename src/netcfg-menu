@@ -12,8 +12,8 @@ while read prof; do
     # if there is a profile called "main", Use as default
     [ "$prof" = "main" ] && DEFAULT=$prof
     unset DESCRIPTION           # JP: we can''t sandbox the sourced profiles, because we need to expose profiles[]
-    . $PROFILE_DIR/$prof
-    profiles[$i]=$prof
+    . "$PROFILE_DIR/$prof"
+    profiles[$i]="$prof"
     i=$((i+1))
     profiles[$i]="$DESCRIPTION" # JP: this will usually have spaces and must be quoted
     i=$((i+1))
@@ -25,7 +25,7 @@ fi
 
 [ "$NETWORKS_MENU_DEFAULT" ] && DEFAULT="$NETWORKS_MENU_DEFAULT"
 # if no default yet, use the first entry
-[ "$DEFAULT" = "" ] && DEFAULT=${profiles[0]}
+[ "$DEFAULT" = "" ] && DEFAULT="${profiles[0]}"
 ANSWER=$(mktemp /tmp/menu.XXXXXXXX) || exit 1
 
 # Set timeout
@@ -36,9 +36,9 @@ else
 fi
 
 # Display Dialog
-dialog --timeout $TIMEOUT --default-item $DEFAULT \
+dialog --timeout "$TIMEOUT" --default-item "$DEFAULT" \
     --menu "Select the network profile you wish to use" \
-    13 50 6 "${profiles[@]}" 2>$ANSWER
+    13 50 6 "${profiles[@]}" 2> $ANSWER
 
 ret=$?
         

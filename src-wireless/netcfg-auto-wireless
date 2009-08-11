@@ -80,8 +80,8 @@ wifi_auto()
 if [[ $(id -u) -ne 0 ]]; then
     exit_stderr "This script needs to be run with root privileges"
 fi
-if [[ -z $1 ]]; then
+if [[ -z "$1" ]]; then
     exit_stderr "Please supply an interface to connect"
 fi
-wifi_auto $1
+wifi_auto "$1"
 

@@ -2,10 +2,10 @@
 # wep_check interface [timeout]
 wep_check()
 {
-    local INTERFACE=$1 TIMEOUT=${2:-15} timeout=0 bssid
+    local INTERFACE="$1" TIMEOUT="${2:-15}" timeout=0 bssid
 
-    while [[ $timeout -ne $TIMEOUT ]]; do
-        bssid=`iwgetid $INTERFACE -ra`
+    while [[ $timeout -lt "$TIMEOUT" ]]; do
+        bssid=$(iwgetid "$INTERFACE" -ra)
         [[ -n "$bssid" && "$bssid" != "00:00:00:00:00:00" ]] && return 0
         sleep 1
         let timeout++

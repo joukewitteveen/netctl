@@ -60,8 +60,8 @@ fi
 case "$1" in
 
     -c|check-iface|-u|up)
-        CHECK="YES"; 
-        profile_up $2;;
+        CHECK="YES"
+        profile_up "$2";;
    clean)
 				rm "$STATE_DIR/interfaces"/* 2> /dev/null
 				rm "$STATE_DIR/profiles"/* 2> /dev/null
@@ -71,14 +71,14 @@ case "$1" in
         killall dhcpcd 2> /dev/null
         ;;	
     -d|down) 
-        profile_down $2;;
+        profile_down "$2";;
     -i|iface-down) 
-        interface_down $2;;
+        interface_down "$2";;
     -a|all-down) 
         all_down;; 
 		-r|reconnect)
-				profile_down $2
-				profile_up $2;;
+				profile_down "$2"
+				profile_up "$2";;
     all-resume)
         all_resume;;
     all-suspend)
@@ -87,7 +87,7 @@ case "$1" in
         usage;;
     *)  
         if [ -n "$1" ]; then
-            profile_up $1
+            profile_up "$1"
         else
             usage
         fi

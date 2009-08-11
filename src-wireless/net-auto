@@ -18,9 +18,9 @@ case "$1" in
 
         # TODO: check if any way of using 'stacks' in bash
         rm -f "$STATE_DIR/net-auto"
-        for iface in ${AUTO_NETWORKS[@]}; do
+        for iface in "${AUTO_NETWORKS[@]}"; do
             if [[ "${iface:0:4}" = "auto" ]]; then
-                auto=$iface
+                auto="$iface"
             elif [[ "$auto" ]]; then
                 if /usr/bin/netcfg-"$auto" "$iface"; then
                     echo "$iface" >> "$STATE_DIR/net-auto"
@@ -36,13 +36,13 @@ case "$1" in
         fi
 
         for iface in $(cat "$STATE_DIR/net-auto"); do
-            netcfg iface-down $iface
+            netcfg iface-down "$iface"
         done
         rm -f "$STATE_DIR/net-auto"
         rm_daemon net-auto
         ;;
     restart)
-        $0 stop; sleep 1; $0 start
+        "$0" stop; sleep 1; "$0" start
         ;;
     *)
         exit_stderr "Usage: $0 {start|stop|restart}"

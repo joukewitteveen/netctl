@@ -16,7 +16,7 @@ case "$1" in
     /bin/true
     ;;
   restart)
-    $0 start
+    "$0" start
     ;;
   *)
     exit_stderr "Usage: $0 {start|stop|restart}"
