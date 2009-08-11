@@ -15,8 +15,10 @@ SECURITY (required)
 :   One of 'wpa', 'wep', 'none' or 'wpa-config'
 KEY (required for SECURITY of 'wpa' or 'wep' only)
 :   Wireless encryption key. 
-ESSID (required)
-:   Name of network to connect to.
+ESSID (this or AP is required)
+:   Name of network to connect to. Note that for "wireless-dbus" profiles this is always a Gnu regexp (as interpreted by "expr").
+AP (this or ESSID is required)
+:   AP of the network to connect to.
 TIMEOUT 
 :   Time to wait for association. Defaults to 15 seconds. 
 

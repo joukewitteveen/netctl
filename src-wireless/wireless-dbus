@@ -61,7 +61,7 @@ def fail(msg=None, report_type="fail"):
     sys.exit(1)
 
 
-def start(profile):
+def start(profile, essid):
     # TODO: Add check if it's even a wireless interface
     # Interface up - probably redundant, should be 'ip' instead.
     #try:
@@ -128,9 +128,11 @@ def start(profile):
         rnet = dbus.Interface(net_obj, WPAS_DBUS_NETWORKS_INTERFACE)
         iface.selectNetwork(rnet)
 
+    if not essid:
+        essid = profile["ESSID"]
 
     if profile['SECURITY'] == "wpa":
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']), 
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid), 
                                 "psk": dbus.String(profile['KEY'])}, 
                                signature="sv")
         report('debug', 'wireless_dbus', 'connect to network with security=wpa')
@@ -145,7 +147,7 @@ def start(profile):
             for l in key:
                 keydbus+=chr(l)
 
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID']),
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid),
                                 "key_mgmt": dbus.String("NONE"),
                                 "wep_tx_keyidx": dbus.Int32(1),
                                 "wep_key0": dbus.ByteArray(keydbus)},
@@ -153,7 +155,7 @@ def start(profile):
         report('debug', 'wireless_dbus', 'connect to network with security=wep')
         rnet.set(opts)
     elif profile['SECURITY'] == "none":
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(profile['ESSID'])}, 
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid)}, 
                                signature="sv")
         report('debug', 'wireless_dbus', 'connect to network with security=none')
         rnet.set(opts)
@@ -201,9 +203,10 @@ if __name__ == "__main__":
     try:
         profile_name = sys.argv[2]
         profile = read_config("/etc/network.d/"+profile_name)
-     
+
+        essid = sys.argv[3] if len(sys.argv)>3 else ""   # JP: pass literal ESSID as an argument, so that we can have entry in profile be a regexp
         if sys.argv[1] == "up":
-            start(profile)
+            start(profile, essid)
         elif sys.argv[1] == "down":
             stop(profile)
 

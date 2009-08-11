@@ -17,6 +17,8 @@ rfkill_from_name() {
 wireless_up() {
 
     load_profile $1
+    [[ -n "$2" ]] && ESSID="$2"              # JP: use the literal ESSID (though currently we only interpret wireless-dbus ESSIDs as regexps)
+
     . ${SUBR_DIR}/8021x
     . ${SUBR_DIR}/wireless
 
@@ -51,14 +53,28 @@ wireless_up() {
 
     report_debug wireless_up ifup
     set_interface up $INTERFACE || return 1
+    ## wireless_control "$INTERFACE" up || return 1
 
-    quirk "prescan" && iwlist $INTERFACE scan &> /dev/null # bcm43xx
-    quirk "preessid" && eval "iwconfig $INTERFACE mode managed essid \"$ESSID\"" # ipw3945
+    quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
+    if quirk preessid; then # ipw3945
+        if [[ -n "$AP" ]]; then             # JP: enable use of AP
+            iwconfig "$INTERFACE" mode managed ap "$AP"
+        else
+            eval "iwconfig \"$INTERFACE\" mode managed essid \"$ESSID\""
+        fi
+    fi
  
     if checkyesno ${SCAN:-no}; then
         report_debug wireless_up scanning
-        if ! find_essid $INTERFACE "$ESSID"; then
-            report_fail "Network not present."
+        local OLDESSID="$ESSID"
+        if [[ -n "$AP" ]]; then
+            ESSID=$(find_ap "$INTERFACE" "$AP")
+        else
+            ESSID=$(find_essid "$INTERFACE" "$ESSID" "$CONNECTION") # JP: we could have left $3 null for default of treating ESSID as literal
+                                                                    # but instead we explicitly pass $CONNECTION
+        fi
+        if [[ $? -gt 0 ]]; then
+            report_fail "Network \"$OLDESSID\" not present."
             return 1
         fi 
     fi
@@ -77,9 +93,17 @@ wireless_up() {
         # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
         if [[ -z "$WEP_OPTS" ]]; then
             if [[ "$SECURITY" = "wep" ]]; then
-                WEP_OPTS="essid \"$ESSID\" key $KEY"
+                if [[ -n "$AP" ]]; then
+                    WEP_OPTS="ap \"$AP\" key $KEY"
+                else
+                    WEP_OPTS="essid \"$ESSID\" key $KEY"
+                fi
             elif [[ "$SECURITY" = "none" ]]; then
-                WEP_OPTS="essid \"$ESSID\""
+                if [[ -n "$AP" ]]; then
+                    WEP_OPTS="ap \"$AP\""
+                else
+                    WEP_OPTS="essid \"$ESSID\""
+                fi
             fi
         fi
               
@@ -102,7 +126,13 @@ wireless_up() {
     wpa)
 
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
-        quirk "wpaessid" && eval iwconfig $INTERFACE essid "\"$ESSID\""
+        if quirk "wpaessid"; then
+            if [[ -n "$AP" ]]; then
+               iwconfig "$INTERFACE" ap "$AP"
+            else
+               eval "iwconfig \"$INTERFACE\" essid \"$ESSID\""
+            fi
+        fi
          
         local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out 
         # make empty tmp dir with correct permissions, rename it
@@ -196,6 +226,6 @@ wireless_status() {
 
 }
 
-wireless_$1 $2
+wireless_$1 "$2" "$3"
 exit $?
 # vim: set ts=4 et sw=4:

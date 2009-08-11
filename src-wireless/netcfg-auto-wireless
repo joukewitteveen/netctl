@@ -20,25 +20,58 @@ wifi_auto()
     fi
 
     # Loop through all the found essid's, then find a matching profile.
-    while read essid; do
-	for network in $(list_profiles); do
-            load_profile $network
+
+	local found_profile found_essid
+
+	# JP: add ability to use AP instead of ESSID
+	# JP: also, make ESSIDs in wireless-dbus CONNECTIONS a regexp instead of a literal
+    while read ap essid; do
+		while read network; do
+			(
+				unset CONNECTION INTERFACE AP
+            load_profile "$network"
             case "$CONNECTION" in
                 wireless-old|wireless|wireless-dbus)
-                    if [[ "$essid" = "$ESSID" && "$interface" = "$INTERFACE" ]]; then
-                        found=$network
+						if [[ "$interface" = "$INTERFACE" ]]; then
+							if [[ "$ap" == "$AP" ]]; then
+								exit 2
+							elif [[ -z "$found_profile" ]]; then
+								if [[ "$CONNECTION" == wireless-dbus ]]; then
+									if expr match "$essid" "^$ESSID\$" 1>/dev/null; then
+							exit 1
                     fi
+								elif [[ "$essid" == "$ESSID" ]]; then
+									exit 1
+								fi
+							fi
+						fi
                     ;;
             esac
-        done
-    done < $networks
-    
-    if [[ "$found" ]]; then
-        netcfg $found
-	exit $?
+				exit 0
+			)
+			case $? in
+				2) found_profile="$network"
+					found_essid="$essid"
+					break 2;;
+				1) found_profile="$network"
+					found_essid="$essid"
+				;;
+			esac
+        done < <(list_profiles)			# avoid subshell we'd get by piping list_profiles to while read
+	done < "$networks"					# avoid subshell; list_networks returns name of a tmp file
+	rm -f "$networks"				# shouldn't we delete the tmp file?
+			
+    if [[ -n "$found_profile" ]]; then
+		report_success
+		if profile_up "$found_profile" "$found_essid"; then		# JP: now we pass literal essid to profile_up as $2
+			exit 0
+		else
+			exit_fail "Couldn't connect profile $found_profile."
+		fi
+	else
+		exit_fail "No profiles matched the local networks."
     fi
     
-    exit_fail "- No profiles matched the found networks"
 }
 
 if [[ $(id -u) -ne 0 ]]; then
