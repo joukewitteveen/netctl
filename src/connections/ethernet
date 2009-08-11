@@ -5,7 +5,7 @@ ethernet_up() {
     load_profile $1
 
     if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
-        if ! echo "$INTERFACE"|grep ":"; then
+        if ! echo "$INTERFACE"| fgrep ":"; then
             report_fail "interface $INTERFACE does not exist"
             return 1
         fi
@@ -14,7 +14,7 @@ ethernet_up() {
     report_debug ethernet_up ifup
     set_interface up $INTERFACE
 
-    if ip link show $INTERFACE|grep -q "NO-CARRIER"; then
+    if ip link show $INTERFACE| fgrep -q "NO-CARRIER"; then
        report_fail "No connection"
        return 1
     fi
@@ -140,7 +140,7 @@ ethernet_down() {
 
 # Returns status of profile - is it still functional?
 ethernet_status() {
-    if ! ip link show dev ra0|grep -q "state UP"; then
+    if ! ip link show dev ra0 | fgrep -q "state UP"; then
         return 1
     fi
 }

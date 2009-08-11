@@ -7,9 +7,9 @@ wpa_check()
     while [[ $timeout -lt $TIMEOUT ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if [[ $timeout -lt 2 ]]; then
-            eval $(wpa_cli -i "$INTERFACE" status 2> /dev/null | grep wpa_state)
+            eval $(wpa_cli -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
         else
-            eval $(wpa_cli -i "$INTERFACE" status | grep wpa_state)
+            eval $(wpa_cli -i "$INTERFACE" status | fgrep "wpa_state=")
         fi
         [[ "$wpa_state" = "COMPLETED" ]] 
         ) && return 0

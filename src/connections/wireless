@@ -32,7 +32,7 @@ wireless_up() {
 
     # Check if interface exists
     if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
-        if ! echo "$INTERFACE"|grep -Fq ":"; then
+        if ! echo "$INTERFACE" | fgrep -q ":"; then
             report_fail "interface $INTERFACE does not exist"
             return 1
         fi
@@ -190,7 +190,7 @@ wireless_status() {
     load_profile $1
     if [[ "$(iwgetid -r)" -ne $ESSID ]]; then
         return 1
-    elif ! ip link show dev ra0|grep -q "state UP"; then
+    elif ! ip link show dev ra0 | fgrep -q "state UP"; then
         return 1
     fi
 

@@ -84,7 +84,7 @@ list_networks()
     let try=0;
     RETRIES=6;
     while [[ $try -ne $RETRIES ]]; do        
-        iwlist $1 scan 2> /dev/null|grep ESSID|sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
+        iwlist $1 scan 2> /dev/null | fgrep ESSID | sed 's/.*ESSID:"\([^"]\+\)".*/\1/' > $essids
         sleep 0.5; let try++
     done
     sort -u $essids -o $essids
