@@ -4,6 +4,9 @@
 
 case "$1" in
     start)
+        if ! ck_daemon net-auto; then           # JP: check if it's already running
+            exit_stderr "net-auto has already been started: try \"/etc/rc.d/net-auto restart\""
+        fi
         # Ensure any device renaming has occurred as intended
         for daemon in "${DAEMONS[@]}"; do
             if [ "$daemon" = "${daemon#!}" -a "$daemon" = "net-rename" ]; then
@@ -14,21 +17,28 @@ case "$1" in
         done
 
         # TODO: check if any way of using 'stacks' in bash
+        rm -f "$STATE_DIR/net-auto"
         for iface in ${AUTO_NETWORKS[@]}; do
             if [[ "${iface:0:4}" = "auto" ]]; then
                 auto=$iface
             elif [[ "$auto" ]]; then
-                /usr/bin/netcfg-$auto $iface
-                [[ $? -eq 0 ]] && echo $iface >> /var/run/daemons/net-auto
+                if /usr/bin/netcfg-"$auto" "$iface"; then
+                    echo "$iface" >> "$STATE_DIR/net-auto"
+                    add_daemon net-auto             # JP: was this forgotten?
+                fi
                 unset auto
             fi
         done       
         ;;
     stop)
-        [[ ! -e /var/run/daemons/net-auto ]] && exit 0
-        for iface in $(cat /var/run/daemons/net-auto); do
+        if ck_daemon net-auto; then
+            exit_stderr "net-auto not running"
+        fi
+
+        for iface in $(cat "$STATE_DIR/net-auto"); do
             netcfg iface-down $iface
         done
+        rm -f "$STATE_DIR/net-auto"
         rm_daemon net-auto
         ;;
     restart)
