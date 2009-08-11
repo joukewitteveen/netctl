@@ -104,28 +104,26 @@ wireless_up() {
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
         quirk "wpaessid" && eval iwconfig $INTERFACE essid "\"$ESSID\""
          
-        local WPA_CONF="/tmp/wpa.${1// /}" # substitute spaces out 
-        echo "ctrl_interface=/var/run/wpa_supplicant" >> $WPA_CONF
-        echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> $WPA_CONF        
-        chmod 600 $WPA_CONF
+        local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out 
+        # make empty tmp dir with correct permissions, rename it
+		rm -rf "$WPA_CONF"
+        mv -f $(mktemp -d) "$WPA_CONF" || return 1
+        echo "ctrl_interface=/var/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
+        echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
         
         # Generate configuration
-        if [[ "${#KEY}" == "64" ]]; then
-            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> $WPA_CONF
-        elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> $WPA_CONF; then
-            report_fail "Configuration generation failed. $(cat $WPA_CONF)"
+        if [[ "${#KEY}" -eq 64 ]]; then
+            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> "$WPA_CONF/wpa.conf"
+        elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> "$WPA_CONF/wpa.conf"; then
+            report_fail "Configuration generation failed."
+            cat "$WPA_CONF/wpa.conf" >&2
             return 1
         fi
 
         # Connect!
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-<<<<<<< Updated upstream
-        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
-        if ! start_wpa $INTERFACE $WPA_CONF $WPA_OPTS; then
-=======
         report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS"
-        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
->>>>>>> Stashed changes
+        if ! start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
             return 1
         fi
@@ -171,7 +169,7 @@ wireless_down() {
     fi
     report_debug wireless_down stop_wpa "$INTERFACE"
     stop_wpa $INTERFACE 
-	[[ "$SECURITY" == "wpa" ]] && rm -f "/tmp/wpa.${PROFILE// /}" # remove wpa config
+	[[ "$SECURITY" == "wpa" ]] && rm -rf "/tmp/wpa.${PROFILE// /}" # remove tmp wpa config
     report_debug wireless_down iwconfig "$INTERFACE" essid off key off
     iwconfig $INTERFACE essid off key off &> /dev/null 
     set_interface down $INTERFACE
