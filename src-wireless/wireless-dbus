@@ -188,7 +188,7 @@ def start(profile, essid):
 def stop(profile):
     ret = subprocess.call([ETHERNET_IPROUTE, "down", sys.argv[2]])
     os.kill(int(open("/var/run/wpa_supplicant.pid").read()),SIGTERM)
-    sys.exit(0)
+    sys.exit(ret)
 
 if __name__ == "__main__":
 
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     WIRELESS = os.path.join(CONN_DIR,"wireless")
 
     # setup bash report_* handler
-    report_handler_script = 'source /etc/rc.conf; source /etc/rc.d/functions; source %s/../globals; while read cmd args; do eval $cmd "$args"; done' % (CONN_DIR,)
+    report_handler_script = 'source %s/../globals; while read cmd args; do eval $cmd "$args"; done' % (CONN_DIR,)
     report_handler = subprocess.Popen(report_handler_script, executable='/bin/bash', stdin=subprocess.PIPE, shell=True)
 
     try:
