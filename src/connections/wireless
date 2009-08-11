@@ -204,7 +204,7 @@ wireless_down() {
     fi
     report_debug wireless_down stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
-	[[ "$SECURITY" == "wpa" ]] && rm -rf "/tmp/wpa.${PROFILE// /}" # remove tmp wpa config
+	[[ "$SECURITY" == "wpa" ]] && rm -rf "${TMPDIR:-/tmp}/wpa.${PROFILE// /}" # remove tmp wpa config
     report_debug wireless_down iwconfig "$INTERFACE" essid off key off
     iwconfig "$INTERFACE" essid off key off &> /dev/null 
     # respects quirk nodown---is that appropriate?

@@ -91,7 +91,7 @@ list_networks()
     # is hard, obscure and kinda nasty. This is simpler and clearer.
  
     [[ -z "$INTERFACE" ]] && return 1
-    essids=$(mktemp /tmp/essid.XXXXXXXX)
+    essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
 
     wpa_supplicant -B -i$INTERFACE -Dwext -C/var/run/wpa_supplicant -P/var/run/wpa_supplicant.pid
@@ -115,8 +115,8 @@ list_networks()
     kill $(cat /var/run/wpa_supplicant.pid)
     
     # File of 0 length, ie. no ssid's.
-    if [[ ! -s $essids ]]; then
-        rm -f $essids 
+    if [[ ! -s "$essids" ]]; then
+        rm -f "$essids"
         return 1
     fi
 

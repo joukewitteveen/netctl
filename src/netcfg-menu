@@ -26,7 +26,7 @@ fi
 [ "$NETWORKS_MENU_DEFAULT" ] && DEFAULT="$NETWORKS_MENU_DEFAULT"
 # if no default yet, use the first entry
 [ "$DEFAULT" = "" ] && DEFAULT="${profiles[0]}"
-ANSWER=$(mktemp /tmp/menu.XXXXXXXX) || exit 1
+ANSWER=$(mktemp --tmpdir menu.XXXXXXXX) || exit 1
 
 # Set timeout
 if [ "$1" = "" ]; then
@@ -38,7 +38,7 @@ fi
 # Display Dialog
 dialog --timeout "$TIMEOUT" --default-item "$DEFAULT" \
     --menu "Select the network profile you wish to use" \
-    13 50 6 "${profiles[@]}" 2> $ANSWER
+    13 50 6 "${profiles[@]}" 2> "$ANSWER"
 
 ret=$?
         
@@ -50,15 +50,15 @@ case $ret in
         if [[ $ret -eq 0 ]]; then echo "$DEFAULT" > "$STATE_DIR/menu"; fi
         ;; 
     0)  # User selection
-        profile_up "$(cat $ANSWER)"
+        profile_up "$(cat "$ANSWER")"
         ret=$?
-        if [[ $ret -eq 0 ]]; then mv $ANSWER "$STATE_DIR/menu"; fi
+        if [[ $ret -eq 0 ]]; then mv "$ANSWER" "$STATE_DIR/menu"; fi
         ;; 
     *)  # Shouldnt happen
         exit_err "Abnormal ret code from dialog: $ret"
         ;; 
 esac
-rm -f $ANSWER     # JP: add -f
+rm -f "$ANSWER"     # JP: add -f
 exit $ret           # JP: exit with caught $?
 
 # vim: set ts=4 et sw=4:
