@@ -31,3 +31,6 @@ WPA_CONF (for SECURITY of 'wpa-config' only)
 :   Path to wpa_supplicant configuration. Defaults to '/etc/wpa_supplicant.conf'
 WPA_OPTS 
 :   Extra arguments for wpa_supplicant not specified otherwise. Any option here must specify wpa_supplicant driver. Defaults to '-Dwext'. 
+WPA_GROUP
+:   Group that has authority for on-the-fly config files created when SECURITY="wpa"
+
