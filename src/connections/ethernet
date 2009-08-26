@@ -54,7 +54,7 @@ ethernet_up() {
             [[ -n "$DNS1" || -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
             report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
-            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug $(cat)
+            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
             if [[ "$PIPESTATUS" -ne 0 ]]; then
                 report_fail "DHCP IP lease attempt failed."
                 return 1
@@ -125,7 +125,7 @@ ethernet_down() {
         if checkyesno "${DHCLIENT:-no}"; then
             if [[ -f "/var/run/dhclient-${INTERFACE}.pid" ]]; then
                 report_debug ethernet_down kill dhclient
-                kill $(cat "/var/run/dhclient-${INTERFACE}.pid")
+                kill "$(cat "/var/run/dhclient-${INTERFACE}.pid")"
             fi
         else
             if [[ -f "/var/run/dhcpcd-${INTERFACE}.pid" ]]; then

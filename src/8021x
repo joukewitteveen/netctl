@@ -43,7 +43,7 @@ stop_wpa()
     sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
                     # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
     if [[ -f "/var/run/wpa_supplicant_$1.pid" ]]; then
-        kill $(cat "/var/run/wpa_supplicant_$1.pid") &>/dev/null &
+        kill "$(cat "/var/run/wpa_supplicant_$1.pid")" &>/dev/null &
     fi
 }
 

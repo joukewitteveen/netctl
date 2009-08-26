@@ -17,7 +17,7 @@ ppp_up() {
 
 ppp_down() {
     load_profile "$1"
-    kill $(head -1 "/var/run/ppp-$(basename $PEER).pid")
+    kill "$(head -1 "/var/run/ppp-$(basename $PEER).pid")"
 }
 
 ppp_$1 "$2"

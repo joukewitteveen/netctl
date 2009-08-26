@@ -54,7 +54,7 @@ ethernet_up() {
         [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
         
         report_debug ethernet_iproute_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"       
-        dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug $(cat)
+        dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
         if [[ "$PIPESTATUS" -ne 0 ]]; then
             report_iproute "DHCP IP lease attempt failed"
         fi
