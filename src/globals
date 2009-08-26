@@ -1,4 +1,4 @@
-# /usr/lin/networks/globals
+# /usr/lib/networks/globals
 #
 # any +x files in /usr/lib/network/hooks and /etc/network.d/hooks
 # will be sourced when this file is.
