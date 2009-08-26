@@ -66,7 +66,9 @@ case "$1" in
 
         # shutdown any profiles started by netcfg (or from NET_PROFILES in rc.conf)
         # JP: only attempt to disconnect the profiles _this daemon_ was told to control
-        cat "$STATE_DIR/net-profiles" 2>/dev/null | xargs -d'\n' /usr/bin/netcfg2 down  # JP: use xargs in case any of the profile names contain spaces etc
+        cat "$STATE_DIR/net-profiles" 2>/dev/null | while read profile; do  # guard against any of the profile names containing spaces etc
+            /usr/bin/netcfg2 down "$profile"
+        done
         rm -f "$STATE_DIR/net-profiles"
         rm_daemon net-profiles
         ;;
