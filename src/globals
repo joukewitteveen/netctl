@@ -18,15 +18,6 @@ CONN_DIR="${SUBR_DIR}/connections/"
 STATE_DIR="/var/run/network/"
 
 
-# Interface up/down hooks
-#
-function at_interface_up {
-	true
-}
-function at_interface_down {
-	true
-}
-
 
 ### Logging/Error reporting
 #

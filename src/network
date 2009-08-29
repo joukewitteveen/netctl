@@ -43,7 +43,7 @@ all_down()
 
 # interface_suspend interface/all [call_profile_down? default=yes]
 #   store a list of running profiles and take them down (unless $2 is "no")
-interface_suspend() 
+interface_suspend()
 {
 	report_debug interface_suspend "$@"
 
@@ -57,7 +57,7 @@ interface_suspend()
         unset INTERFACE
         . "$STATE_DIR/profiles/$prof"
         if [[ "$1" == all || "$1" == "$INTERFACE" ]]; then
-            report_notify "suspending interface $INTERFACE with profile $prof" 
+            report_notify "suspending interface $INTERFACE with profile $prof"
 			cp "$STATE_DIR/profiles/$prof" "$STATE_DIR/suspend/"
             if checkyesno "${2:-yes}"; then
 				profile_down "$prof"
@@ -96,13 +96,13 @@ all_resume()
 #
 profile_up()
 {
-    ( 
+    (
     # Keep inside subshell so that options from one profile don't cross to others
     # exit 1 used in a subshell is effectively exiting a new process
     [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
 
 	local PROFILE="$1"	# save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
-    
+
     load_profile "$PROFILE" || exit 1
 
     if check_profile "$PROFILE"; then
@@ -117,7 +117,7 @@ profile_up()
     fi
 
     report_try "$PROFILE up"
-    
+
     case $(check_iface "$INTERFACE") in
         up)
             if checkyesno "$CHECK"; then
@@ -133,20 +133,20 @@ profile_up()
             exit 1
         ;;
     esac
-   
+
 	if ! ( eval $PRE_UP ); then		# JP: sandbox the eval so variables don't bleed into current function
 		report_debug profile_up "PRE_UP failed"
 		report_fail
 		exit 1
     fi
-    
+
     if ! "$CONN_DIR/$CONNECTION" up "$PROFILE" "$2"; then
 		report_debug profile_up "connect failed"
         report_fail
 		#  "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2" # JP: should we do this to make sure?
         exit 1
     fi
-    
+
 	if ! ( eval $POST_UP ); then	# JP: sandbox the eval
 		report_debug profile_up "POST_UP failed"
 		report_fail
@@ -154,10 +154,10 @@ profile_up()
 		"$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"
 		exit 1
 	fi
-    
+
     set_profile up "$PROFILE"
-    unset EXCLUSIVE 
-    
+    unset EXCLUSIVE
+
     # Successfully running a new profile; erase any suspended profiles on this interface
     local iface="$INTERFACE"
     find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
@@ -172,7 +172,7 @@ profile_up()
     done
 
     report_success
-    ); return $? 
+    ); return $?
 }
 
 # profile_down profile
@@ -182,41 +182,41 @@ profile_down()
 {
     (
     [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
-    
+
 	local PROFILE="$1"	# save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
 
     load_profile "$PROFILE" || exit 1
-    
+
     if ! check_profile "$PROFILE"; then
-        report_fail "Profile not connected" 
+        report_fail "Profile not connected"
         exit 1
     fi
-    
+
     report_try "$PROFILE down"
     if [[ "$(get_iface_prof $INTERFACE)" == "external" ]]; then
         report_fail "$interface was connected by another application"
         exit 1
     fi
-    
+
 	if ! ( eval $PRE_DOWN ); then	# JP: sandbox the eval
 		report_debug profile_down "PRE_DOWN failed"
 		# true	# JP: did we want failing PRE_DOWN to leave the profile active?
 		report_fail
 		exit 1
 	fi
-    
+
     if ! "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"; then
 		report_debug profile_up "disconnect failed"
         report_fail
         exit 1
     fi
-    
+
 	if ! ( eval $POST_DOWN ); then	# JP: sandbox the eval
 		report_debug profile_down "POST_DOWN failed"
 		report_fail
 		exit 1
 	fi
-    
+
     set_profile down "$PROFILE"
     report_success
     ); return $?
@@ -226,7 +226,7 @@ profile_down()
 inarray()
 {
 	local item search="$1"
-	shift 
+	shift
 	for item in "$@"; do
 		if [[ "$item" == "$search" ]]; then
 			return 0
@@ -263,7 +263,7 @@ check_iface() {
             echo "external"
         else
             echo "up"
-        fi        
+        fi
         exit 0
         )
     else
@@ -297,7 +297,7 @@ list_profiles() {
 check_profile() {
     [[ -f "$STATE_DIR/profiles/$1" ]] && return 0
     return 1
-} 
+}
 
 ### Status setting functions
 ##
@@ -312,7 +312,7 @@ set_profile() {
         echo "$2" > "$STATE_DIR/last_profile"
         set_iface up "$INTERFACE" "$2"
 		)
-    elif [[ "$1" == "down" && -f "$STATE_DIR/profiles/$2" ]]; then    # JP: skip if profile not already up 
+    elif [[ "$1" == "down" && -f "$STATE_DIR/profiles/$2" ]]; then    # JP: skip if profile not already up
         (   # subshell
         . "$STATE_DIR/profiles/$2"	# we source profile in order to obtain INTERFACE
         rm "$STATE_DIR/profiles/$2"
@@ -332,7 +332,7 @@ set_iface() {
         echo "PROFILE=$PROFILE" > "$STATE_DIR/interfaces/$2"
     elif [[ "$1" == "down" ]]; then
         rm -f "$STATE_DIR/interfaces/$2"    # JP: add -f so we don't complain if the interface isn't up
-    fi    
+    fi
 }
 
 set_interface()
@@ -340,7 +340,9 @@ set_interface()
     INTERFACE="$2"
     case "$1" in
         up|up-old)
-            at_interface_up
+			if ! ( eval $IFACE_UP ); then
+				return 1
+			fi
 			if [ "$1" = old ]; then
 				ifconfig "$INTERFACE" up
 			else
@@ -349,7 +351,9 @@ set_interface()
             sleep "${UP_SLEEP:-2}"
         ;;
         down|forcedown|down-old|forcedown-old)
-            at_interface_down
+			if ! ( eval $IFACE_DOWN ); then
+				return 1
+			fi
 			if [ "${1%-old}" != "$1" ]; then
 				## ?
 				if ! quirk nodown || [ "$1" = forcedown-old ]; then
