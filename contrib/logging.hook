@@ -36,7 +36,7 @@ function report_err {
 function report_warn {
     report_log warning "$*"
     # printhl "$*"
-    [[ -n "$NETCFG_DEBUG" ]] && echo "DEBUG: $*" >&2
+	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
 }
 
 
@@ -44,11 +44,11 @@ function report_warn {
 function report_notify {
 	report_log notice "$*"
 	# print "$*" >&2
-    [[ -n "$NETCFG_DEBUG" ]] && echo "DEBUG: $*" >&2
+	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
 }
 
 function report_debug {
-	if [[ -n "$NETCFG_DEBUG" ]]; then
+	if checkyesno "$NETCFG_DEBUG"; then
 		echo "DEBUG: $*" >&2
 	else
 		report_log debug "$*"

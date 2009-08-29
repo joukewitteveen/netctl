@@ -43,7 +43,7 @@ function report_notify {
 }
 
 function report_debug {
-	[[ -n "$NETCFG_DEBUG" ]] && echo "DEBUG: $*"
+	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*"
 }
 
 function report_try {
@@ -83,6 +83,37 @@ function exit_err { report_err "$*"; exit 1; }
 function exit_fail { report_fail "$*"; exit 1; }
 
 
+### From FreeBSD's /etc/rc.subr
+##
+# checkyesno var
+#    Test $1 variable, and warn if not set to YES or NO.
+#    Return 0 if it's "yes" (et al), nonzero otherwise.
+#    to make default yes, do "checkyesno ${VAR:-yes}"
+#
+checkyesno()
+{
+    local _value="$1"
+    #debug "checkyesno: $1 is set to $_value."
+    case "$_value" in
+
+        #    "yes", "true", "on", or "1"
+    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+        return 0
+        ;;
+
+        #    "no", "false", "off", or "0"
+    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+        return 1
+        ;;
+    *)
+        #warn "\$${1} is not set properly - see ${rcvar_manpage}."
+        return 1
+        ;;
+    esac
+}
+
+
+
 function load_hooks() {
 	### Load any +x files in $HOOKS_DIR and $USERHOOKS_DIR
 	local hook
@@ -97,4 +128,5 @@ function load_hooks() {
 }
 
 load_hooks
+
 
