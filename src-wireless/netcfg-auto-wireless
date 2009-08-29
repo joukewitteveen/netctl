@@ -28,25 +28,25 @@ wifi_auto()
     while read ap essid; do
 		while read network; do
 			(
-				unset CONNECTION INTERFACE AP
-            load_profile "$network"
-            case "$CONNECTION" in
-                wireless-old|wireless|wireless-dbus)
-						if [[ "$interface" = "$INTERFACE" ]]; then
-							if [[ "$ap" == "$AP" ]]; then
-								exit 2
-							elif [[ -z "$found_profile" ]]; then
-								if [[ "$CONNECTION" == wireless-dbus ]]; then
-									if expr match "$essid" "^$ESSID\$" 1>/dev/null; then
-							exit 1
-                    fi
-								elif [[ "$essid" == "$ESSID" ]]; then
-									exit 1
+				unset CONNECTION INTERFACE AP ESSID
+				load_profile "$network"
+				case "$CONNECTION" in
+					wireless-old|wireless|wireless-dbus)
+							if [[ "$interface" = "$INTERFACE" ]]; then
+								if [[ "$ap" == "$AP" ]]; then
+									exit 2
+								elif [[ -z "$found_profile" ]]; then
+									if [[ "$CONNECTION" == wireless-dbus ]]; then
+										if expr match "$essid" "^$ESSID\$" 1>/dev/null; then
+											exit 1
+										fi
+									elif [[ "$essid" == "$ESSID" ]]; then
+										exit 1
+									fi
 								fi
 							fi
-						fi
-                    ;;
-            esac
+							;;
+				esac
 				exit 0
 			)
 			case $? in
