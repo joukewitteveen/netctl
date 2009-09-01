@@ -51,7 +51,6 @@ case "$1" in
                                 add_daemon net-profiles
                                 exit 0
                             fi
-                            break   # found an enabled profile but failed to bring it up: exit for loop
                         fi
                         ;;
                 esac

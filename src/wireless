@@ -16,7 +16,7 @@ wep_check()
 # Check if a particular network is within range
 # find_essid interface essid connection (we treat ESSID as regexp when CONNECTION=wireless-dbus)
 find_essid() {
-    local INTERFACE="$1" ESSID="$2" CONNECTION="$3" RETRIES=20 try=0 res scanned
+    local INTERFACE="$1" ESSID="$2" CONNECTION="$3" RETRIES=10 try=0 res scanned
     while [[ "$try" -lt "$RETRIES" ]]; do
         sleep 0.5
         let try++
@@ -55,7 +55,7 @@ find_essid() {
 # Check if a particular network is within range
 # find_ap interface ap
 find_ap() {
-    local INTERFACE="$1" ap=$(echo "$2" | tr 'abcdef' 'ABCDEF') RETRIES=20 try=0 res scanned
+    local INTERFACE="$1" ap=$(echo "$2" | tr 'abcdef' 'ABCDEF') RETRIES=10 try=0 res scanned
     while [[ "$try" -lt "$RETRIES" ]]; do
         sleep 0.5
         let try++
