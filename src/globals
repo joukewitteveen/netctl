@@ -12,7 +12,7 @@
 PROFILE_DIR="/etc/network.d/"
 HOOKS_DIR="/usr/lib/network/hooks/"
 USERHOOKS_DIR="$PROFILE_DIR/hooks/"
-IFACE_DIR="$PROFILE/interfaces/"
+IFACE_DIR="$PROFILE_DIR/interfaces/"
 SUBR_DIR="/usr/lib/network/"
 CONN_DIR="${SUBR_DIR}/connections/"
 STATE_DIR="/var/run/network/"
@@ -35,7 +35,7 @@ function report_notify {
 }
 
 function report_debug {
-	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*"
+	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
 }
 
 function report_try {
@@ -120,5 +120,4 @@ function load_hooks() {
 }
 
 load_hooks
-
 

@@ -22,14 +22,41 @@ wireless_up() {
     . "$SUBR_DIR/8021x"
     . "$SUBR_DIR/wireless"
 
-    # If rfkill is specified, enable device.
-    if [[ -n "$RFKILL_NAME" ]]; then
-        path=$(rfkill_from_name $RFKILL_NAME)
-        if [[ $? -ne 0 ]]; then
-            report_fail "no rfkill switch with the name $RFKILL_NAME";
-        fi 
-        echo 1 > ${path}/state
-        sleep 1
+
+    # Handle wireless kill switches
+    if [[ $RFKILL ]]; then
+        report_debug "rfkill support enabled: $RFKILL"
+        if [[ -n "$RFKILL_NAME" ]]; then
+            path=$(rfkill_from_name $RFKILL_NAME)
+            if [[ $? -ne 0 ]]; then
+                report_fail "no rfkill switch with the name $RFKILL_NAME";
+            fi
+        else
+            path=/sys/class/net/$INTERFACE/rfkill
+            if [[ ! -d $path ]]; then
+                report_fail "no rfkill switch available on interface $INTERFACE"
+            fi
+        fi
+
+
+        case $RFKILL in
+        soft)
+            echo 1 > ${path}/state # Soft switch, so enable
+            sleep 1
+            report_debug "Enabled RFKILL on $path"
+            ;;
+        hard)
+            state=$(cat ${path}/state)
+            case $state in
+                0)
+                    report_fail "Card disabled";;
+                1)
+                    true;;
+                *)
+                    report_fail  "Unknown state: $state";;
+            esac
+            ;;
+        esac
     fi
 
     # Check if interface exists
@@ -38,12 +65,12 @@ wireless_up() {
             report_fail "interface $INTERFACE does not exist"
             return 1
         fi
-    fi  
+    fi
 
     # Kill any lingering wpa_supplicants.
     report_debug wireless_up stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
-            
+
     # Most drivers (mac80211) need mode set before device is brought up
     # Drivers generally default to managed, but set this to be sure.
     if [[ $(iwgetid -sm "$INTERFACE") -ne Managed ]]; then
@@ -66,7 +93,7 @@ wireless_up() {
             eval "iwconfig \"$INTERFACE\" mode managed essid \"$ESSID\""
         fi
     fi
- 
+
     if checkyesno "${SCAN:-no}"; then
         report_debug wireless_up scanning
         local OLDESSID="$ESSID"
@@ -79,12 +106,12 @@ wireless_up() {
         if [[ $? -gt 0 ]]; then
             report_fail "Wireless network \"$OLDESSID\" not present."
             return 1
-        fi 
+        fi
     fi
-  
+
     # Manually set iwconfig options
     if [[ -n "$IWCONFIG" ]]; then
-        report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG        
+        report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG
         iwconfig "$INTERFACE" $IWCONFIG
     fi
 
@@ -109,13 +136,13 @@ wireless_up() {
                 fi
             fi
         fi
-              
+
         if quirk "predown"; then # madwifi FS#10585
             # ignore quirk nodown---is that appropriate?
             # this adds a flush call as well---is that appropriate?
             set_interface forcedown-old "$INTERFACE"
         fi
-        
+
         report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
         # JP: I don't understand why this needs to be an eval. What's wrong with just:
         # iwconfig "$INTERFACE" $WEP_OPTS
@@ -127,13 +154,13 @@ wireless_up() {
         if quirk "predown"; then # madwifi FS#10585
            set_interface up-old "$INTERFACE"
         fi
-       
+
         report_debug ethernet_up wep_check
         if ! wep_check "$INTERFACE" "$TIMEOUT"; then
             report_fail "WEP Association Failed"
             return 1
         fi
-        ;;    
+        ;;
     wpa)
 
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
@@ -148,14 +175,14 @@ wireless_up() {
                eval "iwconfig \"$INTERFACE\" essid \"$ESSID\""
             fi
         fi
-         
-        local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out 
+
+        local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out
         # make empty tmp dir with correct permissions, rename it
-		rm -rf "$WPA_CONF"
+        rm -rf "$WPA_CONF"
         mv -f $(mktemp -d) "$WPA_CONF" || return 1
         echo "ctrl_interface=/var/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
         echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
-        
+
         # Generate configuration
         if [[ "${#KEY}" -eq 64 ]]; then
             echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> "$WPA_CONF/wpa.conf"
@@ -194,9 +221,9 @@ wireless_up() {
             report_fail "WPA Authentication/Association Failed"
             return 1
         fi
-        ;;        
+        ;;
     esac
-    
+
     conn=ethernet
     checkyesno "${IPROUTE:-no}" && conn=ethernet-iproute
     if ! "$CONN_DIR/$conn" up "$1"; then
@@ -204,7 +231,7 @@ wireless_up() {
         return 1
     fi
 }
- 
+
 # wireless_down PROFILE [ LEAVE ifconfig up? default no ]
 wireless_down() {
     local PROFILE="$1" NOETHERNETDOWN="$2"
@@ -217,23 +244,39 @@ wireless_down() {
     fi
     report_debug wireless_down stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
-	[[ "$SECURITY" == "wpa" ]] && rm -rf "${TMPDIR:-/tmp}/wpa.${PROFILE// /}" # remove tmp wpa config
+    [[ "$SECURITY" == "wpa" ]] && rm -rf "${TMPDIR:-/tmp}/wpa.${PROFILE// /}" # remove tmp wpa config
     report_debug wireless_down iwconfig "$INTERFACE" essid off key off
-    iwconfig "$INTERFACE" essid off key off &> /dev/null 
+    iwconfig "$INTERFACE" essid off key off &> /dev/null
     # respects quirk nodown---is that appropriate?
     # wasn't this already called in ethernet_down? but does the call there respect quirk nodown?
     # this adds a flush call as well---is that appropriate?
     set_interface down-old "$INTERFACE"
-    
+
     # If rfkill is specified, disable device.
     if [[ -n "$RFKILL_NAME" ]]; then
         path=$(rfkill_from_name "$RFKILL_NAME")
         if [[ $? -ne 0 ]]; then
             report_fail "no rfkill switch with the name $RFKILL_NAME";
-        fi 
+        fi
         echo 0 > "${path}/state"
     fi
-    
+
+    # Handle wireless kill switches
+    # Any reason why a hardware switch should be considered on interface down?
+    if [[ $RFKILL == "soft" ]]; then
+        if [[ -n $RFKILL_NAME ]]; then
+            path=$(rfkill_from_name $RFKILL_NAME)
+            if [[ $? -ne 0 ]]; then
+                report_fail "no rfkill switch with the name $RFKILL_NAME";
+            fi
+        else
+            path=/sys/class/net/$INTERFACE/rfkill
+            if [[ ! -d $path ]]; then
+                report_fail "no rfkill switch available on interface $INTERFACE"
+            fi
+        fi
+        echo 0 > ${path}/state # Soft switch, so disable
+    fi
 }
 
 # Returns status of profile - is it still functional?
@@ -250,3 +293,4 @@ wireless_status() {
 wireless_$1 "$2" "$3"
 exit $?
 # vim: set ts=4 et sw=4:
+

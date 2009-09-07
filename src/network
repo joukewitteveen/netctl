@@ -13,12 +13,15 @@ load_profile()
         report_fail "Profile \"$1\" does not exist"
         return 1
     fi
+    report_debug "Loading profile $1"
     . "$PROFILE_DIR/$1"
+    report_debug "Configuring interface $INTERFACE"
     if [[ -z "$INTERFACE" ]]; then
         report_fail "Profile missing an interface to configure"
         return 1
     fi
 	if [[ -f "$IFACE_DIR/$INTERFACE" ]]; then
+	    report_debug "Interface level configuration enabled: $IFACE_DIR/$INTERFACE"
 		. "$IFACE_DIR/$INTERFACE"
 		. "$PROFILE_DIR/$1"	# we want profile settings to override, so need to source profile again
 	fi
