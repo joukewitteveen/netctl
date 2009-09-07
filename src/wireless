@@ -166,5 +166,61 @@ wpa_supplicant_scan_info() {
     return 0
 }
 
+set_rf_state() {
+    local INTERFACE=$1 state=$2 PROFILE=$3
+
+    source $IFACE_DIR/$INTERFACE
+    [[ $PROFILE ]] && source $PROFILE_DIR/$PROFILE  # profile overrides
+    [[ $RFKILL == "hard" ]] && report_fail "Cannot set state on hardware rfkill switch"
+    path=$(get_rf_path $INTERFACE $RFKILL_NAME)
+    case $state in
+        up)
+            echo 1 > $path/state
+        ;;
+        down)
+            echo 0 > $path/state
+        ;;
+    esac
+}
+
+get_rf_path() {
+    local INTERFACE=$1 RFKILL_NAME=$2
+
+    if [[ $RFKILL_NAME ]]; then
+        for path in /sys/class/rfkill/*; do
+            if [[ "$(cat $path/name)" == $RFKILL_NAME ]]; then
+                echo $path
+                return 0
+            fi
+        done
+        report_fail "no rfkill switch with name $RFKILL_NAME"
+    else
+        path=/sys/class/net/$INTERFACE/rfkill
+        if [[ -d $path ]]; then
+            echo $path
+            return 0
+        fi
+        report_fail "no rfkill switch available on interface $INTERFACE"
+    fi
+}
+
+get_rf_state() {
+    local INTERFACE=$1 PROFILE=$2
+    source $IFACE_DIR/$INTERFACE
+    [[ $PROFILE ]] && source $PROFILE_DIR/$PROFILE  # profile overrides
+    path=$(get_rf_path $INTERFACE $RFKILL_NAME)
+    state=$(cat $path/state)
+
+    case $state in
+        0)
+            echo "disabled";;
+        1)
+            echo "enabled";;
+        *)
+            echo $state;;
+    esac
+}
+
+
 # vim: set ts=4 et sw=4 ft=sh:
 

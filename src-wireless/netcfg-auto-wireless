@@ -11,6 +11,12 @@ wifi_auto()
 {
     local interface="$1"
     report_try "Scanning for networks"
+    source $IFACE_DIR/$interface
+
+    if [[ $RFKILL ]]; then
+        set_rf_state $interface up
+    fi
+
 	set_interface up "$interface"	# uses iproute methods---is it there any value to providing option to use ifconfig?
     networks="$(list_networks $interface)"
 
@@ -60,7 +66,7 @@ wifi_auto()
         done < <(list_profiles)			# avoid subshell we'd get by piping list_profiles to while read
 	done < "$networks"					# avoid subshell; list_networks returns name of a tmp file
 	rm -f "$networks"				# shouldn't we delete the tmp file?
-			
+
     if [[ -n "$found_profile" ]]; then
 		report_success
 		if profile_up "$found_profile" "$found_essid"; then		# JP: now we pass literal essid to profile_up as $2
@@ -73,7 +79,7 @@ wifi_auto()
 		set_interface forcedown "$interface"
 		exit_fail "No profiles matched the local networks."
     fi
-    
+
 }
 
 if [[ $(id -u) -ne 0 ]]; then

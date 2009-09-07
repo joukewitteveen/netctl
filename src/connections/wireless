@@ -2,18 +2,6 @@
 . /usr/lib/network/network
 
 
-rfkill_from_name() {
-    local name=$1
-    for rfkill in /sys/class/rfkill/*; do
-        if [[ "$(cat $rfkill/name)" == $name ]]; then
-            echo $rfkill
-            return 0
-        fi
-    done
-    echo "none"
-    return 1
-}
-
 wireless_up() {
 
     load_profile "$1"
@@ -22,41 +10,15 @@ wireless_up() {
     . "$SUBR_DIR/8021x"
     . "$SUBR_DIR/wireless"
 
-
-    # Handle wireless kill switches
     if [[ $RFKILL ]]; then
-        report_debug "rfkill support enabled: $RFKILL"
-        if [[ -n "$RFKILL_NAME" ]]; then
-            path=$(rfkill_from_name $RFKILL_NAME)
-            if [[ $? -ne 0 ]]; then
-                report_fail "no rfkill switch with the name $RFKILL_NAME";
-            fi
-        else
-            path=/sys/class/net/$INTERFACE/rfkill
-            if [[ ! -d $path ]]; then
-                report_fail "no rfkill switch available on interface $INTERFACE"
+        if [[ ! $(get_rf_state $INTERFACE) == "up" ]]; then
+            if [[ $RFKILL == "soft" ]]; then
+                set_rf_state $INTERFACE up
+                sleep 1
+            else
+                report_fail "radio is disabled on $INTERFACE"
             fi
         fi
-
-
-        case $RFKILL in
-        soft)
-            echo 1 > ${path}/state # Soft switch, so enable
-            sleep 1
-            report_debug "Enabled RFKILL on $path"
-            ;;
-        hard)
-            state=$(cat ${path}/state)
-            case $state in
-                0)
-                    report_fail "Card disabled";;
-                1)
-                    true;;
-                *)
-                    report_fail  "Unknown state: $state";;
-            esac
-            ;;
-        esac
     fi
 
     # Check if interface exists
@@ -252,30 +214,11 @@ wireless_down() {
     # this adds a flush call as well---is that appropriate?
     set_interface down-old "$INTERFACE"
 
-    # If rfkill is specified, disable device.
-    if [[ -n "$RFKILL_NAME" ]]; then
-        path=$(rfkill_from_name "$RFKILL_NAME")
-        if [[ $? -ne 0 ]]; then
-            report_fail "no rfkill switch with the name $RFKILL_NAME";
-        fi
-        echo 0 > "${path}/state"
-    fi
-
     # Handle wireless kill switches
     # Any reason why a hardware switch should be considered on interface down?
     if [[ $RFKILL == "soft" ]]; then
-        if [[ -n $RFKILL_NAME ]]; then
-            path=$(rfkill_from_name $RFKILL_NAME)
-            if [[ $? -ne 0 ]]; then
-                report_fail "no rfkill switch with the name $RFKILL_NAME";
-            fi
-        else
-            path=/sys/class/net/$INTERFACE/rfkill
-            if [[ ! -d $path ]]; then
-                report_fail "no rfkill switch available on interface $INTERFACE"
-            fi
-        fi
-        echo 0 > ${path}/state # Soft switch, so disable
+        . "$SUBR_DIR/wireless"
+        set_rf_state $INTERFACE down
     fi
 }
 
