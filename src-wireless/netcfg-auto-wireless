@@ -11,11 +11,10 @@ wifi_auto()
 {
     local interface="$1"
     report_try "Scanning for networks"
-
 	set_interface up "$interface"	# uses iproute methods---is it there any value to providing option to use ifconfig?
     networks="$(list_networks $interface)"
 
-    if [[ ! "$networks" ]]; then
+    if [[ -z $networks ]]; then
 		set_interface forcedown "$interface"
         exit_fail "- No networks available."
     fi
