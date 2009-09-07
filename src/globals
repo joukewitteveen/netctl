@@ -12,6 +12,7 @@
 PROFILE_DIR="/etc/network.d/"
 HOOKS_DIR="/usr/lib/network/hooks/"
 USERHOOKS_DIR="$PROFILE_DIR/hooks/"
+IFACE_DIR="$PROFILE/interfaces/"
 SUBR_DIR="/usr/lib/network/"
 CONN_DIR="${SUBR_DIR}/connections/"
 STATE_DIR="/var/run/network/"

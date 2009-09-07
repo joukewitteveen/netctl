@@ -5,14 +5,8 @@
 ### Profile loading
 ##
 # load_profile profile
-#   source the profile
-load_profile() {
-    validate_profile "$1" || return 1
-    . "$PROFILE_DIR/$1"
-}
-# validate_profile profile
-#   check whether profile exists and is usable
-validate_profile()
+#   source profile, checking whether it exists and is usable
+load_profile()
 {
     [[ -z "$1" ]] && return 1
     if [[ ! -f "$PROFILE_DIR/$1" ]]; then
@@ -24,6 +18,10 @@ validate_profile()
         report_fail "Profile missing an interface to configure"
         return 1
     fi
+	if [[ -f "$IFACE_DIR/$INTERFACE" ]]; then
+		. "$IFACE_DIR/$INTERFACE"
+		. "$PROFILE_DIR/$1"	# we want profile settings to override, so need to source profile again
+	fi
     if [[ ! -f "$CONN_DIR/$CONNECTION" ]]; then
         report_fail "$CONNECTION is not a valid connection, check spelling or look at examples"
         return 1
@@ -309,14 +307,14 @@ check_profile() {
 set_profile() {
     if [[ "$1" == "up" ]]; then
         (   # subshell creates sandbox for sourced variables
-        . "$PROFILE_DIR/$2"
+        . "$PROFILE_DIR/$2"		# we source profile in order to obtain INTERFACE
         cp "$PROFILE_DIR/$2" "$STATE_DIR/profiles/"
         echo "$2" > "$STATE_DIR/last_profile"
         set_iface up "$INTERFACE" "$2"
 		)
     elif [[ "$1" == "down" && -f "$STATE_DIR/profiles/$2" ]]; then    # JP: skip if profile not already up 
         (   # subshell
-        . "$STATE_DIR/profiles/$2"
+        . "$STATE_DIR/profiles/$2"	# we source profile in order to obtain INTERFACE
         rm "$STATE_DIR/profiles/$2"
         set_iface down "$INTERFACE" "$2"
 		)
