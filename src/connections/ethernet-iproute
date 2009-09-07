@@ -20,12 +20,13 @@ ethernet_up() {
     report_debug ethernet_iproute_up ifup
     set_interface up "$INTERFACE"
 
+
     if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
        report_iproute "No connection"
     fi
      
     if checkyesno "${AUTH8021X:-no}"; then 
-        . "${SUBR_DIR}/8021x"
+        . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
 
@@ -47,7 +48,7 @@ ethernet_up() {
     case "$IP" in
     dhcp)
         # Clear remaining pid files. 
-        rm -f "/var/run/dhcpcd-${INTERFACE}".{pid,cache} >/dev/null 2>&1
+        rm -f "/var/run/dhcpcd-$INTERFACE".{pid,cache} >/dev/null 2>&1
 
         # If using own dns, tell dhcpcd to NOT replace resolv.conf
         [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
@@ -61,7 +62,7 @@ ethernet_up() {
     static)
         if [[ -n "$ADDR" ]]; then
             report_debug ethernet_iproute_up ip addr add "$ADDR/24" brd + dev "$INTERFACE"
-            if ! ip addr add "${ADDR}/24" brd + dev "$INTERFACE"; then
+            if ! ip addr add "$ADDR/24" brd + dev "$INTERFACE"; then
                 report_iproute "Could not configure interface"
             fi
         fi
@@ -73,7 +74,7 @@ ethernet_up() {
         fi
         ;;
       *)
-        report_iproute "Profile error: IP must be either 'dhcp' or 'static'"
+        report_iproute "IP must be either 'dhcp' or 'static'"
         ;;
     esac
 
@@ -91,7 +92,7 @@ ethernet_up() {
     if [[ -n "$HOSTNAME" ]]; then
         report_debug ethernet_iproute_up hostname "$HOSTNAME"
         if ! hostname "$HOSTNAME"; then
-            report_iproute "Cannot set hostname"
+            report_iproute "Cannot set hostname to $HOSTNAME"
         fi
     fi
 

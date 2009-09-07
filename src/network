@@ -93,7 +93,7 @@ all_resume()
     done
 }
 
-# profile_up profile
+# profile_up profile [literal essid]
 #   put all profiles up
 #
 profile_up()
@@ -102,11 +102,15 @@ profile_up()
     # Keep inside subshell so that options from one profile don't cross to others
     # exit 1 used in a subshell is effectively exiting a new process
     [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
+
 	local PROFILE="$1"	# save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
     
     load_profile "$PROFILE" || exit 1
 
-    check_profile "$PROFILE" && report_fail "$PROFILE already connected" &&  exit 1
+    if check_profile "$PROFILE"; then
+		report_fail "$PROFILE already connected"
+		exit 1
+	fi
 
     # NETWORKS_EXCLUSIVE, rc.conf: Profiles are globally mutually exclusive
     # EXCLUSIVE, network.d/profile: Individual profile is mutually exclusive
@@ -116,13 +120,13 @@ profile_up()
 
     report_try "$PROFILE up"
     
-    case $(check_iface $INTERFACE) in
+    case $(check_iface "$INTERFACE") in
         up)
-            if checkyesno $CHECK; then
+            if checkyesno "$CHECK"; then
                 report_fail "Interface $INTERFACE already in use"
                 exit 1
             else
-                interface_down $INTERFACE || exit 1
+                interface_down "$INTERFACE" || exit 1
                 load_profile "$PROFILE"
             fi
         ;;
@@ -223,19 +227,19 @@ profile_down()
 # Check if variable is a member of an array
 inarray()
 {
-search="$1"
-shift 
-for item in "$@"; do
-    if [[ "$item" == "$search" ]]; then
-        return 0
-    fi
-done
-return 1
+	local item search="$1"
+	shift 
+	for item in "$@"; do
+		if [[ "$item" == "$search" ]]; then
+			return 0
+		fi
+	done
+	return 1
 }
 
 quirk() {
-inarray "$1" "${QUIRKS[@]}"
-return $?
+	inarray "$1" "${QUIRKS[@]}"
+	return $?
 }
 
 # interface_down interface
@@ -375,7 +379,7 @@ set_interface()
 #
 checkyesno()
 {
-    local _value="${1}"
+    local _value="$1"
     #debug "checkyesno: $1 is set to $_value."
     case "$_value" in
 

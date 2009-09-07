@@ -18,7 +18,7 @@ case "$1" in
         done
 
         # $NET env var is passed from the kernel boot line
-        [ ! "$NETWORKS_MENU_TIMEOUT" ] && NETWORKS_MENU_TIMEOUT=5 
+        [[ -z "$NETWORKS_MENU_TIMEOUT" ]] && NETWORKS_MENU_TIMEOUT=5 
         
         if [[ "$NET" = "menu" ]]; then
             if /usr/bin/netcfg-menu "$NETWORKS_MENU_TIMEOUT"; then
@@ -26,7 +26,7 @@ case "$1" in
                 add_daemon net-profiles
                 exit 0
             fi
-        elif [[ "$NET" ]]; then
+        elif [[ -n "$NET" ]]; then
             if /usr/bin/netcfg2 -c "$NET"; then
                 echo "$NET" > "$STATE_DIR/net-profiles"        # JP: user may want to disconnect profile by calling net-profiles stop
                 add_daemon net-profiles
@@ -45,7 +45,7 @@ case "$1" in
                         break   # if netcfg-menu was called but failed: exit for loop
                         ;;
                     *) # Either interface or profile
-                        if [ "$network" = "${network#!}" ]; then # otherwise profile
+                        if [[ "$network" = "${network#!}" ]]; then # otherwise profile
                             if /usr/bin/netcfg2 -c "$network"; then
                                 echo "$network" > "$STATE_DIR/net-profiles"       # JP: user may want to disconnect profile by calling net-profiles stop
                                 add_daemon net-profiles
@@ -66,7 +66,7 @@ case "$1" in
 
         # shutdown any profiles started by netcfg (or from NET_PROFILES in rc.conf)
         # JP: only attempt to disconnect the profiles _this daemon_ was told to control
-        cat "${state_DIR}/net-profiles" 2>/dev/null | xargs -d'\n' /usr/bin/netcfg2 down  # JP: use xargs in case any of the profile names contain spaces etc
+        cat "$STATE_DIR/net-profiles" 2>/dev/null | xargs -d'\n' /usr/bin/netcfg2 down  # JP: use xargs in case any of the profile names contain spaces etc
         rm -f "$STATE_DIR/net-profiles"
         rm_daemon net-profiles
         ;;

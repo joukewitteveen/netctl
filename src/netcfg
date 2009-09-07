@@ -86,7 +86,7 @@ case "$1" in
     -*|--*) 
         usage;;
     *)  
-        if [ -n "$1" ]; then
+        if [[ -n "$1" ]]; then
             profile_up "$1"
         else
             usage

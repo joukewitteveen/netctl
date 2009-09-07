@@ -10,26 +10,26 @@ i=0
 # JP: change for prof to while read prof to avoid assumption that profile names are always single tokens (no spaces etc.)
 while read prof; do
     # if there is a profile called "main", Use as default
-    [ "$prof" = "main" ] && DEFAULT=$prof
+    [ "$prof" = "main" ] && DEFAULT="main"
     unset DESCRIPTION           # JP: we can''t sandbox the sourced profiles, because we need to expose profiles[]
     . "$PROFILE_DIR/$prof"
     profiles[$i]="$prof"
-    i=$((i+1))
+    let i++
     profiles[$i]="$DESCRIPTION" # JP: this will usually have spaces and must be quoted
-    i=$((i+1))
+    let i++
 done < <(list_profiles | sort)  # JP: re-use list_profiles instead of duplicating it; avoid subshell we'd get by piping it to the while read...
 
-if [ ${#profiles} -eq 0 ]; then
+if [[ ${#profiles} -eq 0 ]]; then
     exit_err "No profiles were found in $PROFILE_DIR"
 fi
 
-[ "$NETWORKS_MENU_DEFAULT" ] && DEFAULT="$NETWORKS_MENU_DEFAULT"
+[[ -n "$NETWORKS_MENU_DEFAULT" ]] && DEFAULT="$NETWORKS_MENU_DEFAULT"
 # if no default yet, use the first entry
-[ "$DEFAULT" = "" ] && DEFAULT="${profiles[0]}"
+[[ -z "$DEFAULT" ]] && DEFAULT="${profiles[0]}"
 ANSWER=$(mktemp --tmpdir menu.XXXXXXXX) || exit 1
 
 # Set timeout
-if [ "$1" = "" ]; then
+if [ -z "$1" ]]; then
     TIMEOUT="0"
 else
     TIMEOUT="$1"

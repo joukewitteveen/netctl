@@ -19,8 +19,8 @@ wireless_up() {
     load_profile "$1"
     [[ -n "$2" ]] && ESSID="$2"              # JP: use the literal ESSID (though currently we only interpret wireless-dbus ESSIDs as regexps)
 
-    . "${SUBR_DIR}/8021x"
-    . "${SUBR_DIR}/wireless"
+    . "$SUBR_DIR/8021x"
+    . "$SUBR_DIR/wireless"
 
     # If rfkill is specified, enable device.
     if [[ -n "$RFKILL_NAME" ]]; then
@@ -33,7 +33,7 @@ wireless_up() {
     fi
 
     # Check if interface exists
-    if [[ ! -e /sys/class/net/"$INTERFACE" ]]; then
+    if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
         if ! echo "$INTERFACE" | fgrep -q ":"; then
             report_fail "interface $INTERFACE does not exist"
             return 1
@@ -79,7 +79,7 @@ wireless_up() {
     fi
   
     # Manually set iwconfig options
-    if [[ "$IWCONFIG" ]]; then
+    if [[ -n "$IWCONFIG" ]]; then
         report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG        
         iwconfig "$INTERFACE" $IWCONFIG
     fi
@@ -113,7 +113,7 @@ wireless_up() {
         fi
         
         report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
-        if ! eval iwconfig $INTERFACE $WEP_OPTS; then
+        if ! eval "iwconfig \"$INTERFACE\" $WEP_OPTS"; then
             report_fail "Could not set wireless configuration."
             return 1
         fi
@@ -149,6 +149,8 @@ wireless_up() {
         # Generate configuration
         if [[ "${#KEY}" -eq 64 ]]; then
             echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> "$WPA_CONF/wpa.conf"
+            # JP: formerly I had  { \nssid=\"$ESSID\" \nproto=WPA \nkey_mgmt=WPA-PSK \npsk=$KEY \n}
+            # JP: is what's above better?
         elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> "$WPA_CONF/wpa.conf"; then
             report_fail "Configuration generation failed."
             cat "$WPA_CONF/wpa.conf" >&2
@@ -169,7 +171,7 @@ wireless_up() {
         fi
         ;;
     wpa-config)
-        . "${SUBR_DIR}/8021x"
+        . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
         report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
@@ -187,7 +189,7 @@ wireless_up() {
     
     conn=ethernet
     checkyesno "${IPROUTE:-no}" && conn=ethernet-iproute
-    if ! "${CONN_DIR}/$conn" up "$1"; then
+    if ! "$CONN_DIR/$conn" up "$1"; then
         wireless_down "$1" YES
         return 1
     fi
@@ -196,7 +198,7 @@ wireless_up() {
 wireless_down() {
     local PROFILE="$1" NOETHERNETDOWN="$2"
     load_profile "$PROFILE"
-    . "${SUBR_DIR}/8021x"
+    . "$SUBR_DIR/8021x"
     if ! checkyesno "$NOETHERNETDOWN"; then
         conn=ethernet
         checkyesno "${IPROUTE:-no}" && conn=ethernet-iproute
