@@ -136,7 +136,7 @@ wpa_supplicant_scan_info() {
     [[ -z "$INTERFACE" ]] && return 1
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
-    wpa_supplicant -B -i"$INTERFACE" -Dwext -C/var/run/wpa_supplicant -P/var/run/wpa_supplicant.pid
+    wpa_supplicant -B -i"$INTERFACE" -Dwext -C/var/run/wpa_supplicant -P/var/run/wpa_supplicant.pid || return 1
     wpa_cli -i "$INTERFACE" scan &> /dev/null
     sleep 2.5
     wpa_cli -i "$INTERFACE" scan_results |
@@ -169,8 +169,11 @@ wpa_supplicant_scan_info() {
 set_rf_state() {
     local INTERFACE="$1" state="$2" PROFILE="$3"
 
-    [[ $RFKILL == "hard" ]] && report_fail "Cannot set state on hardware rfkill switch"
-    local path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME")
+    if [[ "$RFKILL" == "hard" ]]
+        report_fail "Cannot set state on hardware rfkill switch"
+        return 1
+    fi
+    local path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
     case "$state" in
         up)
             echo 1 > "$path/state"
@@ -200,12 +203,13 @@ get_rf_path() {
         fi
         report_fail "no rfkill switch available on interface $INTERFACE"
     fi
+    return 1
 }
 
 get_rf_state() {
     local INTERFACE="$1" PROFILE="$2" path state
 
-    path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME")
+    path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
     state=$(cat "$path/state")
 
     case "$state" in

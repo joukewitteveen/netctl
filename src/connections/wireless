@@ -11,12 +11,14 @@ wireless_up() {
     . "$SUBR_DIR/wireless"
 
     if [[ -n "$RFKILL" ]]; then
-        if [[ ! "$(get_rf_state "$INTERFACE")" == "up" ]]; then
+        local state=$(get_rf_state "$INTERFACE") || return 1
+        if [[ "$state" != "up" ]]; then
             if [[ "$RFKILL" == "soft" ]]; then
                 set_rf_state "$INTERFACE" up
                 sleep 1
             else
                 report_fail "radio is disabled on $INTERFACE"
+                return 1
             fi
         fi
     fi
@@ -218,7 +220,7 @@ wireless_down() {
     # Any reason why a hardware switch should be considered on interface down?
     if [[ "$RFKILL" == "soft" ]]; then
         . "$SUBR_DIR/wireless"
-        set_rf_state "$INTERFACE" down
+        set_rf_state "$INTERFACE" down || return 1
     fi
 }
 

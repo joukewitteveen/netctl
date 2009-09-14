@@ -28,7 +28,6 @@ usage()
     echo "-v, version        Output version information and exit"
     echo "    all-resume     Resume previously suspended profiles and reconnect them"
     echo "    all-suspend    Store a list of current running profiles and suspend them"
-    exit 1
 }
 
 # TODO: Re-add ROOT check and rewrite with getopts from BashFAQ
@@ -38,7 +37,8 @@ case "$1" in
         version
         exit 0;;
     --help|-h|help)
-        usage;;
+        usage
+        exit 0;;
     list|-l)
         echo "Available Profiles"
         echo "------------------"
@@ -84,12 +84,14 @@ case "$1" in
     all-suspend)
         all_suspend;;
     -*|--*)
-        usage;;
+        usage
+        exit 1;;
     *)
         if [[ -n "$1" ]]; then
             profile_up "$1"
         else
             usage
+            exit 1
         fi
         ;;
 esac

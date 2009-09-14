@@ -267,8 +267,8 @@ check_iface() {
         else
             echo "up"
         fi
-        exit 0
         )
+        return 0
     else
         return 1
     fi
