@@ -31,15 +31,15 @@ function report_warn {
 }
 
 function report_notify {
-	true
+    true
 }
 
 function report_debug {
-	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
+    checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
 }
 
 function report_try {
-	# JP: this needs -n option
+    # JP: this needs -n option
     echo -n ":: $*"
     REPORT_TRYING=1
 }
@@ -47,7 +47,7 @@ function report_try {
 function report_fail {
     if [[ -n "$*" ]]; then
         if [[ -n "$REPORT_TRYING" ]]; then
-			# JP: this needs -n option
+            # JP: this needs -n option
             echo -n "- $*"
             REPORT_TRYING=
             echo "[fail]"
@@ -62,9 +62,9 @@ function report_fail {
 
 function report_success {
     if [[ -n "$*" ]]; then
-		# JP: this needs -n option
+        # JP: this needs -n option
         echo -n "- $*"
-		REPORT_TRYING=
+        REPORT_TRYING=
     fi
     echo "[done]"
 }
@@ -107,18 +107,18 @@ checkyesno()
 
 
 function load_hooks() {
-	### Load any +x files in $HOOKS_DIR and $USERHOOKS_DIR
-	local hook
-	for hook in $(find -L "$HOOKS_DIR/" "$USERHOOKS_DIR/$hook" -maxdepth 1 -type f -executable -printf '%P\n' | sort -u); do
-		# if there's an executable hook of this name in USERHOOKS_DIR, we only load it
-		if [ -x "$USERHOOKS_DIR/$hook" ]; then
-			source "$USERHOOKS_DIR/$hook"
-		else
-			source "$HOOKS_DIR/$hook"
-		fi
-	done
+    ### Load any +x files in $HOOKS_DIR and $USERHOOKS_DIR
+    local hook
+    for hook in $(find -L "$HOOKS_DIR/" "$USERHOOKS_DIR/$hook" -maxdepth 1 -type f -executable -printf '%P\n' | sort -u); do
+        # if there's an executable hook of this name in USERHOOKS_DIR, we only load it
+        if [ -x "$USERHOOKS_DIR/$hook" ]; then
+            source "$USERHOOKS_DIR/$hook"
+        else
+            source "$HOOKS_DIR/$hook"
+        fi
+    done
 }
 
 load_hooks
 
-
+# vim: ft=sh ts=4 et sw=4:

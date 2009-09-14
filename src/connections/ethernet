@@ -157,5 +157,5 @@ ethernet_status() {
 
 ethernet_$1 "$2"
 exit $?
-# vim: set ts=4 et sw=4:
 
+# vim: ft=sh ts=4 et sw=4:

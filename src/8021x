@@ -3,7 +3,7 @@
 wpa_check()
 {
     local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}"
-    
+
     while [[ $timeout -lt "$TIMEOUT" ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if [[ $timeout -lt 2 ]]; then
@@ -11,7 +11,7 @@ wpa_check()
         else
             eval $(wpa_cli -i "$INTERFACE" status | fgrep "wpa_state=")
         fi
-        [[ "$wpa_state" = "COMPLETED" ]] 
+        [[ "$wpa_state" = "COMPLETED" ]]
         ) && return 0
         sleep 1
         let timeout++
@@ -20,10 +20,10 @@ wpa_check()
     # wpa_cli -i "$INTERFACE" terminate >/dev/null 2>&1   # callers sometimes called stop_wpa, which does more but seems redundant
                                                         # termination should either be handled properly here, or by callers
     stop_wpa "$INTERFACE"
-    return 1 
+    return 1
 }
 
-start_wpa() 
+start_wpa()
 {
     local INTERFACE="$1" WPA_CONF="$2"
     shift 2
@@ -31,7 +31,7 @@ start_wpa()
 
     wpa_supplicant -B -P "/var/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -c "$WPA_CONF" $WPA_OPTS
     sleep 1
-    
+
     if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
         return 1
     fi
@@ -39,7 +39,7 @@ start_wpa()
 
 stop_wpa()
 {
-    wpa_cli -i "$1" terminate &> /dev/null 
+    wpa_cli -i "$1" terminate &> /dev/null
     sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
                     # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
     if [[ -f "/var/run/wpa_supplicant_$1.pid" ]]; then
@@ -47,4 +47,4 @@ stop_wpa()
     fi
 }
 
-# vim: set ts=4 et sw=4 ft=sh:
+# vim: ft=sh ts=4 et sw=4:

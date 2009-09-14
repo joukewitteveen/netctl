@@ -22,4 +22,5 @@ ppp_down() {
 
 ppp_$1 "$2"
 exit $?
-# vim: set ts=4 et sw=4:
+
+# vim: ft=sh ts=4 et sw=4:

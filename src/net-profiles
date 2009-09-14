@@ -18,8 +18,8 @@ case "$1" in
         done
 
         # $NET env var is passed from the kernel boot line
-        [[ -z "$NETWORKS_MENU_TIMEOUT" ]] && NETWORKS_MENU_TIMEOUT=5 
-        
+        [[ -z "$NETWORKS_MENU_TIMEOUT" ]] && NETWORKS_MENU_TIMEOUT=5
+
         if [[ "$NET" = "menu" ]]; then
             if /usr/bin/netcfg-menu "$NETWORKS_MENU_TIMEOUT"; then
                 mv "$STATE_DIR"/{menu,net-profiles}         # JP: user may want to disconnect profile by calling net-profiles stop
@@ -32,7 +32,7 @@ case "$1" in
                 add_daemon net-profiles
                 exit 0
             fi
-        else 
+        else
             # No NET= passed at boot, go to NETWORKS=()
             for network in "${NETWORKS[@]}"; do
                 case "$network" in
@@ -55,7 +55,7 @@ case "$1" in
                         ;;
                 esac
             done
-        fi            
+        fi
 
         exit_err "No profile started."       # JP: don't add_daemon unless we were successful (above)
         ;;
@@ -79,4 +79,4 @@ case "$1" in
         exit_stderr "Usage: $0 {start|stop|restart}"
 esac
 
-# vim: set ts=4 et sw=4:
+# vim: ft=sh ts=4 et sw=4:

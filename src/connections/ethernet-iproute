@@ -15,7 +15,7 @@ ethernet_up() {
         if ! echo "$INTERFACE" | fgrep -q ":"; then
             report_iproute "Interface $INTERFACE does not exist"
         fi
-    fi  
+    fi
 
     report_debug ethernet_iproute_up ifup
     set_interface up "$INTERFACE"
@@ -24,8 +24,8 @@ ethernet_up() {
     if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
        report_iproute "No connection"
     fi
-     
-    if checkyesno "${AUTH8021X:-no}"; then 
+
+    if checkyesno "${AUTH8021X:-no}"; then
         . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
@@ -35,25 +35,25 @@ ethernet_up() {
             report_fail "wpa_supplicant did not start, possible configuration error"
             return 1
         fi
-        
+
         if ! wpa_check "$INTERFACE"; then
             # ignore quirk nodown---is that appropriate? or should we just use report_iproute?
             # this adds a flush call as well---is that appropriate?
             set_interface forcedown "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
-        fi 
+        fi
     fi
 
     case "$IP" in
     dhcp)
-        # Clear remaining pid files. 
+        # Clear remaining pid files.
         rm -f "/var/run/dhcpcd-$INTERFACE".{pid,cache} >/dev/null 2>&1
 
         # If using own dns, tell dhcpcd to NOT replace resolv.conf
         [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
-        
-        report_debug ethernet_iproute_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"       
+
+        report_debug ethernet_iproute_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
         dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
         if [[ "$PIPESTATUS" -ne 0 ]]; then
             report_iproute "DHCP IP lease attempt failed"
@@ -80,8 +80,8 @@ ethernet_up() {
 
     if [[ -n "$IPCFG" ]]; then
         for line in "${IPCFG[@]}"; do
-        
-            report_debug ethernet_iproute_up ip "$line"            
+
+            report_debug ethernet_iproute_up ip "$line"
             if ! ip $line; then
                 report_iproute "Could not configure interface ($line)."
             fi
@@ -98,7 +98,7 @@ ethernet_up() {
 
     # Generate a new resolv.conf
     if [[ -n "$DNS" ]]; then
-        : >/etc/resolv.conf 
+        : >/etc/resolv.conf
         [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
         [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
 
@@ -118,7 +118,7 @@ ethernet_down() {
             dhcpcd -qx "$INTERFACE" &>/dev/null
         fi
     fi
-    
+
     report_debug ethernet_iproute_down if_down
     # ignore quirk nodown---is that appropriate?
     # this adds a flush call as well---is that appropriate?

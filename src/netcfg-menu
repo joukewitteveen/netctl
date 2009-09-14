@@ -41,24 +41,24 @@ dialog --timeout "$TIMEOUT" --default-item "$DEFAULT" \
     13 50 6 "${profiles[@]}" 2> "$ANSWER"
 
 ret=$?
-        
+
 case $ret in
     1) ;; # Cancel - do nothing
-    255) # timeout - use default 
+    255) # timeout - use default
         profile_up "$DEFAULT"       # JP: use profile_up and catch $?
         ret=$?
         if [[ $ret -eq 0 ]]; then echo "$DEFAULT" > "$STATE_DIR/menu"; fi
-        ;; 
+        ;;
     0)  # User selection
         profile_up "$(cat "$ANSWER")"
         ret=$?
         if [[ $ret -eq 0 ]]; then mv "$ANSWER" "$STATE_DIR/menu"; fi
-        ;; 
+        ;;
     *)  # Shouldnt happen
         exit_err "Abnormal ret code from dialog: $ret"
-        ;; 
+        ;;
 esac
 rm -f "$ANSWER"     # JP: add -f
 exit $ret           # JP: exit with caught $?
 
-# vim: set ts=4 et sw=4:
+# vim: ft=sh ts=4 et sw=4:

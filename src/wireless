@@ -221,6 +221,4 @@ get_rf_state() {
     esac
 }
 
-
-# vim: set ts=4 et sw=4 ft=sh:
-
+# vim: ft=sh ts=4 et sw=4:

@@ -28,7 +28,7 @@ case "$1" in
                 fi
                 unset auto
             fi
-        done       
+        done
         ;;
     stop)
         if ck_daemon net-auto; then
@@ -48,4 +48,4 @@ case "$1" in
         exit_stderr "Usage: $0 {start|stop|restart}"
 esac
 
-# vim: set ts=4 et sw=4:
+# vim: ft=sh ts=4 et sw=4:

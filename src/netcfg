@@ -13,7 +13,7 @@ usage()
 {
     version
     echo "Usage:"
-    echo "      Start specified profile:    netcfg profile " 
+    echo "      Start specified profile:    netcfg profile "
     echo "      Other functions:            netcfg argument profile"
     echo "Arguments:"
     echo "    current        Report currently running profiles"
@@ -23,38 +23,38 @@ usage()
     echo "-h, help           This help message"
     echo "-i, iface-down     Take down profile active on specified interface"
     echo "-l, list           List all available profiles"
-		echo "-r, reconnect      Disconnect and reconnect specified profile"
-		echo "-u, up             Start specified profile"
+    echo "-r, reconnect      Disconnect and reconnect specified profile"
+    echo "-u, up             Start specified profile"
     echo "-v, version        Output version information and exit"
     echo "    all-resume     Resume previously suspended profiles and reconnect them"
     echo "    all-suspend    Store a list of current running profiles and suspend them"
-		exit 1
+    exit 1
 }
 
 # TODO: Re-add ROOT check and rewrite with getopts from BashFAQ
 
 case "$1" in
-    --version|-v|version) 
+    --version|-v|version)
         version
-				exit 0;;
-    --help|-h|help) 
+        exit 0;;
+    --help|-h|help)
         usage;;
-		list|-l)
-				echo "Available Profiles"
-				echo "------------------"
-				list_profiles
-				exit 0;;
-		current)
-				if [[ -d "$STATE_DIR/profiles/" ]]; then
-						ls "$STATE_DIR/profiles/"
-						exit 0
-				else
-						exit_stderr "No active profiles."
-				fi;;
+    list|-l)
+        echo "Available Profiles"
+        echo "------------------"
+        list_profiles
+        exit 0;;
+    current)
+        if [[ -d "$STATE_DIR/profiles/" ]]; then
+            ls "$STATE_DIR/profiles/"
+            exit 0
+        else
+            exit_stderr "No active profiles."
+        fi;;
 esac
 
 if [[ $(id -u) -gt 0 ]]; then
-		exit_stderr "This script should be run as root."
+    exit_stderr "This script should be run as root."
 fi
 
 case "$1" in
@@ -63,35 +63,36 @@ case "$1" in
         CHECK="YES"
         profile_up "$2";;
    clean)
-				rm "$STATE_DIR/interfaces"/* 2> /dev/null
-				rm "$STATE_DIR/profiles"/* 2> /dev/null
-				rm "$STATE_DIR/suspend"/* 2> /dev/null
-				rm "$STATE_DIR/last_profile" 2> /dev/null
+        rm "$STATE_DIR/interfaces"/* 2> /dev/null
+        rm "$STATE_DIR/profiles"/* 2> /dev/null
+        rm "$STATE_DIR/suspend"/* 2> /dev/null
+        rm "$STATE_DIR/last_profile" 2> /dev/null
         killall wpa_supplicant 2> /dev/null
         killall dhcpcd 2> /dev/null
-        ;;	
-    -d|down) 
+        ;;
+    -d|down)
         profile_down "$2";;
-    -i|iface-down) 
+    -i|iface-down)
         interface_down "$2";;
-    -a|all-down) 
-        all_down;; 
-		-r|reconnect)
-				profile_down "$2"
-				profile_up "$2";;
+    -a|all-down)
+        all_down;;
+    -r|reconnect)
+        profile_down "$2"
+        profile_up "$2";;
     all-resume)
         all_resume;;
     all-suspend)
         all_suspend;;
-    -*|--*) 
+    -*|--*)
         usage;;
-    *)  
+    *)
         if [[ -n "$1" ]]; then
             profile_up "$1"
         else
             usage
         fi
-        ;;  
+        ;;
 esac
 exit $?
-# vim: set ts=2 noet:
+
+# vim: ft=sh ts=4 et sw=4:

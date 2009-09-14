@@ -235,5 +235,5 @@ wireless_status() {
 
 wireless_$1 "$2" "$3"
 exit $?
-# vim: set ts=4 et sw=4:
 
+# vim: ft=sh ts=4 et sw=4:
