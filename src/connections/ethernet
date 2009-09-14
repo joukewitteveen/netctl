@@ -12,7 +12,7 @@ ethernet_up() {
     fi
 
     report_debug ethernet_up ifup
-    set_interface up-old "$INTERFACE"
+    bring_interface up-old "$INTERFACE"
 
     # don't think it's possible to detect carrier using ifconfig alone (at least, not without ifdown/ifupping the interface)
     if [[ $(cat "/sys/class/net/$INTERFACE/carrier" 2>/dev/null) -ne 1 ]]; then   # gives err if iface inactive (i.e. ifdown)
@@ -32,7 +32,7 @@ ethernet_up() {
         if ! wpa_check "$INTERFACE"; then
             # ignore quirk nodown---is that appropriate?
             # this adds a flush call as well---is that appropriate?
-            set_interface forcedown-old "$INTERFACE"
+            bring_interface forcedown-old "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
         fi
@@ -79,7 +79,7 @@ ethernet_up() {
                 # JP: don't we want to add this to all the aborts?
                 # ignore quirk nodown---is that appropriate?
                 # this adds a flush call as well---is that appropriate?
-                set_interface forcedown-old "$INTERFACE"
+                bring_interface forcedown-old "$INTERFACE"
                 report_fail "Adding gateway $GATEWAY failed."
                 return 1
             fi
@@ -145,7 +145,7 @@ ethernet_down() {
     report_debug ethernet_down ifdown
     # ignore quirk nodown---is that appropriate?
     # this adds a flush call as well---is that appropriate?
-    set_interface forcedown-old "$INTERFACE"
+    bring_interface forcedown-old "$INTERFACE"
 }
 
 # Returns status of profile - is it still functional?

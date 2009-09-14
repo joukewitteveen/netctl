@@ -333,7 +333,7 @@ set_iface() {
     fi
 }
 
-set_interface()
+bring_interface()
 {
     INTERFACE="$2"
     case "$1" in
