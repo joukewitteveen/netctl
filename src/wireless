@@ -84,46 +84,6 @@ find_ap() {
 
 # Return a filename containing a list of network APs and ESSIDs found (sorted by decreasing signal strength)
 # list_networks interface
-list_networks()
-{
-    local INTERFACE="$1" essids
-    # temp file used, as keeping ESSID's with spaces in their name in arrays
-    # is hard, obscure and kinda nasty. This is simpler and clearer.
-
-    [[ -z "$INTERFACE" ]] && return 1
-    essids=$(mktemp --tmpdir essid.XXXXXXXX)
-
-
-    wpa_supplicant -B -i$INTERFACE -Dwext -C/var/run/wpa_supplicant -P/var/run/wpa_supplicant.pid
-    wpa_cli -i "$INTERFACE" scan &> /dev/null
-    sleep 2.5
-    wpa_cli -i "$INTERFACE" scan_results |
-        grep -v "^Selected" |
-        grep -v "^bssid" |
-        sort -rn -k3 |
-        sort -u -k5 |
-        sort -rn -k3 |
-        cut -f1,5  > "$essids"
-
-    # Fields are tab delimited
-    # Remove extraneous output from wpa_cli
-    # Sort by strength
-    # Remove duplicates
-    # Re-sort by strength as the removal disorders the list
-    # Cut to the AP/essid fields only
-
-    kill $(cat /var/run/wpa_supplicant.pid)
-
-    # File of 0 length, ie. no ssid's.
-    if [[ ! -s "$essids" ]]; then
-        rm -f "$essids"
-        return 1
-    fi
-
-    echo $essids
-    return 0
-}
-
 list_networks() {
     wpa_supplicant_scan_info "$1" 1,5
 }
