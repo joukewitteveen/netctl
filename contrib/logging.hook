@@ -14,17 +14,17 @@ NETCFG_LOG="${NETCFG_LOG-local0}"
 
 
 function report_log {
-	if [[ -n "$NETCFG_LOG" ]]; then
-		local caller level="$1"
-		shift
-		case "$0" in 
-			net-auto|netcfg-auto-*) caller=net-auto;;
-			net-profiles) caller=net-profiles;;
-			net-rename) caller=net-rename;;
-			*) caller=netcfg;;
-		esac
-		logger -p "${NETCFG_LOG}.$level" -t "$caller" -- "$*" 
-	fi
+    if [[ -n "$NETCFG_LOG" ]]; then
+        local caller level="$1"
+        shift
+        case "$0" in
+            net-auto|netcfg-auto-*) caller=net-auto;;
+            net-profiles) caller=net-profiles;;
+            net-rename) caller=net-rename;;
+            *) caller=netcfg;;
+        esac
+        logger -p "${NETCFG_LOG}.$level" -t "$caller" -- "$*"
+    fi
 }
 
 
@@ -36,23 +36,23 @@ function report_err {
 function report_warn {
     report_log warning "$*"
     # printhl "$*"
-	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
+    checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
 }
 
 
 
 function report_notify {
-	report_log notice "$*"
-	# print "$*" >&2
-	checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
+    report_log notice "$*"
+    # print "$*" >&2
+    checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
 }
 
 function report_debug {
-	if checkyesno "$NETCFG_DEBUG"; then
-		echo "DEBUG: $*" >&2
-	else
-		report_log debug "$*"
-	fi
+    if checkyesno "$NETCFG_DEBUG"; then
+        echo "DEBUG: $*" >&2
+    else
+        report_log debug "$*"
+    fi
 }
 
 
@@ -82,9 +82,10 @@ function report_fail {
 function report_success {
     if [[ -n "$*" ]]; then
         stat_append "- $*"
-		REPORT_TRYING=
+        REPORT_TRYING=
     fi
     report_log notice "${*:-succeeded}"
     stat_done
 }
 
+# vim: ft=sh ts=4 et sw=4:

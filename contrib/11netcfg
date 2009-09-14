@@ -4,41 +4,42 @@ source /usr/lib/pm-utils/functions
 source /etc/pm/config.d/netcfg
 
 suspend_netcfg() {
-	case $NETCFG_SUSPEND in
-		daemons)
-			stopservice net-profiles
-			stopservice net-auto
-		;;
-		retain|*)
-			netcfg all-suspend
-		;;
-	esac
+    case $NETCFG_SUSPEND in
+        daemons)
+            stopservice net-profiles
+            stopservice net-auto
+        ;;
+        retain|*)
+            netcfg all-suspend
+        ;;
+    esac
 }
 
 resume_netcfg() {
-	case $NETCFG_SUSPEND in
-		daemons)
-			restartservice net-profiles
-			restartservice net-auto
-			;;
-		retain|*)
-			netcfg all-resume
-			;;
-	esac
+    case $NETCFG_SUSPEND in
+        daemons)
+            restartservice net-profiles
+            restartservice net-auto
+            ;;
+        retain|*)
+            netcfg all-resume
+            ;;
+    esac
 }
 
 if [ -x /usr/bin/netcfg2 ]; then
-	case "$1" in
-		hibernate|suspend)
-			suspend_netcfg
-			;;
-		thaw|resume)
-			resume_netcfg
-			;;
-		*)
-			;;
-	esac
+    case "$1" in
+        hibernate|suspend)
+            suspend_netcfg
+            ;;
+        thaw|resume)
+            resume_netcfg
+            ;;
+        *)
+            ;;
+    esac
 fi
 
 exit $?
 
+# vim: ft=sh ts=4 et sw=4:
