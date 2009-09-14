@@ -10,14 +10,14 @@ load_profile()
 {
     [[ -z "$1" ]] && return 1
     if [[ ! -f "$PROFILE_DIR/$1" ]]; then
-        report_fail "Profile \"$1\" does not exist"
+        report_err "Profile \"$1\" does not exist"
         return 1
     fi
     report_debug "Loading profile $1"
     . "$PROFILE_DIR/$1"
     report_debug "Configuring interface $INTERFACE"
     if [[ -z "$INTERFACE" ]]; then
-        report_fail "Profile missing an interface to configure"
+        report_err "Profile missing an interface to configure"
         return 1
     fi
     if [[ -f "$IFACE_DIR/$INTERFACE" ]]; then
@@ -26,7 +26,7 @@ load_profile()
         . "$PROFILE_DIR/$1" # we want profile settings to override, so need to source profile again
     fi
     if [[ ! -f "$CONN_DIR/$CONNECTION" ]]; then
-        report_fail "$CONNECTION is not a valid connection, check spelling or look at examples"
+        report_err "$CONNECTION is not a valid connection, check spelling or look at examples"
         return 1
     fi
 }
@@ -104,12 +104,12 @@ profile_up()
     # exit 1 used in a subshell is effectively exiting a new process
     [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
 
-    local PROFILE="$1"  # save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
+    local status PROFILE="$1"   # save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
 
     load_profile "$PROFILE" || exit 1
 
     if check_profile "$PROFILE"; then
-        report_fail "$PROFILE already connected"
+        report_err "$PROFILE already connected"
         exit 1
     fi
 
@@ -121,20 +121,30 @@ profile_up()
 
     report_try "$PROFILE up"
 
-    case $(check_iface "$INTERFACE") in
-        up)
-            if checkyesno "$CHECK"; then
-                report_fail "Interface $INTERFACE already in use"
-                exit 1
-            else
-                interface_down "$INTERFACE" || exit 1
-                load_profile "$PROFILE"
-            fi
-        ;;
+    status=$(check_iface "$INTERFACE")
+    report_debug "status reported to profile_up as: $status"
+    case "$status" in
         external)
             report_fail "Interface $INTERFACE externally controlled"
             exit 1
-        ;;
+            ;;
+        disabled)
+            report_fail "Interface $INTERFACE is disabled"
+            exit 1
+            ;;
+        "")
+            ;;
+        *)
+            if checkyesno "$CHECK"; then
+                report_fail "Interface $INTERFACE already in use"
+                exit 1
+
+            # not necessary to sandbox this call or reload PROFILE afterwards
+            elif ! interface_down "$INTERFACE"; then
+                report_fail
+                exit 1
+            fi
+            ;;
     esac
 
     if ! ( eval $PRE_UP ); then     # JP: sandbox the eval so variables don't bleed into current function
@@ -186,12 +196,18 @@ profile_down()
     (
     [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
 
-    local PROFILE="$1"  # save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
+    local status PROFILE="$1"   # save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
 
     load_profile "$PROFILE" || exit 1
 
-    if ! check_profile "$PROFILE"; then
-        report_fail "Profile not connected"
+    status=$(check_iface "$INTERFACE")
+    report_debug "status reported to profile_down as: $status"
+
+    if [[ "$status" != "$PROFILE" ]]; then
+        # if interface not available to be controlled by netcfg, then
+        # any profiles should have been removed by check_iface
+        # else we get here if another profile is running
+        report_err "Profile not connected"
         exit 1
     fi
 
@@ -337,7 +353,7 @@ set_interface()
             if [ "$1" = old ]; then
                 ifconfig "$INTERFACE" up
             else
-                ip link set dev "$INTERFACE" up
+                ip link set dev "$INTERFACE" up &>/dev/null         # man ip is inconsistent about whether to use "dev"
             fi
             sleep "${UP_SLEEP:-2}"
         ;;
@@ -347,14 +363,14 @@ set_interface()
                 return 1
             fi
             if [ "${1%-old}" != "$1" ]; then
-                ## ?
+                ifconfig "$INTERFACE" 0.0.0.0
                 if ! quirk nodown || [ "$1" = forcedown-old ]; then
                     ifconfig "$INTERFACE" down
                 fi
             else
                 ip addr flush dev "$INTERFACE" &>/dev/null
                 if ! quirk nodown || [ "$1" = forcedown ]; then
-                    ip link set dev "$INTERFACE" down &>/dev/null
+                    ip link set dev "$INTERFACE" down &>/dev/null   # man ip is inconsistent about whether to use "dev"
                 fi
             fi
         ;;
