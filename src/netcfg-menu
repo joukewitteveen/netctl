@@ -11,11 +11,9 @@ i=0
 while read prof; do
     # if there is a profile called "main", Use as default
     [[ "$prof" = "main" ]] && DEFAULT="main"
-    unset DESCRIPTION           # JP: we can''t sandbox the sourced profiles, because we need to expose profiles[]
-    . "$PROFILE_DIR/$prof"
     profiles[$i]="$prof"
     let i++
-    profiles[$i]="$DESCRIPTION" # JP: this will usually have spaces and must be quoted
+    profiles[$i]=$(. "$PROFILE_DIR/$prof"; echo "$DESCRIPTION")
     let i++
 done < <(list_profiles | sort)  # JP: re-use list_profiles instead of duplicating it; avoid subshell we'd get by piping it to the while read...
 

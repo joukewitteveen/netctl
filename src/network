@@ -14,7 +14,7 @@ load_profile()
         return 1
     fi
     report_debug "Loading profile $1"
-    . "$PROFILE_DIR/$1"
+    INTERFACE=$(. "$PROFILE_DIR/$1"; echo "$INTERFACE")
     report_debug "Configuring interface $INTERFACE"
     if [[ -z "$INTERFACE" ]]; then
         report_err "Profile missing an interface to configure"
@@ -23,8 +23,8 @@ load_profile()
     if [[ -f "$IFACE_DIR/$INTERFACE" ]]; then
         report_debug "Interface level configuration enabled: $IFACE_DIR/$INTERFACE"
         . "$IFACE_DIR/$INTERFACE"
-        . "$PROFILE_DIR/$1" # we want profile settings to override, so need to source profile again
     fi
+    . "$PROFILE_DIR/$1" # we want profile settings to override, so need to source profile again
     if [[ ! -f "$CONN_DIR/$CONNECTION" ]]; then
         report_err "$CONNECTION is not a valid connection, check spelling or look at examples"
         return 1
@@ -55,10 +55,8 @@ interface_suspend()
 
     find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
     | while read prof; do
-        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-        # we just need to clear INTERFACE which is all we care about
-        unset INTERFACE
-        . "$STATE_DIR/profiles/$prof"
+        # the pipe to "while read" will create a subshell
+        INTERFACE=$(. "$STATE_DIR/profiles/$prof"; echo "$INTERFACE")
         if [[ "$1" == all || "$1" == "$INTERFACE" ]]; then
             report_notify "suspending interface $INTERFACE with profile $prof"
             cp "$STATE_DIR/profiles/$prof" "$STATE_DIR/suspend/"
@@ -82,10 +80,8 @@ all_resume()
     report_debug all_resume "$@"
     find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
     | while read prof; do
-        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-        # we just need to clear INTERFACE which is all we care about
-        unset INTERFACE
-        . "$STATE_DIR/suspend/$prof"
+        # the pipe to "while read" will create a subshell
+        INTERFACE=$(. "$STATE_DIR/suspend/$prof"; echo "$INTERFACE")
         if [[ $# -eq 0 || ! " $* " =~ " $INTERFACE " ]]; then
             report_notify "resuming interface $INTERFACE with profile $prof"
             profile_up "$prof"
@@ -175,10 +171,8 @@ profile_up()
     local iface="$INTERFACE"
     find "$STATE_DIR/suspend/" -maxdepth 1 -type f -printf '%f\n' \
     | while read prof; do
-        # the pipe to "while read" will create a subshell, so sourced variables will already be in a sandbox
-        # we just need to clear INTERFACE which is all we care about
-        unset INTERFACE
-        . "$STATE_DIR/suspend/$prof"
+        # the pipe to "while read" will create a subshell
+        INTERFACE=$(. "$STATE_DIR/suspend/$prof"; echo "$INTERFACE")
         if [[ "$iface" == "$INTERFACE" ]]; then
             rm "$STATE_DIR/suspend/$prof"
         fi
@@ -312,19 +306,16 @@ check_profile() {
 #   Set profile state, either up or down
 #
 set_profile() {
+    local INTERFACE
     if [[ "$1" == "up" ]]; then
-        (   # subshell creates sandbox for sourced variables
-        . "$PROFILE_DIR/$2"     # we source profile in order to obtain INTERFACE
+        INTERFACE=$(. "$PROFILE_DIR/$2"; echo "$INTERFACE")
         cp "$PROFILE_DIR/$2" "$STATE_DIR/profiles/"
         echo "$2" > "$STATE_DIR/last_profile"
         set_iface up "$INTERFACE" "$2"
-        )
     elif [[ "$1" == "down" && -f "$STATE_DIR/profiles/$2" ]]; then    # JP: skip if profile not already up
-        (   # subshell
-        . "$STATE_DIR/profiles/$2"  # we source profile in order to obtain INTERFACE
+        INTERFACE=$(. "$STATE_DIR/profiles/$2"; echo "$INTERFACE")
         rm "$STATE_DIR/profiles/$2"
         set_iface down "$INTERFACE" "$2"
-        )
     fi
 }
 
