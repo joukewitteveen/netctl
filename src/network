@@ -296,7 +296,7 @@ list_profiles() {
 #   Return 1 if profile not registered
 #
 check_profile() {
-    [[ -f "$STATE_DIR/profiles/$1" ]] && return 0
+    [[ -f "$STATE_DIR/profiles/$1" && ! -f "$STATE_DIR/suspend/$1" ]] && return 0
     return 1
 }
 
