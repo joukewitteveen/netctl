@@ -13,14 +13,14 @@ wifi_auto()
     report_try "Scanning for networks"
     source $IFACE_DIR/$interface
 
-    if [[ $RFKILL ]]; then
-        set_rf_state $interface up
+    if [[ -n "$RFKILL" ]]; then
+        set_rf_state "$interface" up
     fi
 
 	set_interface up "$interface"	# uses iproute methods---is it there any value to providing option to use ifconfig?
-    networks="$(list_networks $interface)"
+    networks=$(list_networks "$interface")
 
-    if [[ -z $networks ]]; then
+    if [[ -z "$networks" ]]; then
 		set_interface forcedown "$interface"
         exit_fail "- No networks available."
     fi

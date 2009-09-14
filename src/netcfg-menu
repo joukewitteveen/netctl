@@ -29,7 +29,7 @@ fi
 ANSWER=$(mktemp --tmpdir menu.XXXXXXXX) || exit 1
 
 # Set timeout
-if [ -z "$1" ]]; then
+if [[ -z "$1" ]]; then
     TIMEOUT="0"
 else
     TIMEOUT="$1"

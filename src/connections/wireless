@@ -10,10 +10,10 @@ wireless_up() {
     . "$SUBR_DIR/8021x"
     . "$SUBR_DIR/wireless"
 
-    if [[ $RFKILL ]]; then
-        if [[ ! $(get_rf_state $INTERFACE) == "up" ]]; then
-            if [[ $RFKILL == "soft" ]]; then
-                set_rf_state $INTERFACE up
+    if [[ -n "$RFKILL" ]]; then
+        if [[ ! "$(get_rf_state "$INTERFACE")" == "up" ]]; then
+            if [[ "$RFKILL" == "soft" ]]; then
+                set_rf_state "$INTERFACE" up
                 sleep 1
             else
                 report_fail "radio is disabled on $INTERFACE"
@@ -141,7 +141,7 @@ wireless_up() {
         local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out
         # make empty tmp dir with correct permissions, rename it
         rm -rf "$WPA_CONF"
-        mv -f $(mktemp -d) "$WPA_CONF" || return 1
+        mv -f "$(mktemp -d)" "$WPA_CONF" || return 1
         echo "ctrl_interface=/var/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
         echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
 
@@ -216,18 +216,18 @@ wireless_down() {
 
     # Handle wireless kill switches
     # Any reason why a hardware switch should be considered on interface down?
-    if [[ $RFKILL == "soft" ]]; then
+    if [[ "$RFKILL" == "soft" ]]; then
         . "$SUBR_DIR/wireless"
-        set_rf_state $INTERFACE down
+        set_rf_state "$INTERFACE" down
     fi
 }
 
 # Returns status of profile - is it still functional?
 wireless_status() {
-    load_profile $1
-    if [[ "$(iwgetid -r)" -ne $ESSID ]]; then
+    load_profile "$1"
+    if [[ "$(iwgetid -r)" -ne "$ESSID" ]]; then
         return 1
-    elif ! ip link show dev ra0 | fgrep -q "state UP"; then
+    elif ! ip link show dev "$INTERFACE" | fgrep -q "state UP"; then
         return 1
     fi
 

@@ -125,7 +125,7 @@ list_networks()
 }
 
 list_networks() {
-    wpa_supplicant_scan_info $1 1,5
+    wpa_supplicant_scan_info "$1" 1,5
 }
 
 wpa_supplicant_scan_info() {
@@ -136,7 +136,7 @@ wpa_supplicant_scan_info() {
     [[ -z "$INTERFACE" ]] && return 1
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
-    wpa_supplicant -B -i$INTERFACE -Dwext -C/var/run/wpa_supplicant -P/var/run/wpa_supplicant.pid
+    wpa_supplicant -B -i"$INTERFACE" -Dwext -C/var/run/wpa_supplicant -P/var/run/wpa_supplicant.pid
     wpa_cli -i "$INTERFACE" scan &> /dev/null
     sleep 2.5
     wpa_cli -i "$INTERFACE" scan_results |
@@ -145,7 +145,7 @@ wpa_supplicant_scan_info() {
         sort -rn -k3 |
         sort -u -k5 |
         sort -rn -k3 |
-        cut -f$fields  > "$essids"
+        cut -f"$fields"  > "$essids"
 
     # Fields are tab delimited
     # Remove extraneous output from wpa_cli
@@ -154,7 +154,7 @@ wpa_supplicant_scan_info() {
     # Re-sort by strength as the removal disorders the list
     # Cut to the AP/essid fields only
 
-    kill $(cat /var/run/wpa_supplicant.pid)
+    kill "$(cat /var/run/wpa_supplicant.pid)"
 
     # File of 0 length, ie. no ssid's.
     if [[ ! -s "$essids" ]]; then
@@ -167,37 +167,37 @@ wpa_supplicant_scan_info() {
 }
 
 set_rf_state() {
-    local INTERFACE=$1 state=$2 PROFILE=$3
+    local INTERFACE="$1" state="$2" PROFILE="$3"
 
-    source $IFACE_DIR/$INTERFACE
-    [[ $PROFILE ]] && source $PROFILE_DIR/$PROFILE  # profile overrides
+    source "$IFACE_DIR/$INTERFACE"
+    [[ -n "$PROFILE" ]] && source "$PROFILE_DIR/$PROFILE"  # profile overrides
     [[ $RFKILL == "hard" ]] && report_fail "Cannot set state on hardware rfkill switch"
-    path=$(get_rf_path $INTERFACE $RFKILL_NAME)
-    case $state in
+    local path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME")
+    case "$state" in
         up)
-            echo 1 > $path/state
+            echo 1 > "$path/state"
         ;;
         down)
-            echo 0 > $path/state
+            echo 0 > "$path/state"
         ;;
     esac
 }
 
 get_rf_path() {
-    local INTERFACE=$1 RFKILL_NAME=$2
+    local INTERFACE="$1" RFKILL_NAME="$2" path
 
-    if [[ $RFKILL_NAME ]]; then
+    if [[ -n "$RFKILL_NAME" ]]; then
         for path in /sys/class/rfkill/*; do
-            if [[ "$(cat $path/name)" == $RFKILL_NAME ]]; then
-                echo $path
+            if [[ "$(cat "$path/name")" == "$RFKILL_NAME" ]]; then
+                echo "$path"
                 return 0
             fi
         done
         report_fail "no rfkill switch with name $RFKILL_NAME"
     else
-        path=/sys/class/net/$INTERFACE/rfkill
-        if [[ -d $path ]]; then
-            echo $path
+        path="/sys/class/net/$INTERFACE/rfkill"
+        if [[ -d "$path" ]]; then
+            echo "$path"
             return 0
         fi
         report_fail "no rfkill switch available on interface $INTERFACE"
@@ -205,19 +205,19 @@ get_rf_path() {
 }
 
 get_rf_state() {
-    local INTERFACE=$1 PROFILE=$2
-    source $IFACE_DIR/$INTERFACE
-    [[ $PROFILE ]] && source $PROFILE_DIR/$PROFILE  # profile overrides
-    path=$(get_rf_path $INTERFACE $RFKILL_NAME)
-    state=$(cat $path/state)
+    local INTERFACE="$1" PROFILE="$2" path state
+    source "$IFACE_DIR/$INTERFACE"
+    [[ -n "$PROFILE" ]] && source "$PROFILE_DIR/$PROFILE"  # profile overrides
+    path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME")
+    state=$(cat "$path/state")
 
-    case $state in
+    case "$state" in
         0)
             echo "disabled";;
         1)
             echo "enabled";;
         *)
-            echo $state;;
+            echo "$state";;
     esac
 }
 

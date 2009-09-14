@@ -196,7 +196,7 @@ profile_down()
     fi
 
     report_try "$PROFILE down"
-    if [[ "$(get_iface_prof $INTERFACE)" == "external" ]]; then
+    if [[ "$(get_iface_prof "$INTERFACE")" == "external" ]]; then
         report_fail "$interface was connected by another application"
         exit 1
     fi
@@ -354,6 +354,7 @@ set_interface()
             sleep "${UP_SLEEP:-2}"
         ;;
         down|forcedown|down-old|forcedown-old)
+			# should this be placed elsewhere?
 			if ! ( eval $IFACE_DOWN ); then
 				return 1
 			fi

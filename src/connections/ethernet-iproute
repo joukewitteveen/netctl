@@ -128,7 +128,7 @@ ethernet_down() {
 
 # Returns status of profile - is it still functional?
 ethernet_status() {
-    if ! ip link show dev ra0 | fgrep -q "state UP"; then
+    if ! ip link show dev "$INTERFACE" | fgrep -q "state UP"; then
         return 1
     fi
 }
