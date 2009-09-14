@@ -169,8 +169,6 @@ wpa_supplicant_scan_info() {
 set_rf_state() {
     local INTERFACE="$1" state="$2" PROFILE="$3"
 
-    [[ -f "$IFACE_DIR/$INTERFACE" ]] && source "$IFACE_DIR/$INTERFACE"
-    [[ -n "$PROFILE" ]] && source "$PROFILE_DIR/$PROFILE"  # profile overrides
     [[ $RFKILL == "hard" ]] && report_fail "Cannot set state on hardware rfkill switch"
     local path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME")
     case "$state" in
@@ -206,8 +204,7 @@ get_rf_path() {
 
 get_rf_state() {
     local INTERFACE="$1" PROFILE="$2" path state
-    [[ -f "$IFACE_DIR/$INTERFACE" ]] && source "$IFACE_DIR/$INTERFACE"
-    [[ -n "$PROFILE" ]] && source "$PROFILE_DIR/$PROFILE"  # profile overrides
+
     path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME")
     state=$(cat "$path/state")
 
