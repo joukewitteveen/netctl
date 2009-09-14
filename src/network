@@ -88,7 +88,7 @@ all_resume()
         . "$STATE_DIR/suspend/$prof"
         if [[ $# -eq 0 || ! " $* " =~ " $INTERFACE " ]]; then
             report_notify "resuming interface $INTERFACE with profile $prof"
-        profile_up "$prof"
+            profile_up "$prof"
             rm -f "$STATE_DIR/suspend/$prof"   # if profile_up succeeds, it will have already removed this
         fi
     done
@@ -196,7 +196,7 @@ profile_down()
     fi
 
     report_try "$PROFILE down"
-    if [[ "$(get_iface_prof "$INTERFACE")" == "external" ]]; then
+    if [[ "$(check_iface "$INTERFACE")" == "external" ]]; then
         report_fail "$interface was connected by another application"
         exit 1
     fi
@@ -248,40 +248,28 @@ quirk() {
 #
 interface_down()
 {
-    local prof=$(get_iface_prof "$1")
-    profile_down "$prof"
-    return $?
+    local status=$(check_iface "$1")
+    case "$status" in
+        disabled) return 0 ;;
+        "") return 0 ;;
+        external) return 1 ;;
+        *) profile_down "$status" ;;
+    esac
 }
 
 
 ##
 # check_iface interface
-#   Return 0 if interface up
-#   Return 1 if interface down
+#   Return 0 if interface unavailable (in use by a profile or externally, or disabled)
+#   Return 1 if interface down and available to be used
 #
 check_iface() {
     if [[ -f "$STATE_DIR/interfaces/$1" ]]; then (
         . "$STATE_DIR/interfaces/$1"
-        if [[ "$PROFILE" == "external" ]]; then
-            echo "external"
-        else
-            echo "up"
-        fi
+        echo "$PROFILE" # may be: external, disabled, or a profile name
+        return 0
         )
         return 0
-    else
-        return 1
-    fi
-}
-
-# get_iface_prof interface
-#   Echo interface profile and return 0 if up
-#   Return 1 if down.
-#
-get_iface_prof() {
-    if check_iface "$1" &>/dev/null; then
-        . "$STATE_DIR/interfaces/$1"
-        echo "$PROFILE"
     else
         return 1
     fi
