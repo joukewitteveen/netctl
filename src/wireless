@@ -173,7 +173,7 @@ get_rf_state() {
     state=$(cat "$path/state")
 
     case "$state" in
-        0)
+        0|2)
             echo "disabled";;
         1)
             echo "enabled";;
