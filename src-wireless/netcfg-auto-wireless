@@ -11,7 +11,7 @@ wifi_auto()
 {
     local interface="$1"
     report_try "Scanning for networks"
-    source $IFACE_DIR/$interface
+    [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
 
     if [[ -n "$RFKILL" ]]; then
         set_rf_state "$interface" up
