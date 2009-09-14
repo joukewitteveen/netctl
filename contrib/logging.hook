@@ -1,5 +1,5 @@
 ### Sample netcfg hook script for logging/debugging connections
-### To install, make this executable and put it in /etc/network.d/hooks
+### To install, make this executable and put it in /usr/lib/network/hooks
 
 
 . /etc/rc.conf
