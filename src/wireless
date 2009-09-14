@@ -14,28 +14,18 @@ wep_check()
 }
 
 # Check if a particular network is within range
-# find_essid interface essid connection (we treat ESSID as regexp when CONNECTION=wireless-dbus)
+# find_essid interface essid connection
 find_essid() {
-    local INTERFACE="$1" ESSID="$2" CONNECTION="$3" RETRIES=10 try=0 res scanned
+    local INTERFACE="$1" ESSID="$2" RETRIES=10 try=0 res scanned
     while [[ "$try" -lt "$RETRIES" ]]; do
         sleep 0.5
         let try++
-        if [[ "$CONNECTION" == wireless-dbus ]]; then
-            # JP: ESSID is a regexp
-            found=$(
-                    res=$(iwlist "$INTERFACE" scan 2>/dev/null)
-                    [[ -z "$res" ]] && exit 1
-                    # if results were non-null, process them and exit 0
-                    echo "$res" | sed -nr 's/^\s+ESSID:"([^"]*)"$/\1/p' | egrep -xm1 "$ESSID"
-                   )
-        else
-            found=$(
-                    res=$(iwlist "$INTERFACE" scan 2>/dev/null)
-                    [[ -z "$res" ]] && exit 1
-                    # if results were non-null, process them and exit 0
-                    echo "$res" | sed -nr 's/^\s+ESSID:"([^"]*)"$/\1/p' | fgrep -xm1 "$ESSID"
-                   )
-        fi && {
+        found=$(
+                res=$(iwlist "$INTERFACE" scan 2>/dev/null)
+                [[ -z "$res" ]] && exit 1
+                # if results were non-null, process them and exit 0
+                echo "$res" | sed -nr 's/^\s+ESSID:"([^"]*)"$/\1/p' | fgrep -xm1 "$ESSID"
+               ) && {
                 scanned=1
                 report_debug find_essid "\"$found\""
                 # we only bother with at most 5 successful scans

@@ -5,7 +5,6 @@
 wireless_up() {
 
     load_profile "$1"
-    [[ -n "$2" ]] && ESSID="$2"              # JP: use the literal ESSID (though currently we only interpret wireless-dbus ESSIDs as regexps)
 
     . "$SUBR_DIR/8021x"
     . "$SUBR_DIR/wireless"
@@ -64,8 +63,7 @@ wireless_up() {
         if [[ -n "$AP" ]]; then
             ESSID=$(find_ap "$INTERFACE" "$AP")
         else
-            ESSID=$(find_essid "$INTERFACE" "$ESSID" "$CONNECTION") # JP: we could have left $3 null for default of treating ESSID as literal
-                                                                    # but instead we explicitly pass $CONNECTION
+            ESSID=$(find_essid "$INTERFACE" "$ESSID")
         fi
         if [[ $? -gt 0 ]]; then
             report_fail "Wireless network \"$OLDESSID\" not present."

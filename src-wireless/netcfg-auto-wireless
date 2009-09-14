@@ -27,10 +27,9 @@ wifi_auto()
 
     # Loop through all the found essid's, then find a matching profile.
 
-    local found_profile found_essid
+    local found_profile
 
     # JP: add ability to use AP instead of ESSID
-    # JP: also, make ESSIDs in wireless-dbus CONNECTIONS a regexp instead of a literal
     while read ap essid; do
         while read network; do
             (
@@ -42,11 +41,7 @@ wifi_auto()
                                 if [[ "$ap" == "$AP" ]]; then
                                     exit 2
                                 elif [[ -z "$found_profile" ]]; then
-                                    if [[ "$CONNECTION" == wireless-dbus ]]; then
-                                        if expr match "$essid" "^$ESSID\$" 1>/dev/null; then
-                                            exit 1
-                                        fi
-                                    elif [[ "$essid" == "$ESSID" ]]; then
+                                    if [[ "$essid" == "$ESSID" ]]; then
                                         exit 1
                                     fi
                                 fi
@@ -57,11 +52,10 @@ wifi_auto()
             )
             case $? in
                 2) found_profile="$network"
-                    found_essid="$essid"
-                    break 2;;
+                    break 2
+                    ;;
                 1) found_profile="$network"
-                    found_essid="$essid"
-                ;;
+                    ;;
             esac
         done < <(list_profiles)         # avoid subshell we'd get by piping list_profiles to while read
     done < "$networks"                  # avoid subshell; list_networks returns name of a tmp file
@@ -69,7 +63,7 @@ wifi_auto()
 
     if [[ -n "$found_profile" ]]; then
         report_success
-        if profile_up "$found_profile" "$found_essid"; then     # JP: now we pass literal essid to profile_up as $2
+        if profile_up "$found_profile"; then
             exit 0
         else
             set_interface forcedown "$interface"

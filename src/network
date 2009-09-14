@@ -94,7 +94,7 @@ all_resume()
     done
 }
 
-# profile_up profile [literal essid]
+# profile_up profile
 #   put all profiles up
 #
 profile_up()
@@ -143,10 +143,10 @@ profile_up()
         exit 1
     fi
 
-    if ! "$CONN_DIR/$CONNECTION" up "$PROFILE" "$2"; then
+    if ! "$CONN_DIR/$CONNECTION" up "$PROFILE"; then
         report_debug profile_up "connect failed"
         report_fail
-        #  "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2" # JP: should we do this to make sure?
+        #  "$CONN_DIR/$CONNECTION" down "$PROFILE" # JP: should we do this to make sure?
         exit 1
     fi
 
@@ -154,7 +154,7 @@ profile_up()
         report_debug profile_up "POST_UP failed"
         report_fail
         # failing POST_UP will take interface down
-        "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"
+        "$CONN_DIR/$CONNECTION" down "$PROFILE"
         exit 1
     fi
 
@@ -208,7 +208,7 @@ profile_down()
         exit 1
     fi
 
-    if ! "$CONN_DIR/$CONNECTION" down "$PROFILE" "$2"; then
+    if ! "$CONN_DIR/$CONNECTION" down "$PROFILE"; then
         report_debug profile_up "disconnect failed"
         report_fail
         exit 1
