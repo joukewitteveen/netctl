@@ -42,7 +42,7 @@ wireless_up() {
     fi
 
     report_debug wireless_up ifup
-    bring_interface up-old "$INTERFACE" || return 1
+    bring_interface up "$INTERFACE" || return 1
 
     quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
     if quirk preessid; then # ipw3945
@@ -102,7 +102,7 @@ wireless_up() {
         if quirk "predown"; then # madwifi FS#10585
             # ignore quirk nodown---is that appropriate?
             # this adds a flush call as well---is that appropriate?
-            bring_interface forcedown-old "$INTERFACE"
+            bring_interface forcedown "$INTERFACE"
         fi
 
         report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
@@ -114,7 +114,7 @@ wireless_up() {
         fi
 
         if quirk "predown"; then # madwifi FS#10585
-           bring_interface up-old "$INTERFACE"
+           bring_interface up "$INTERFACE"
         fi
 
         report_debug ethernet_up wep_check
@@ -186,9 +186,7 @@ wireless_up() {
         ;;
     esac
 
-    conn=ethernet
-    checkyesno "${IPROUTE:-no}" && conn=ethernet-iproute
-    if ! "$CONN_DIR/$conn" up "$1"; then
+    if ! $CONN_DIR/ethernet up "$1"; then
         wireless_down "$1" YES
         return 1
     fi
@@ -200,9 +198,7 @@ wireless_down() {
     load_profile "$PROFILE"
     . "$SUBR_DIR/8021x"
     if ! checkyesno "$NOETHERNETDOWN"; then
-        conn=ethernet
-        checkyesno "${IPROUTE:-no}" && conn=ethernet-iproute
-        "$CONN_DIR/$conn" down "$PROFILE"
+        "$CONN_DIR/ethernet" down "$PROFILE"
     fi
     report_debug wireless_down stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
@@ -212,7 +208,7 @@ wireless_down() {
     # respects quirk nodown---is that appropriate?
     # wasn't this already called in ethernet_down? but does the call there respect quirk nodown?
     # this adds a flush call as well---is that appropriate?
-    bring_interface down-old "$INTERFACE"
+    bring_interface down "$INTERFACE"
 
     # Handle wireless kill switches
     # Any reason why a hardware switch should be considered on interface down?

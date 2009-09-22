@@ -16,6 +16,7 @@ install:
 	# Libs
 	install -m644 src/{network,wireless,8021x,globals} $(DESTDIR)/usr/lib/network
 	install -m755 src/connections/* ${DESTDIR}/usr/lib/network/connections
+	ln -s $(DESTDIR)/usr/lib/network/connections/ethernet $(DESTDIR)/usr/lib/network/connections/ethernet-iproute 
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# 'Binaries'

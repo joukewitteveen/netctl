@@ -1,0 +1,10 @@
+CONNECTION="wireless"
+DESCRIPTION="A simple WPA encrypted wireless connection using a static IP"
+INTERFACE="wlan0"
+SECURITY="wpa"
+ESSID="MyNetwork"
+KEY="WirelessKey"
+IP="static" # Any other CONNECTION="ethernet" options may be used.
+ADDR="192.168.1.23"
+GATEWAY="192.168.1.1"
+DNS=("192.168.1.1")

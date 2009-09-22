@@ -1,38 +1,48 @@
 #! /bin/bash
 . /usr/lib/network/network
 
+report_iproute()
+{
+    report_fail "$*"
+    bring_interface down "$INTERFACE"
+    exit 1
+}
+
 ethernet_up() {
     load_profile "$1"
 
     if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
         if ! echo "$INTERFACE" | fgrep -q ":"; then
-            report_fail "interface $INTERFACE does not exist"
-            return 1
+            report_iproute "Interface $INTERFACE does not exist"
         fi
     fi
 
-    report_debug ethernet_up ifup
-    bring_interface up-old "$INTERFACE"
+    report_debug ethernet_iproute_up ifup
+    bring_interface up "$INTERFACE"
 
-    # don't think it's possible to detect carrier using ifconfig alone (at least, not without ifdown/ifupping the interface)
-    if [[ $(cat "/sys/class/net/$INTERFACE/carrier" 2>/dev/null) -ne 1 ]]; then   # gives err if iface inactive (i.e. ifdown)
-       report_fail "No connection"
-       return 1
+
+    if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
+        sleep ${CARRIER_TIMEOUT:-2} # Some cards are plain slow to come up. Don't fail immediately.
+        if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
+            report_iproute "No connection"
+        fi
     fi
 
     if checkyesno "${AUTH8021X:-no}"; then
         . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwired"
-        report_debug ethernet_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+
+        report_debug ethernet_iproute_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
         if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
             return 1
         fi
+
         if ! wpa_check "$INTERFACE"; then
-            # ignore quirk nodown---is that appropriate?
+            # ignore quirk nodown---is that appropriate? or should we just use report_iproute?
             # this adds a flush call as well---is that appropriate?
-            bring_interface forcedown-old "$INTERFACE"
+            bring_interface forcedown "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
         fi
@@ -60,102 +70,95 @@ ethernet_up() {
                 return 1
             fi
         fi
-        if [[ -n "$IFOPTS" ]]; then
-            report_debug ethernet_up ifup $IFOPTS
-            ifconfig "$INTERFACE" $IFOPTS
-        fi
         ;;
     static)
-        report_debug ethernet_up ifup $IFOPTS
-        if ! ifconfig "$INTERFACE" $IFOPTS up; then
-            report_fail "Bringing interface up failed."
-            return 1
+        if [[ -n "$ADDR" ]]; then
+            report_debug ethernet_iproute_up ip addr add "$ADDR/24" brd + dev "$INTERFACE"
+            if ! ip addr add "$ADDR/24" brd + dev "$INTERFACE"; then
+                report_iproute "Could not configure interface"
+            fi
         fi
-
-        # bring up the default route (gateway)
-        if [[ -n "$GATEWAY" ]]; then
-            report_debug ethernet_up route add default gw "$GATEWAY"
-            if ! route add default gw "$GATEWAY"; then
-                # JP: don't we want to add this to all the aborts?
-                # ignore quirk nodown---is that appropriate?
-                # this adds a flush call as well---is that appropriate?
-                bring_interface forcedown-old "$INTERFACE"
-                report_fail "Adding gateway $GATEWAY failed."
+        if [[ -n "$IFOPTS" ]]; then
+            if ! ifconfig "$INTERFACE" $IFOPTS up; then
+                report_iproute "Bringing interface up failed."
                 return 1
+            fi
+        fi
+        if [[ -n "$GATEWAY" ]]; then
+            report_debug ethernet_iproute_up ip route add default via "$GATEWAY"
+            if ! ip route add default via "$GATEWAY"; then
+                report_iproute "Adding gateway $GATEWAY failed"
             fi
         fi
         ;;
       *)
-        report_fail "IP must be either 'dhcp' or 'static'."
-        return 1
+        report_iproute "IP must be either 'dhcp' or 'static'"
         ;;
     esac
 
-    # set the hostname
+    if [[ -n "$IPCFG" ]]; then
+        for line in "${IPCFG[@]}"; do
+
+            report_debug ethernet_iproute_up ip "$line"
+            if ! ip $line; then
+                report_iproute "Could not configure interface ($line)."
+            fi
+        done
+    fi
+
+    # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
-        report_debug ethernet_up hostname "$HOSTNAME"
+        report_debug ethernet_iproute_up hostname "$HOSTNAME"
         if ! hostname "$HOSTNAME"; then
-            report_fail "Setting hostname $HOSTNAME failed."
-            return 1
+            report_iproute "Cannot set hostname to $HOSTNAME"
         fi
     fi
 
     # Generate a new resolv.conf
-    if [[ -n "$DNS1" || -n "$DNS" ]]; then
+    if [[ -n "$DNS" ]]; then
+        : >/etc/resolv.conf
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
 
+        for dns in "${DNS[@]}"; do
+            echo "nameserver $dns" >>/etc/resolv.conf
+        done
+    elif [[ -n "$DNS1" ]]; then # support older 'ethernet' syntax.
         : >/etc/resolv.conf
         [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
         [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
         [[ -n "$DNS1" ]]   && echo "nameserver $DNS1" >>/etc/resolv.conf
         [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
-
-        if [[ -n "$DNS" ]]; then
-            for dns in "${DNS[@]}"; do
-                echo "nameserver $dns" >>/etc/resolv.conf
-            done
-        fi
     fi
+
     return 0
 }
 
 ethernet_down() {
     load_profile "$1"
-    case "$IP" in
-    dhcp)
-        if checkyesno "${DHCLIENT:-no}"; then
-            if [[ -f "/var/run/dhclient-${INTERFACE}.pid" ]]; then
-                report_debug ethernet_down kill dhclient
-                kill "$(cat "/var/run/dhclient-${INTERFACE}.pid")"
-            fi
-        else
-            if [[ -f "/var/run/dhcpcd-${INTERFACE}.pid" ]]; then
-                report_debug ethernet_down dhcpcd -qx "$INTERFACE"
-                dhcpcd -qx "$INTERFACE" &>/dev/null
-            fi
-        fi
-        ;;
-    static)
-        if [[ -n "$GATEWAY" ]]; then
-            report_debug ethernet_down route del default gw "$GATEWAY"
-            route del default gw "$GATEWAY"
-        fi
-        ;;
-    esac
 
-    report_debug ethernet_down ifdown
+    if [[ "$IP" == "dhcp" ]]; then
+        if [[ -f "/var/run/dhcpcd-${INTERFACE}.pid" ]]; then
+            report_debug ethernet_iproute_down dhcpcd -qx "$INTERFACE"
+            dhcpcd -qx "$INTERFACE" &>/dev/null
+        fi
+    fi
+
+    report_debug ethernet_iproute_down if_down
     # ignore quirk nodown---is that appropriate?
     # this adds a flush call as well---is that appropriate?
-    bring_interface forcedown-old "$INTERFACE"
+    bring_interface forcedown "$INTERFACE"
+
 }
 
 # Returns status of profile - is it still functional?
 ethernet_status() {
-    if ! ip link show dev ra0 | fgrep -q "state UP"; then
+    if ! ip link show dev "$INTERFACE" | fgrep -q "state UP"; then
         return 1
     fi
 }
 
 ethernet_$1 "$2"
 exit $?
+# vim: set ts=4 et sw=4:
 
-# vim: ft=sh ts=4 et sw=4:

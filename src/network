@@ -337,32 +337,21 @@ bring_interface()
 {
     INTERFACE="$2"
     case "$1" in
-        up|up-old)
+        up)
             if ! ( eval $IFACE_UP ); then
                 return 1
             fi
-            if [ "$1" = old ]; then
-                ifconfig "$INTERFACE" up
-            else
-                ip link set dev "$INTERFACE" up &>/dev/null         # man ip is inconsistent about whether to use "dev"
-            fi
+            ip link set dev "$INTERFACE" up &>/dev/null         # man ip is inconsistent about whether to use "dev"
             sleep "${UP_SLEEP:-2}"
         ;;
-        down|forcedown|down-old|forcedown-old)
+        down|forcedown)
             # should this be placed elsewhere?
             if ! ( eval $IFACE_DOWN ); then
                 return 1
             fi
-            if [ "${1%-old}" != "$1" ]; then
-                ifconfig "$INTERFACE" 0.0.0.0
-                if ! quirk nodown || [ "$1" = forcedown-old ]; then
-                    ifconfig "$INTERFACE" down
-                fi
-            else
-                ip addr flush dev "$INTERFACE" &>/dev/null
-                if ! quirk nodown || [ "$1" = forcedown ]; then
-                    ip link set dev "$INTERFACE" down &>/dev/null   # man ip is inconsistent about whether to use "dev"
-                fi
+            ip addr flush dev "$INTERFACE" &>/dev/null
+            if ! quirk nodown || [ "$1" = forcedown ]; then
+                ip link set dev "$INTERFACE" down &>/dev/null   # man ip is inconsistent about whether to use "dev"
             fi
         ;;
         *)

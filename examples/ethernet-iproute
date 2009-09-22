@@ -1,4 +1,4 @@
-CONNECTION="ethernet-iproute"
+CONNECTION="ethernet"
 DESCRIPTION="A more versatile static ethernet connection using iproute"
 INTERFACE="eth0"
 IP="static"

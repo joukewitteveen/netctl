@@ -119,7 +119,7 @@ wpa_supplicant_scan_info() {
 set_rf_state() {
     local INTERFACE="$1" state="$2" PROFILE="$3"
 
-    if [[ "$RFKILL" == "hard" ]]
+    if [[ "$RFKILL" == "hard" ]]; then
         report_fail "Cannot set state on hardware rfkill switch"
         return 1
     fi
@@ -173,3 +173,4 @@ get_rf_state() {
 }
 
 # vim: ft=sh ts=4 et sw=4:
+
