@@ -156,24 +156,19 @@ wireless_up() {
         ;;
     esac
     
-    case $SECURITY in
-        wep-old|none-old)
-            true
-        ;;
-        *)
-            [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-            report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
-            if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
-                report_fail "wpa_supplicant did not start, possible configuration error"
-                return 1
-            fi
-            report_debug wireless_up wpa_check
-            if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
-                report_fail "WPA Authentication/Association Failed"
-                return 1
-            fi        
-        ;;
-    esac
+    if  [[ ${SECURITY:(-4)} != "-old" ]]; then
+        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
+        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
+            report_fail "wpa_supplicant did not start, possible configuration error"
+            return 1
+        fi
+        report_debug wireless_up wpa_check
+        if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
+            report_fail "WPA Authentication/Association Failed"
+            return 1
+        fi        
+    fi
 
     if ! $CONN_DIR/ethernet up "$1"; then
         wireless_down "$1" YES
