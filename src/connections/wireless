@@ -2,6 +2,10 @@
 . /usr/lib/network/network
 
 
+
+
+
+
 wireless_up() {
 
     load_profile "$1"
@@ -9,6 +13,7 @@ wireless_up() {
     . "$SUBR_DIR/8021x"
     . "$SUBR_DIR/wireless"
 
+    # Enable rfkill if necessary, or fail if it is hardware
     if [[ -n "$RFKILL" ]]; then
         local state=$(get_rf_state "$INTERFACE") || return 1
         if [[ "$state" != "up" ]]; then
@@ -23,19 +28,13 @@ wireless_up() {
     fi
 
     # Check if interface exists
-    if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
-        if ! echo "$INTERFACE" | fgrep -q ":"; then
-            report_fail "interface $INTERFACE does not exist"
-            return 1
-        fi
-    fi
+    is_interface $INTERFACE || report_fail "interface $INTERFACE does not exist"
 
     # Kill any lingering wpa_supplicants.
     report_debug wireless_up stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
 
     # Most drivers (mac80211) need mode set before device is brought up
-    # Drivers generally default to managed, but set this to be sure.
     if [[ $(iwgetid -sm "$INTERFACE") -ne Managed ]]; then
         report_debug wireless_up iwconfig "$INTERFACE" mode managed
         iwconfig "$INTERFACE" mode managed
@@ -43,20 +42,11 @@ wireless_up() {
 
     report_debug wireless_up ifup
     bring_interface up "$INTERFACE" || return 1
-
+    
     quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
-    if quirk preessid; then # ipw3945
-        if [[ -n "$AP" ]]; then             # JP: enable use of AP
-           # JP: Since I don't undertand why the else block below is an eval, I'm not sure
-           # if this command also needs to be eval'd
-            iwconfig "$INTERFACE" mode managed ap "$AP"
-        else
-            # JP: I don't understand why this needs to be an eval. What's wrong with just:
-            # iwconfig "$INTERFACE" mode managed essid "$ESSID"
-            eval "iwconfig \"$INTERFACE\" mode managed essid \"$ESSID\""
-        fi
-    fi
+    quirk preessid && eval "iwconfig \"$INTERFACE\" mode managed essid \"$ESSID\"" # ipw3945
 
+    # Scan for network's existence first
     if checkyesno "${SCAN:-no}"; then
         report_debug wireless_up scanning
         local OLDESSID="$ESSID"
@@ -81,7 +71,7 @@ wireless_up() {
     [[ -z "$SECURITY" ]] && SECURITY="none"
 
     case "$SECURITY" in
-    wep|none)
+    wep-old|none-old)
         # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
         if [[ -z "$WEP_OPTS" ]]; then
             if [[ "$SECURITY" = "wep" ]]; then
@@ -123,8 +113,15 @@ wireless_up() {
             return 1
         fi
         ;;
+    wep)
+        WPA_CONF="$(make_wpa_config $1)"
+        echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"$KEY\" \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
+        ;;
+    none)
+        WPA_CONF="$(make_wpa_config $1)"
+        echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \n}" >> "$WPA_CONF"
+        ;;
     wpa)
-
         # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
         if quirk "wpaessid"; then
             if [[ -n "$AP" ]]; then
@@ -138,51 +135,43 @@ wireless_up() {
             fi
         fi
 
-        local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out
-        # make empty tmp dir with correct permissions, rename it
-        rm -rf "$WPA_CONF"
-        mv -f "$(mktemp -d)" "$WPA_CONF" || return 1
-        echo "ctrl_interface=/var/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
-        echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
-
+        WPA_CONF="$(make_wpa_config $1)"
         # Generate configuration
         if [[ "${#KEY}" -eq 64 ]]; then
-            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> "$WPA_CONF/wpa.conf"
-            # JP: formerly I had  { \nssid=\"$ESSID\" \nproto=WPA \nkey_mgmt=WPA-PSK \npsk=$KEY \n}
-            # JP: is what's above better?
-        elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> "$WPA_CONF/wpa.conf"; then
+            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> "$WPA_CONF"
+        elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> "$WPA_CONF"; then
             report_fail "Configuration generation failed."
-            cat "$WPA_CONF/wpa.conf" >&2
-            return 1
-        fi
-
-        # Connect!
-        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS"
-        if ! start_wpa "$INTERFACE" "$WPA_CONF/wpa.conf" "$WPA_OPTS"; then
-            report_fail "wpa_supplicant did not start, possible configuration error"
-            return 1
-        fi
-        report_debug wireless_up wpa_check
-        if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
-            report_fail "WPA Authentication/Association Failed"
+            cat "$WPA_CONF" >&2
             return 1
         fi
         ;;
     wpa-config)
         . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
-        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
-        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
-            report_fail "wpa_supplicant did not start, possible configuration error"
-            return 1
-        fi
-        report_debug wireless_up wpa_check
-        if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
-            report_fail "WPA Authentication/Association Failed"
-            return 1
-        fi
+        ;;
+    wpa-configsection)
+        . "$SUBR_DIR/8021x"
+        WPA_CONF="$(make_wpa_config $1)"
+        echo -e "$CONFIGSECTION" >> "$WPA_CONF"
+        ;;
+    esac
+    
+    case $SECURITY in
+        wep-old|none-old)
+            true
+        ;;
+        *)
+            [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
+            report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
+            if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
+                report_fail "wpa_supplicant did not start, possible configuration error"
+                return 1
+            fi
+            report_debug wireless_up wpa_check
+            if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
+                report_fail "WPA Authentication/Association Failed"
+                return 1
+            fi        
         ;;
     esac
 
@@ -233,3 +222,4 @@ wireless_$1 "$2" "$3"
 exit $?
 
 # vim: ft=sh ts=4 et sw=4:
+

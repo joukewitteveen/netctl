@@ -333,6 +333,16 @@ set_iface() {
     fi
 }
 
+
+is_interface() {
+    if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
+        if ! echo "$INTERFACE" | fgrep -q ":"; then
+            return 1
+        fi
+    fi
+    return 0
+}
+
 bring_interface()
 {
     INTERFACE="$2"
