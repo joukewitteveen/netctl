@@ -25,11 +25,11 @@ wpa_check()
 
 start_wpa()
 {
-    local INTERFACE="$1" WPA_CONF="$2"
-    shift 2
+    local INTERFACE="$1" WPA_CONF="$2" WPA_DRIVER="$3"
+    shift 3
     local WPA_OPTS="$*"
 
-    wpa_supplicant -B -P "/var/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -c "$WPA_CONF" $WPA_OPTS
+    wpa_supplicant -B -P "/var/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" -c "$WPA_CONF" $WPA_OPTS
     sleep 1
 
     if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
@@ -48,15 +48,16 @@ stop_wpa()
 }
 
 # $1 is profile
-make_wpa_config() {
+make_wpa_config() { 
     local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out
+        
     # make empty tmp dir with correct permissions, rename it
     rm -rf "$WPA_CONF"
     mv -f "$(mktemp -d)" "$WPA_CONF" || return 1
     echo "ctrl_interface=/var/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
     echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
+    [[ $WPA_COUNTRY ]] && echo "country=$WPA_COUNTRY" >> "$WPA_CONF/wpa.conf"
     echo "$WPA_CONF/wpa.conf"
 }
 
 # vim: ft=sh ts=4 et sw=4:
-

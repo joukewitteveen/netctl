@@ -115,7 +115,11 @@ wireless_up() {
         ;;
     wep)
         WPA_CONF="$(make_wpa_config $1)"
-        echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"$KEY\" \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
+        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected? 
+            echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
+        else
+            echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
+        fi
         ;;
     none)
         WPA_CONF="$(make_wpa_config $1)"
@@ -151,15 +155,15 @@ wireless_up() {
         ;;
     wpa-configsection)
         . "$SUBR_DIR/8021x"
-        WPA_CONF="$(make_wpa_config $1)"
-        echo -e "$CONFIGSECTION" >> "$WPA_CONF"
+        WPA_CONF="$(make_wpa_config $1)" 
+        echo -e "network={ \n$CONFIGSECTION \n}">> "$WPA_CONF"
         ;;
     esac
     
     if  [[ ${SECURITY:(-4)} != "-old" ]]; then
-        [[ -z "$WPA_OPTS" ]] && WPA_OPTS="-Dwext"
-        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"
-        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_OPTS"; then
+        [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wext"
+        report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
+        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
             return 1
         fi
