@@ -1,18 +1,11 @@
 #! /bin/bash
 . /usr/lib/network/network
+. $SUBR_DIR/8021x
+. $SUBR_DIR/wireless
 
 
 
-
-
-
-wireless_up() {
-
-    load_profile "$1"
-
-    . "$SUBR_DIR/8021x"
-    . "$SUBR_DIR/wireless"
-
+enable_rf() {
     # Enable rfkill if necessary, or fail if it is hardware
     if [[ -n "$RFKILL" ]]; then
         local state=$(get_rf_state "$INTERFACE") || return 1
@@ -26,6 +19,54 @@ wireless_up() {
             fi
         fi
     fi
+}
+
+
+iwconfig_up() {
+
+    quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
+
+    # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
+    if [[ -z "$WEP_OPTS" ]]; then
+        if [[ "$SECURITY" = "wep" ]]; then
+            if [[ -n "$AP" ]]; then
+                WEP_OPTS="ap \"$AP\" key $KEY"
+            else
+                WEP_OPTS="essid \"$ESSID\" key $KEY"
+            fi
+        elif [[ "$SECURITY" = "none" ]]; then
+            if [[ -n "$AP" ]]; then
+                WEP_OPTS="ap \"$AP\""
+            else
+                WEP_OPTS="essid \"$ESSID\""
+            fi
+        fi
+    fi
+
+    quirk "predown" && bring_interface forcedown "$INTERFACE" # madwifi FS#10585
+
+    report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
+
+    if ! iwconfig "$INTERFACE" "$WEP_OPTS"; then
+        report_fail "Could not set wireless configuration."
+        return 1
+    fi
+
+    quirk "predown" && bring_interface up "$INTERFACE" # madwifi FS#10585
+
+    report_debug ethernet_up wep_check
+    if ! wep_check "$INTERFACE" "$TIMEOUT"; then
+        report_fail "WEP Association Failed"
+        return 1
+    fi
+}
+
+wireless_up() {
+
+    PROFILE=$1
+    load_profile "$PROFILE"
+
+    enable_rf || return 1
 
     # Check if interface exists
     is_interface $INTERFACE || report_fail "interface $INTERFACE does not exist"
@@ -42,9 +83,6 @@ wireless_up() {
 
     report_debug wireless_up ifup
     bring_interface up "$INTERFACE" || return 1
-    
-    quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
-    quirk preessid && eval "iwconfig \"$INTERFACE\" mode managed essid \"$ESSID\"" # ipw3945
 
     # Scan for network's existence first
     if checkyesno "${SCAN:-no}"; then
@@ -71,96 +109,41 @@ wireless_up() {
     [[ -z "$SECURITY" ]] && SECURITY="none"
 
     case "$SECURITY" in
-    wep-old|none-old)
-        # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
-        if [[ -z "$WEP_OPTS" ]]; then
-            if [[ "$SECURITY" = "wep" ]]; then
-                if [[ -n "$AP" ]]; then
-                    WEP_OPTS="ap \"$AP\" key $KEY"          # JP: formerly I had "...key open $KEY"; is it correct to omit the 'open'?
-                else
-                    WEP_OPTS="essid \"$ESSID\" key $KEY"          # JP: formerly I had "...key open $KEY"; is it correct to omit the 'open'?
-                fi
-            elif [[ "$SECURITY" = "none" ]]; then
-                if [[ -n "$AP" ]]; then
-                    WEP_OPTS="ap \"$AP\""
-                else
-                    WEP_OPTS="essid \"$ESSID\""
-                fi
-            fi
-        fi
-
-        if quirk "predown"; then # madwifi FS#10585
-            # ignore quirk nodown---is that appropriate?
-            # this adds a flush call as well---is that appropriate?
-            bring_interface forcedown "$INTERFACE"
-        fi
-
-        report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
-        # JP: I don't understand why this needs to be an eval. What's wrong with just:
-        # iwconfig "$INTERFACE" $WEP_OPTS
-        if ! eval "iwconfig \"$INTERFACE\" $WEP_OPTS"; then
-            report_fail "Could not set wireless configuration."
-            return 1
-        fi
-
-        if quirk "predown"; then # madwifi FS#10585
-           bring_interface up "$INTERFACE"
-        fi
-
-        report_debug ethernet_up wep_check
-        if ! wep_check "$INTERFACE" "$TIMEOUT"; then
-            report_fail "WEP Association Failed"
-            return 1
-        fi
+    *-old)
+        report_debug "Using older iwconfig based path"
+        iwconfig_up || return 1
         ;;
     wep)
-        WPA_CONF="$(make_wpa_config $1)"
-        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected? 
+        WPA_CONF="$(make_wpa_config $INTERFACE)"
+        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
             echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
         else
             echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
         fi
         ;;
     none)
-        WPA_CONF="$(make_wpa_config $1)"
+        WPA_CONF="$(make_wpa_config $INTERFACE)"
         echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \n}" >> "$WPA_CONF"
         ;;
     wpa)
-        # Quirk for broken drivers... http://bbs.archlinux.org/viewtopic.php?id=36384
-        if quirk "wpaessid"; then
-            if [[ -n "$AP" ]]; then
-               # JP: Since I don't undertand why the else block below is an eval, I'm not sure
-               # if this command also needs to be eval'd
-               iwconfig "$INTERFACE" ap "$AP"
-            else
-                # JP: I don't understand why this needs to be an eval. What's wrong with just:
-                # iwconfig "$INTERFACE" essid "$ESSID"
-               eval "iwconfig \"$INTERFACE\" essid \"$ESSID\""
-            fi
-        fi
-
-        WPA_CONF="$(make_wpa_config $1)"
-        # Generate configuration
+        WPA_CONF="$(make_wpa_config $INTERFACE)"
         if [[ "${#KEY}" -eq 64 ]]; then
-            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}">> "$WPA_CONF"
-        elif ! echo "$KEY" | wpa_passphrase "$ESSID" >> "$WPA_CONF"; then
-            report_fail "Configuration generation failed."
-            cat "$WPA_CONF" >&2
-            return 1
+            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}" >> "$WPA_CONF"
+        else
+            echo -e "network={ \nssid=\"$ESSID\" \npsk=\"$KEY\"\n}" >> "$WPA_CONF"
         fi
         ;;
     wpa-config)
-        . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
         ;;
     wpa-configsection)
-        . "$SUBR_DIR/8021x"
-        WPA_CONF="$(make_wpa_config $1)" 
+        WPA_CONF="$(make_wpa_config $INTERFACE)"
         echo -e "network={ \n$CONFIGSECTION \n}">> "$WPA_CONF"
         ;;
     esac
-    
+
     if  [[ ${SECURITY:(-4)} != "-old" ]]; then
+        report_debug wireless_up "Configuration generated at $WPA_CONF"
         [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wext"
         report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
         if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
@@ -171,11 +154,11 @@ wireless_up() {
         if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
             report_fail "WPA Authentication/Association Failed"
             return 1
-        fi        
+        fi
     fi
 
-    if ! $CONN_DIR/ethernet up "$1"; then
-        wireless_down "$1" YES
+    if ! $CONN_DIR/ethernet up "$PROFILE"; then
+        wireless_down "$PROFILE" YES
         return 1
     fi
 }
@@ -184,18 +167,20 @@ wireless_up() {
 wireless_down() {
     local PROFILE="$1" NOETHERNETDOWN="$2"
     load_profile "$PROFILE"
-    . "$SUBR_DIR/8021x"
+
     if ! checkyesno "$NOETHERNETDOWN"; then
         "$CONN_DIR/ethernet" down "$PROFILE"
     fi
-    report_debug wireless_down stop_wpa "$INTERFACE"
-    stop_wpa "$INTERFACE"
-    [[ "$SECURITY" == "wpa" ]] && rm -rf "${TMPDIR:-/tmp}/wpa.${PROFILE// /}" # remove tmp wpa config
-    report_debug wireless_down iwconfig "$INTERFACE" essid off key off
-    iwconfig "$INTERFACE" essid off key off &> /dev/null
-    # respects quirk nodown---is that appropriate?
-    # wasn't this already called in ethernet_down? but does the call there respect quirk nodown?
-    # this adds a flush call as well---is that appropriate?
+
+    if [[ ${SECURITY:(-4)} == "-old" ]]; then
+        report_debug wireless_down iwconfig "$INTERFACE" essid off key off
+        iwconfig "$INTERFACE" essid off key off &> /dev/null
+    else
+        report_debug wireless_down stop_wpa "$INTERFACE"
+        stop_wpa "$INTERFACE"
+        rm -rf ${TMPDIR:-/tmp}/wpa.$INTERFACE
+    fi
+
     bring_interface down "$INTERFACE"
 
     # Handle wireless kill switches

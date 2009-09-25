@@ -47,10 +47,10 @@ stop_wpa()
     fi
 }
 
-# $1 is profile
-make_wpa_config() { 
-    local WPA_CONF="${TMPDIR:-/tmp}/wpa.${1// /}" # substitute spaces out
-        
+# $1 is interface
+make_wpa_config() {
+    local WPA_CONF="${TMPDIR:-/tmp}/wpa.${INTERFACE}" # substitute spaces out
+
     # make empty tmp dir with correct permissions, rename it
     rm -rf "$WPA_CONF"
     mv -f "$(mktemp -d)" "$WPA_CONF" || return 1
@@ -61,3 +61,4 @@ make_wpa_config() {
 }
 
 # vim: ft=sh ts=4 et sw=4:
+
