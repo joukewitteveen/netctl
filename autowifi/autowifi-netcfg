@@ -1,0 +1,78 @@
+
+. /usr/lib/network/network
+. /usr/lib/network/8021x
+. /usr/lib/network/wireless
+
+interface=$1; shift
+
+AUTOWIFI="/home/iphitus/netcfg/autowifi/autowifi/autowifi-wpactrl/autowifi"
+ACTION_SCRIPT="/home/iphitus/netcfg/autowifi/autowifi-netcfg-action"
+PIDFILE="/var/run/wpa_supplicant_${interface}.pid"
+EXTRA_AUTOWIFI_OPTIONS="$*"
+
+if [[ -z $interface ]]; then
+    echo "No interface specified"
+    exit 1
+fi
+
+# Load interface specific config
+[[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
+
+if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
+    set_rf_state "$interface" up || exit $?
+fi
+
+WPA_CONF="$(make_wpa_config $interface)"
+
+for profile in $(list_profiles); do
+    echo $profile
+    (
+    load_profile $profile
+
+    [[ $CONNECTION != "wireless" ]] && exit 1
+    [[ $INTERFACE != $interface ]] && exit 1
+
+    case $SECURITY in
+    wep)
+        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
+            config="ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0"
+        else
+            config="ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0"
+        fi
+        ;;
+    none)
+        config="ssid=\"$ESSID\" \nkey_mgmt=NONE"
+        ;;
+    wpa)
+        if [[ "${#KEY}" -eq 64 ]]; then
+            config="ssid=\"$ESSID\" \npsk=$KEY"
+        else
+            config="ssid=\"$ESSID\" \npsk=\"$KEY\""
+        fi
+        ;;
+    wpa-configsection)
+        echo -e "$CONFIGSECTION">> "$WPA_CONF"
+        ;;
+    *)
+        continue
+        ;;
+    esac
+
+    echo -e "network={ \n$config \nid_str=\"$profile\" \n}" >> $WPA_CONF
+    )
+done
+
+
+[[ -z $WPA_DRIVER ]] && WPA_DRIVER="wext"
+
+# Kill any existing wpa_supplicant on this interface
+stop_wpa "$interface"
+
+if start_wpa $interface $WPA_CONF $WPA_DRIVER $WPA_OPTS; then
+    if $AUTOWIFI -i ${interface} -P {PIDFILE} -a ${ACTION_SCRIPT} ${EXTRA_AUTOWIFI_OPTIONS}; then
+        exit 0
+    fi
+fi
+
+exit 1
+

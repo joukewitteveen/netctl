@@ -1,0 +1,54 @@
+#! /bin/bash
+
+interface=$1
+ssid=$2
+profile=$3
+action=$4
+
+. /usr/lib/network/network
+[[ $profile ]] && load_profile "$profile"
+
+case $action in
+    CONNECT)
+        if [[ -z $profile ]]; then
+            dhcpcd $interface
+            exit $?
+        fi
+        if ! $CONN_DIR/ethernet up "$profile"; then
+            exit 1 # what to do if fail?
+        fi
+
+        set_profile up "$profile"
+
+        if ! ( eval $POST_UP ); then    # JP: sandbox the eval
+            # failing POST_UP will take interface down
+            "$CONN_DIR/$ethernet" down "$profile"
+            exit 1
+        fi
+        ;;
+    DISCONNECT)
+        if [[ -z $profile ]]; then
+            dhcpcd -k $interface
+            exit $?
+        fi
+        if ! ( eval $PRE_DOWN ); then   # JP: sandbox the eval
+            exit 1
+        fi
+        if ! "$CONN_DIR/ethernet" down "$profile"; then
+            exit 1
+        fi
+        if ! ( eval $POST_DOWN ); then  # JP: sandbox the eval
+            exit 1
+        fi
+        set_profile down "$profile"
+        ;;
+    LOST|REESTABLISHED)
+        # Not handled.
+        exit 0
+        ;;
+    *)
+        # ???
+        exit 1
+        ;;
+esac
+
