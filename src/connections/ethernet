@@ -40,9 +40,7 @@ ethernet_up() {
         fi
 
         if ! wpa_check "$INTERFACE"; then
-            # ignore quirk nodown---is that appropriate? or should we just use report_iproute?
-            # this adds a flush call as well---is that appropriate?
-            bring_interface forcedown "$INTERFACE"
+            bring_interface down "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
         fi
@@ -145,10 +143,11 @@ ethernet_down() {
     fi
 
     report_debug ethernet_iproute_down if_down
-    # ignore quirk nodown---is that appropriate?
-    # this adds a flush call as well---is that appropriate?
-    bring_interface forcedown "$INTERFACE"
-
+    if [[ "$CONNECTION" == "wireless" ]]; then
+        bring_interface flush "$INTERFACE"
+    else
+        bring_interface down "$INTERFACE"
+    fi
 }
 
 # Returns status of profile - is it still functional?

@@ -43,7 +43,7 @@ iwconfig_up() {
         fi
     fi
 
-    quirk "predown" && bring_interface forcedown "$INTERFACE" # madwifi FS#10585
+    quirk "predown" && bring_interface down "$INTERFACE" # madwifi FS#10585
 
     report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
 
@@ -165,12 +165,10 @@ wireless_up() {
 
 # wireless_down PROFILE [ LEAVE ifconfig up? default no ]
 wireless_down() {
-    local PROFILE="$1" NOETHERNETDOWN="$2"
+    local PROFILE="$1"
     load_profile "$PROFILE"
 
-    if ! checkyesno "$NOETHERNETDOWN"; then
-        "$CONN_DIR/ethernet" down "$PROFILE"
-    fi
+    "$CONN_DIR/ethernet" down "$PROFILE"
 
     if [[ ${SECURITY:(-4)} == "-old" ]]; then
         report_debug wireless_down iwconfig "$INTERFACE" essid off key off

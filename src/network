@@ -351,18 +351,17 @@ bring_interface()
             if ! ( eval $IFACE_UP ); then
                 return 1
             fi
-            ip link set dev "$INTERFACE" up &>/dev/null         # man ip is inconsistent about whether to use "dev"
+            ip link set dev "$INTERFACE" up &>/dev/null
             sleep "${UP_SLEEP:-2}"
         ;;
-        down|forcedown)
-            # should this be placed elsewhere?
+        down|flush)
             if ! ( eval $IFACE_DOWN ); then
                 return 1
             fi
             ip addr flush dev "$INTERFACE" &>/dev/null
-            if ! quirk nodown || [ "$1" = forcedown ]; then
-                ip link set dev "$INTERFACE" down &>/dev/null   # man ip is inconsistent about whether to use "dev"
-            fi
+        ;;&
+        down)
+            ip link set dev "$INTERFACE" down &>/dev/null
         ;;
         *)
             return 1
@@ -371,3 +370,4 @@ bring_interface()
 }
 
 # vim: ft=sh ts=4 et sw=4:
+
