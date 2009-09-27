@@ -64,14 +64,14 @@ make_wpa_config_file() {
 # Requires already loaded profile
 make_wpa_config() {
     case $SECURITY in
-    wep)
+    wep|wep-old)
         if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
             echo "ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0"
         else
             echo "ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0"
         fi
         ;;
-    none)
+    none|none-old)
         echo "ssid=\"$ESSID\" \nkey_mgmt=NONE"
         ;;
     wpa)

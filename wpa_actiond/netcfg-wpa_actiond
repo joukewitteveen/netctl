@@ -5,8 +5,8 @@
 
 interface=$1; shift
 
-AUTOWIFI="/usr/sbin/autowifi"
-ACTION_SCRIPT="/usr/bin/autowifi-netcfg-action"
+AUTOWIFI="/usr/sbin/wpa_actiond"
+ACTION_SCRIPT="/usr/bin/netcfg-wpa_actiond-action"
 PIDFILE="/var/run/wpa_supplicant_${interface}.pid"
 EXTRA_AUTOWIFI_OPTIONS="$*"
 

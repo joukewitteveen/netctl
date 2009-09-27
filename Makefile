@@ -22,6 +22,7 @@ install:
 	# 'Binaries'
 	install -m755 src/netcfg $(DESTDIR)/usr/bin/netcfg2
 	install -m755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
+	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} $(DESTDIR)/usr/bin
 	# Daemons
 	install -m755 src/net-profiles src/net-rename $(DESTDIR)/etc/rc.d
 
