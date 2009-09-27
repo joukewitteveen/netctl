@@ -5,8 +5,8 @@
 
 interface=$1; shift
 
-AUTOWIFI="/home/iphitus/netcfg/autowifi/autowifi/autowifi-wpactrl/autowifi"
-ACTION_SCRIPT="/home/iphitus/netcfg/autowifi/autowifi-netcfg-action"
+AUTOWIFI="/usr/sbin/autowifi"
+ACTION_SCRIPT="/usr/bin/autowifi-netcfg-action"
 PIDFILE="/var/run/wpa_supplicant_${interface}.pid"
 EXTRA_AUTOWIFI_OPTIONS="$*"
 
@@ -51,10 +51,10 @@ for profile in $(list_profiles); do
         fi
         ;;
     wpa-configsection)
-        echo -e "$CONFIGSECTION">> "$WPA_CONF"
+        config="$CONFIGSECTION"
         ;;
     *)
-        continue
+        exit 1
         ;;
     esac
 
