@@ -1,14 +1,28 @@
-
+#! /bin/bash
 . /usr/lib/network/network
 . /usr/lib/network/8021x
 . /usr/lib/network/wireless
 
-interface=$1; shift
-
 AUTOWIFI="/usr/sbin/wpa_actiond"
 ACTION_SCRIPT="/usr/bin/netcfg-wpa_actiond-action"
-PIDFILE="/var/run/wpa_supplicant_${interface}.pid"
-EXTRA_AUTOWIFI_OPTIONS="$*"
+PIDFILE="/var/run/wpa_actiond_${interface}.pid"
+
+case $1 in
+    help)
+        echo "netcfg-wpa_actiond <interface>"
+        echo "netcfg-wpa_actiond stop <interface>"
+        exit
+        ;;
+    stop)
+        stop_wpa $2
+        kill $(cat $PIDFILE)
+        exit 
+        ;;
+    *)
+        interface=$1; shift
+        EXTRA_AUTOWIFI_OPTIONS="$*"
+        ;;     
+esac
 
 if [[ -z $interface ]]; then
     echo "No interface specified"
@@ -45,7 +59,7 @@ done
 stop_wpa "$interface"
 
 if start_wpa $interface $WPA_CONF $WPA_DRIVER $WPA_OPTS; then
-    if $AUTOWIFI -i ${interface} -P {PIDFILE} -a ${ACTION_SCRIPT} ${EXTRA_AUTOWIFI_OPTIONS}; then
+    if $AUTOWIFI -i ${interface} -P ${PIDFILE} -a ${ACTION_SCRIPT} ${EXTRA_AUTOWIFI_OPTIONS}; then
         exit 0
     fi
 fi

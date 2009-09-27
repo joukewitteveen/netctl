@@ -76,9 +76,9 @@ make_wpa_config() {
         ;;
     wpa)
         if [[ "${#KEY}" -eq 64 ]]; then
-            echo "ssid=\"$ESSID\" \npsk=$KEY"
+            echo "proto=RSN WPA\n ssid=\"$ESSID\" \npsk=$KEY"
         else
-            echo "ssid=\"$ESSID\" \npsk=\"$KEY\""
+            echo "proto=RSN WPA\n ssid=\"$ESSID\" \npsk=\"$KEY\""
         fi
         ;;
     wpa-configsection)
