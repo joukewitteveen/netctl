@@ -5,7 +5,6 @@
 
 AUTOWIFI="/usr/sbin/wpa_actiond"
 ACTION_SCRIPT="/usr/bin/netcfg-wpa_actiond-action"
-PIDFILE="/var/run/wpa_actiond_${interface}.pid"
 
 case $1 in
     help)
@@ -15,13 +14,14 @@ case $1 in
         ;;
     stop)
         stop_wpa $2
-        kill $(cat $PIDFILE)
-        exit 
+        kill $(cat "/var/run/wpa_actiond_${2}.pid")
+        exit
         ;;
     *)
         interface=$1; shift
+        PIDFILE="/var/run/wpa_actiond_${interface}.pid"
         EXTRA_AUTOWIFI_OPTIONS="$*"
-        ;;     
+        ;;
 esac
 
 if [[ -z $interface ]]; then
