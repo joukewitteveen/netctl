@@ -27,15 +27,15 @@ iwconfig_up() {
     quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
 
     # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
-    if [[ -z "$WEP_OPTS" ]]; then
-        if [[ "$SECURITY" = "wep" ]]; then
+    if [[ -z $WEP_OPTS ]]; then
+        if [[ "$SECURITY" = "wep-old" ]]; then
             if [[ -n "$AP" ]]; then
                 WEP_OPTS="ap \"$AP\" key $KEY"
             else
                 WEP_OPTS="essid \"$ESSID\" key $KEY"
             fi
-        elif [[ "$SECURITY" = "none" ]]; then
-            if [[ -n "$AP" ]]; then
+        elif [[ "$SECURITY" = "none-old" ]]; then
+            if [[ -n $AP ]]; then
                 WEP_OPTS="ap \"$AP\""
             else
                 WEP_OPTS="essid \"$ESSID\""
@@ -47,7 +47,7 @@ iwconfig_up() {
 
     report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
 
-    if ! iwconfig "$INTERFACE" "$WEP_OPTS"; then
+    if ! iwconfig "$INTERFACE" $WEP_OPTS; then
         report_fail "Could not set wireless configuration."
         return 1
     fi
@@ -109,37 +109,20 @@ wireless_up() {
     [[ -z "$SECURITY" ]] && SECURITY="none"
 
     case "$SECURITY" in
-    *-old)
-        report_debug "Using older iwconfig based path"
-        iwconfig_up || return 1
-        ;;
-    wep)
-        WPA_CONF="$(make_wpa_config $INTERFACE)"
-        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
-            echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
-        else
-            echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0 \n}" >> "$WPA_CONF"
-        fi
-        ;;
-    none)
-        WPA_CONF="$(make_wpa_config $INTERFACE)"
-        echo -e "network={ \nssid=\"$ESSID\" \nkey_mgmt=NONE \n}" >> "$WPA_CONF"
-        ;;
-    wpa)
-        WPA_CONF="$(make_wpa_config $INTERFACE)"
-        if [[ "${#KEY}" -eq 64 ]]; then
-            echo -e "network={ \nssid=\"$ESSID\" \npsk=$KEY \n}" >> "$WPA_CONF"
-        else
-            echo -e "network={ \nssid=\"$ESSID\" \npsk=\"$KEY\"\n}" >> "$WPA_CONF"
-        fi
-        ;;
-    wpa-config)
-        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
-        ;;
-    wpa-configsection)
-        WPA_CONF="$(make_wpa_config $INTERFACE)"
-        echo -e "network={ \n$CONFIGSECTION \n}">> "$WPA_CONF"
-        ;;
+        *-old)
+            report_debug "Using older iwconfig based path"
+            iwconfig_up || return 1
+            ;;
+        wpa-config)
+            [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
+            ;;
+        none|wep|wpa|wpa-configsection)
+            WPA_CONF="$(make_wpa_config_file $INTERFACE)"
+            echo -e "network={ \n$(make_wpa_config) \n}">> "$WPA_CONF"
+            ;;
+        *)
+            report_fail "Invalid SECURITY setting: $SECURITY"
+            ;;
     esac
 
     if  [[ ${SECURITY:(-4)} != "-old" ]]; then

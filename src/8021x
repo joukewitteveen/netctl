@@ -47,9 +47,10 @@ stop_wpa()
     fi
 }
 
-# $1 is interface
-make_wpa_config() {
-    local WPA_CONF="${TMPDIR:-/tmp}/wpa.${INTERFACE}" # substitute spaces out
+# Requires already loaded profile
+make_wpa_config_file() {
+    local interface=$1
+    local WPA_CONF="${TMPDIR:-/tmp}/wpa.${interface}" # substitute spaces out
 
     # make empty tmp dir with correct permissions, rename it
     rm -rf "$WPA_CONF"
@@ -58,6 +59,35 @@ make_wpa_config() {
     echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
     [[ $WPA_COUNTRY ]] && echo "country=$WPA_COUNTRY" >> "$WPA_CONF/wpa.conf"
     echo "$WPA_CONF/wpa.conf"
+}
+
+# Requires already loaded profile
+make_wpa_config() {
+    case $SECURITY in
+    wep)
+        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
+            echo "ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0"
+        else
+            echo "ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0"
+        fi
+        ;;
+    none)
+        echo "ssid=\"$ESSID\" \nkey_mgmt=NONE"
+        ;;
+    wpa)
+        if [[ "${#KEY}" -eq 64 ]]; then
+            echo "ssid=\"$ESSID\" \npsk=$KEY"
+        else
+            echo "ssid=\"$ESSID\" \npsk=\"$KEY\""
+        fi
+        ;;
+    wpa-configsection)
+        echo "$CONFIGSECTION"
+        ;;
+    *)
+        return 1
+        ;;
+    esac
 }
 
 # vim: ft=sh ts=4 et sw=4:

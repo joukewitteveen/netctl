@@ -22,7 +22,7 @@ if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
     set_rf_state "$interface" up || exit $?
 fi
 
-WPA_CONF="$(make_wpa_config $interface)"
+WPA_CONF="$(make_wpa_config_file $interface)"
 
 for profile in $(list_profiles); do
     echo $profile
@@ -32,31 +32,7 @@ for profile in $(list_profiles); do
     [[ $CONNECTION != "wireless" ]] && exit 1
     [[ $INTERFACE != $interface ]] && exit 1
 
-    case $SECURITY in
-    wep)
-        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
-            config="ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0"
-        else
-            config="ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0"
-        fi
-        ;;
-    none)
-        config="ssid=\"$ESSID\" \nkey_mgmt=NONE"
-        ;;
-    wpa)
-        if [[ "${#KEY}" -eq 64 ]]; then
-            config="ssid=\"$ESSID\" \npsk=$KEY"
-        else
-            config="ssid=\"$ESSID\" \npsk=\"$KEY\""
-        fi
-        ;;
-    wpa-configsection)
-        config="$CONFIGSECTION"
-        ;;
-    *)
-        exit 1
-        ;;
-    esac
+    config=$(make_wpa_config)
 
     echo -e "network={ \n$config \nid_str=\"$profile\" \n}" >> $WPA_CONF
     )
