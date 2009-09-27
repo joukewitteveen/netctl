@@ -1,0 +1,56 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+if [ -z "${WIRELESS_INTERFACE}" ]; then
+    echo "No interface name set. Set it by adding WIRELESS_INTERFACE=\"your_interface\" to rc.conf"
+    exit 1
+fi
+
+case "$1" in
+    start)
+        if ! ck_daemon net-auto-wireless; then
+            exit_stderr "net-auto-wireless has already been started: try \"/etc/rc.d/net-auto-wireless restart\""
+        fi
+        # Ensure any device renaming has occurred as intended
+        for daemon in "${DAEMONS[@]}"; do
+            if [[ "$daemon" = "${daemon#!}" && "$daemon" = "net-rename" ]]; then
+                if ck_daemon net-rename; then
+                    /etc/rc.d/net-rename start
+                fi
+            fi
+        done
+
+        stat_busy "Starting netcfg auto-wireless mode for interface ${WIRELESS_INTERFACE}"
+        /usr/bin/netcfg-wpa_actiond "${WIRELESS_INTERFACE}" >/dev/null
+        if [ $? -eq 0 ]; then
+            add_daemon net-auto-wireless
+            stat_done
+        else
+            stat_fail
+        fi
+        ;;
+    stop)
+        if ! ck_daemon net-auto-wireless; then
+            stat_busy "Stopping netcfg auto-wireless mode for interface ${WIRELESS_INTERFACE}"
+            /usr/bin/netcfg-wpa_actiond stop "${WIRELESS_INTERFACE}" >/dev/null
+            if [ $? -eq 0 ]; then
+                rm_daemon net-auto-wireless
+                stat_done
+            else
+                stat_fail
+            fi
+        fi
+        ;;
+    restart)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+exit 0
+# vim: ft=sh ts=4 et sw=4:

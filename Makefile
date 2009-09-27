@@ -24,7 +24,7 @@ install:
 	install -m755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
 	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} $(DESTDIR)/usr/bin
 	# Daemons
-	install -m755 src/net-profiles src/net-rename $(DESTDIR)/etc/rc.d
+	install -m755 src/net-profiles src/net-rename wpa_actiond/net-auto-wireless $(DESTDIR)/etc/rc.d
 
 install-wireless:
 	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/usr/bin \
