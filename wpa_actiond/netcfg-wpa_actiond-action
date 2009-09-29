@@ -1,17 +1,17 @@
 #! /bin/bash
 
-interface=$1
-ssid=$2
-profile=$3
-action=$4
+interface="$1"
+ssid="$2"
+profile="$3"
+action="$4"
 
 . /usr/lib/network/network
-[[ $profile ]] && load_profile "$profile"
+[[ "$profile" ]] && load_profile "$profile"
 
 case $action in
     CONNECT)
         if [[ -z $profile ]]; then
-            dhcpcd $interface
+            dhcpcd "$interface"
             exit $?
         fi
         if ! $CONN_DIR/ethernet up "$profile"; then
@@ -28,7 +28,7 @@ case $action in
         ;;
     DISCONNECT)
         if [[ -z $profile ]]; then
-            dhcpcd -k $interface
+            dhcpcd -k "$interface"
             exit $?
         fi
         if ! ( eval $PRE_DOWN ); then   # JP: sandbox the eval
