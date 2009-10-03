@@ -354,7 +354,7 @@ bring_interface()
             ip link set dev "$INTERFACE" up &>/dev/null
             sleep "${UP_SLEEP:-2}"
         ;;
-        down|flush)
+        flush)
             if ! ( eval $IFACE_DOWN ); then
                 return 1
             fi
@@ -362,9 +362,6 @@ bring_interface()
         ;;&
         down)
             ip link set dev "$INTERFACE" down &>/dev/null
-        ;;
-        *)
-            return 1
         ;;
     esac
 }

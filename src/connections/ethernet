@@ -148,6 +148,7 @@ ethernet_down() {
     else
         bring_interface down "$INTERFACE"
     fi
+    return 0 
 }
 
 # Returns status of profile - is it still functional?
