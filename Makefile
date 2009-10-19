@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.2.1
+VERSION=2.5.0a1
 VPATH = doc
 
 install:
@@ -35,24 +35,22 @@ install-wireless:
 
 install-docs: docs
 	install -d $(DESTDIR)/usr/share/doc/netcfg/contrib
-	install -m644 doc/*html $(DESTDIR)/usr/share/doc/netcfg/
+	install -m644 docs/*html $(DESTDIR)/usr/share/doc/netcfg/
 	install -m644 contrib/* $(DESTDIR)/usr/share/doc/netcfg/contrib/
 	
-docs: doc/*
-	for doc in $(?); do \
-		pandoc $$doc -o $$doc.html;\
-	done
+docs:
+	cd docs; \
+	./make.sh
 
 tarball: 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
 	mkdir -p netcfg-$(VERSION)
-	cp -r src src-wireless examples contrib man Makefile LICENSE README netcfg-$(VERSION)
+	cp -r src src-wireless wpa_actiond examples contrib man Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
-	mv netcfg-$(VERSION).tar.gz ../
 	rm -rf netcfg-$(VERSION)
 
 
-upload: 
+upload:
 	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
 	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
 

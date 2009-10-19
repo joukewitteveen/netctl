@@ -6,7 +6,9 @@
 ## Description
 This connection method uses wpa_supplicant's dbus interface to configure a wireless network connection.
 
-This connection uses the 'ethernet-iproute' connection after successful association and thus supports all of it's options. 
+This connection uses the 'ethernet' connection after successful association and thus supports all of it's options. 
+
+This is presently unmaintained and unsupported.
 
 ## Options
 INTERFACE (required)

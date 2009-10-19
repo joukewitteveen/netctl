@@ -1,8 +1,8 @@
-% ETHERNET-IPROUTE netcfg manuals 
+% Ethernet connections
 % Arch Linux
 %
 
-# ethernet-iproute Connection manual
+
 ## Description
 This connection method uses the iproute suite of tools and dhcpcd to gain an IP address.
 
@@ -17,6 +17,8 @@ GATEWAY (requires IP of 'static')
 :   Set specified gateway
 IPCFG 
 :   Array of arguments to pass to 'ip'. The power of this options is that it allows both simple and complicated routing configurations, within the framework of netcfg.
+IFOPTS (deprecated, requires IP of 'static')
+:   Arguments to pass to 'ifconfig'. This allows you to use the syntax for the older 'ifconfig' tool. Retained for compatability. 
 ### DNS
 DNS
 :   Array of DNS nameservers. Simply specify the IP's of each of the DNS nameservers. 
@@ -26,12 +28,15 @@ DOMAIN
 :   "domain" line for /etc/resolv.conf
 HOSTNAME
 :   Set the system hostname. Ensure any hostname is correctly referenced in /etc/hosts.
+DNS1, DNS2 (deprecated)
+:   First and second DNS servers for /etc/resolv.conf
 ### DHCP
 DHCP_OPTIONS
 :   String. Any extra arguments to pass to the dhcp client, presently dhcpcd.
 DHCP_TIMEOUT
 :   Integer. Maximum time to try for a DHCP IP. Default is 10 seconds.
-
+DHCLIENT
+:   yes/no. Use dhclient instead of dhcpcd. Defaults to no
 ### 802.11x Authentication
 AUTH8021X 
 :   Use 802.11x authentication. Enable with 'yes'. 
