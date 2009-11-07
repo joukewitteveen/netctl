@@ -15,6 +15,9 @@ case $1 in
     stop)
         stop_wpa $2
         kill $(cat "/var/run/wpa_actiond_${2}.pid")
+        if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
+            set_rf_state "$interface" down || exit $?
+        fi
         exit
         ;;
     *)
@@ -32,6 +35,10 @@ fi
 # Load interface specific config
 [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
 
+if [[ -f "$CONN_DIR/interfaces/$interface" ]]; then
+    netcfg -i $interface
+fi
+
 if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
     set_rf_state "$interface" up || exit $?
 fi
@@ -45,9 +52,11 @@ for profile in $(list_profiles); do
 
     [[ $CONNECTION != "wireless" ]] && exit 1
     [[ $INTERFACE != $interface ]] && exit 1
-
+    # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
+    [[ $SECURITY == "wpa-config" ]] && exit 1 
+    
     config=$(make_wpa_config)
-
+    
     echo -e "network={ \n$config \nid_str=\"$profile\" \n}" >> $WPA_CONF
     )
 done
