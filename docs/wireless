@@ -2,7 +2,7 @@
 % Arch Linux
 %
 
-# 'wireless' Connection manual
+# Wireless options reference
 ## Description
 This connection method uses  wpa_supplicant to configure a wireless network connection. This connection uses the 'ethernet' connection after successful association and thus supports all of it's options. 
 

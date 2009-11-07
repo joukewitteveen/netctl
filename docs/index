@@ -1,0 +1,57 @@
+% netcfg - Profile based network connection tool
+% James Rayner
+% 
+
+# netcfg
+
+## About
+
+netcfg is profile based network connection tool. It can connect to wireless, wired and PPP connections and is easily expanded to support other connection types. 
+
+## Features
+
+* Easy configuration
+* Wireless, wired and ppp connections
+* Wireless roaming and automatic connection (using wpa_actiond/wpa_supplicant)
+* Radio kill switch (rfkill) awareness
+* pm-utils suspend/resume support
+* Execution of commands before/after up/down
+* Wired link detection (using ifplugd)
+* Modern iproute and wpa_supplicant based connectivity
+
+## Download
+
+The latest version is 2.5.0rc1 
+
+Arch users can install netcfg via pacman, it is located in the [core] repository. Testing versions can often be found in the [testing] repository.
+
+    pacman -S netcfg
+
+The source for netcfg can be found on the [Arch Linux ftp](ftp://ftp.archlinux.org/other/netcfg/), or [mirrored here](http://rayner.id.au/netcfg/source/)
+
+[Download latest source (2.5.0rc1)](ftp://ftp.archlinux.org/other/netcfg/netcfg-2.5.0rc1.tar.gz)
+
+### Optional dependencies
+
+* wpa_actiond: Wireless Roaming/autoconnect
+* ifplugd: Wired link detection
+* dialog: Menu support
+
+
+## Documentation
+
+* [Quick Start Guide](http://wiki.archlinux.org/index.php/Network_Profiles)
+* [Features](features.html)
+* [Wireless options reference](wireless.html)
+* [Ethernet options reference](ethernet.html)
+
+## Contact
+
+To report bugs or issues with netcfg, please use the [Arch Linux Bug Tracker](http://bugs.archlinux.org)
+
+To seek help using netcfg, please post on the [Arch Linux Forums](http://bbs.archlinux.org)
+
+To contact James regarding netcfg, please [email](mailto:james@archlinux.org)
+
+
+

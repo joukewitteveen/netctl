@@ -1,5 +1,5 @@
 #! /bin/bash
-PAGES=(index ethernet features wireless)
+PAGES=(ethernet features wireless)
 
 for page in ${PAGES[@]}; do
     rm ${page}.html

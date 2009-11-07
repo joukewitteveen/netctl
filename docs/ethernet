@@ -2,6 +2,7 @@
 % Arch Linux
 %
 
+# Ethernet options reference
 
 ## Description
 This connection method uses the iproute suite of tools and dhcpcd to gain an IP address.
