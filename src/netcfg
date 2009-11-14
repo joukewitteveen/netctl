@@ -44,7 +44,7 @@ case "$1" in
         echo "------------------"
         list_profiles
         exit 0;;
-    current)
+    current|-s|status)
         if [[ -d "$STATE_DIR/profiles/" ]]; then
             ls "$STATE_DIR/profiles/"
             exit 0

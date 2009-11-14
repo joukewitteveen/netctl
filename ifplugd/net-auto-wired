@@ -5,7 +5,8 @@
 
 CFG=/etc/ifplugd/ifplugd.conf
 ACTION=/etc/ifplugd/netcfg.action
-PID=$(cat /var/run/ifplugd.$WIRED_INTERFACE)
+PIDFILE=/var/run/ifplugd.$WIRED_INTERFACE.pid
+[[ -f $PIDFILE ]] && PID=$(cat $PIDFILE)
 
 # Source ifplugd configuration
 [ -f $CFG ] && . $CFG
@@ -16,7 +17,9 @@ case "$1" in
     A="`eval echo \$\{ARGS_${WIRED_INTERFACE}\}`"
     [ -z "$A" ] && A="$ARGS"
     [ -z "$PID" ] && /usr/sbin/ifplugd -i $WIRED_INTERFACE -r $ACTION $A
-    if [ $? -gt 0 ]; then
+    # ifplugd may return non-zero, but still succeed if -w is passed, as default in upstream config.
+    sleep 1
+    if [[ ! -f $PIDFILE ]]; then
       stat_fail
     else
       add_daemon net-auto-wired
@@ -25,7 +28,7 @@ case "$1" in
     ;;
   stop)
     stat_busy "Stopping netcfg auto-wired mode for interface ${WIRED_INTERFACE}"
-    [ ! -z "$PID" ] && /usr/sbin/ifplugd -k -i $WIRED_INTERFACE -r $ACTION
+    [ -n "$PID" ] && /usr/sbin/ifplugd -k -i $WIRED_INTERFACE -r $ACTION
     if [ $? -gt 0 ]; then
       stat_fail
     else

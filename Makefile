@@ -8,6 +8,7 @@ install:
 	            $(DESTDIR)/var/run/network/{interfaces,profiles} \
 	            $(DESTDIR)/usr/bin/ $(DESTDIR)/etc/rc.d/ \
 				$(DESTDIR)/usr/share/man/{man5,man8} \
+				$(DESTDIR)/etc/ifplugd
 				
 	# Documentation
 	install -m644 examples/* $(DESTDIR)/etc/network.d/examples/
@@ -19,12 +20,13 @@ install:
 	ln -s ethernet $(DESTDIR)/usr/lib/network/connections/ethernet-iproute
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
-	# 'Binaries'
+	# Scripts
 	install -m755 src/netcfg $(DESTDIR)/usr/bin/netcfg2
 	install -m755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
-	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} $(DESTDIR)/usr/bin
+	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} ifplugd/net-auto-wired $(DESTDIR)/usr/bin
+	install -m755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/
 	# Daemons
-	install -m755 src/net-profiles src/net-rename wpa_actiond/net-auto-wireless $(DESTDIR)/etc/rc.d
+	install -m755 src/net-profiles src/net-rename wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
 
 install-wireless:
 	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/usr/bin \
@@ -42,10 +44,10 @@ docs:
 	cd docs; \
 	./make.sh
 
-tarball: 
+tarball: docs 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
 	mkdir -p netcfg-$(VERSION)
-	cp -r src src-wireless wpa_actiond examples contrib man Makefile LICENSE README netcfg-$(VERSION)
+	cp -r src src-wireless ifplugd wpa_actiond examples contrib man Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
 
@@ -54,10 +56,9 @@ upload:
 	md5sum netcfg-$(VERSION)*gz > MD5SUMS.$(VERSION)
 	scp netcfg-$(VERSION)*gz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
 
-clean:
-	rm doc/*html
+clean:	
 	rm *gz
 	rm -rf netcfg-*$(VERSION)
 	rm -rf pkg
 	rm MD5SUMS*
-	
+	rm docs/*html
