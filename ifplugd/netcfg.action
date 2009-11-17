@@ -5,6 +5,7 @@
 . /etc/rc.conf
 . /etc/rc.d/functions
 . /usr/lib/network/network
+shopt -s extglob
 
 case "$2" in
   up)
