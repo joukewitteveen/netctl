@@ -51,7 +51,7 @@ ethernet_up() {
         if checkyesno "${DHCLIENT:-no}"; then
             rm -r "/var/run/dhclient-${INTERFACE}.pid" >/dev/null 2>&1
             report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-$INTERFACE.pid" "$INTERFACE"
-            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-${INTERFACE}.pid" "$INTERFACE"; then
+            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-${INTERFACE}.pid" ${DHCLIENT_OPTIONS} "$INTERFACE"; then
                 report_fail "DHCP IP lease attempt failed."
                 return 1
             fi
