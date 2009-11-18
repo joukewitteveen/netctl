@@ -3,12 +3,11 @@ VERSION=2.5.0rc1
 VPATH = doc
 
 install:
-	install -d $(DESTDIR)/usr/lib/network/{connections,hooks} $(DESTDIR)/etc/network.d/examples \
-				$(DESTDIR)/etc/network.d/hooks \
+	install -d $(DESTDIR)/usr/lib/network/{connections,hooks} \
+				$(DESTDIR)/etc/network.d/{examples,hooks,interfaces} \
+				$(DESTDIR)/etc/rc.d} \
 	            $(DESTDIR)/var/run/network/{interfaces,profiles} \
-	            $(DESTDIR)/usr/bin/ $(DESTDIR)/etc/rc.d/ \
 				$(DESTDIR)/usr/share/man/{man5,man8} \
-				$(DESTDIR)/etc/ifplugd
 				
 	# Documentation
 	install -m644 examples/* $(DESTDIR)/etc/network.d/examples/
@@ -21,12 +20,15 @@ install:
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# Scripts
-	install -m755 src/netcfg $(DESTDIR)/usr/bin/netcfg2
-	install -m755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
+	install -Dm755 src/netcfg $(DESTDIR)/usr/bin/netcfg2
+	install -Dm755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
 	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} ifplugd/net-auto-wired $(DESTDIR)/usr/bin
-	install -m755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/
+	install -Dm755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/netcfg.action
 	# Daemons
-	install -m755 src/net-profiles src/net-rename wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
+	install -m755 src/net-{profiles,rename} wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
+	# Shell Completion
+	install -Dm644 contrib/bash-completion $(DESTDIR)/etc/bash_completion.d/netcfg
+	install -Dm644 contrib/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_netcfg
 
 install-wireless:
 	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/usr/bin \

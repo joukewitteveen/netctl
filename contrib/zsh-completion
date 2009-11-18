@@ -1,0 +1,23 @@
+#compdef netcfg netcfg2=netcfg
+local -a disp
+
+all_profiles() {
+	_path_files -W "/etc/network.d" -g "*(.)"
+}
+
+up_profiles() {
+	_files -W "/var/run/network/profiles"
+}
+
+up_ifaces() {
+	_files -W "/var/run/network/interfaces"
+}
+
+_arguments -C \
+'(- *)-c[Start specified profile if its interface is not currently up]:Network profile:all_profiles' \
+'(- *)-d[Take specified profile down]:Active profiles:up_profiles' \
+'(- *)-a[Take all active profiles down]' \
+'(- *)-i[Take down profile active on specified interface]:Active interfaces:up_ifaces' \
+'(- *)-r[Disconnect and reconnect specified profile]:Active profiles:up_profiles' \
+'(- *)-u[Start specified profile]:Network profile:all_profiles' \
+'(- *)*:Network profile:all_profiles'
