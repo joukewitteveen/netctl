@@ -24,8 +24,10 @@ case "$2" in
     for profile in $(list profiles}; do (
         load_profile $profile
         [[ $INTERFACE != $1 ]] && continue
-        [[ $CONNECTION != "(ethernet|ethernet-iproute)" ]] && continue
-        netcfg $profile && exit 0
+        [[ $CONNECTION != @(ethernet|ethernet-iproute) ]] && continue
+        if [[ $IP == "static" ]]; then
+        	netcfg $profile && exit 0
+		fi
     ) done    
     exit 1
   ;;
