@@ -5,7 +5,7 @@ VPATH = doc
 install:
 	install -d $(DESTDIR)/usr/lib/network/{connections,hooks} \
 				$(DESTDIR)/etc/network.d/{examples,hooks,interfaces} \
-				$(DESTDIR)/etc/rc.d} \
+				$(DESTDIR)/etc/rc.d \
 	            $(DESTDIR)/var/run/network/{interfaces,profiles} \
 				$(DESTDIR)/usr/share/man/{man5,man8} \
 				
