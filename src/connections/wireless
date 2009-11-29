@@ -27,7 +27,7 @@ iwconfig_up() {
     quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
 
     # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
-    if [[ -z $WEP_OPTS ]]; then
+    if [[ -z "$WEP_OPTS" ]]; then
         if [[ "$SECURITY" = "wep-old" ]]; then
             if [[ -n "$AP" ]]; then
                 WEP_OPTS="ap \"$AP\" key $KEY"
@@ -35,7 +35,7 @@ iwconfig_up() {
                 WEP_OPTS="essid \"$ESSID\" key $KEY"
             fi
         elif [[ "$SECURITY" = "none-old" ]]; then
-            if [[ -n $AP ]]; then
+            if [[ -n "$AP" ]]; then
                 WEP_OPTS="ap \"$AP\""
             else
                 WEP_OPTS="essid \"$ESSID\""
@@ -63,7 +63,7 @@ iwconfig_up() {
 
 wireless_up() {
 
-    PROFILE=$1
+    PROFILE="$1"
     load_profile "$PROFILE"
 
     enable_rf || return 1
@@ -140,7 +140,7 @@ wireless_up() {
         fi
     fi
 
-    if ! $CONN_DIR/ethernet up "$PROFILE"; then
+    if ! "$CONN_DIR/ethernet" up "$PROFILE"; then
         wireless_down "$PROFILE" YES
         return 1
     fi
@@ -159,7 +159,7 @@ wireless_down() {
     else
         report_debug wireless_down stop_wpa "$INTERFACE"
         stop_wpa "$INTERFACE"
-        rm -rf ${TMPDIR:-/tmp}/wpa.$INTERFACE
+        rm -rf "${TMPDIR:-/tmp}/wpa.$INTERFACE"
     fi
 
     bring_interface down "$INTERFACE"
