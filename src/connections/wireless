@@ -69,7 +69,7 @@ wireless_up() {
     enable_rf || return 1
 
     # Check if interface exists
-    is_interface $INTERFACE || report_fail "interface $INTERFACE does not exist"
+    is_interface "$INTERFACE" || { report_fail "interface $INTERFACE does not exist"; return 1; }
 
     # Kill any lingering wpa_supplicants.
     report_debug wireless_up stop_wpa "$INTERFACE"
