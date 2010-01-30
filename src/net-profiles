@@ -43,7 +43,7 @@ case "$1" in
             for network in "${NETWORKS[@]}"; do
                 if [[ "$network" = "${network#!}" ]]; then 
                     if /usr/bin/netcfg2 check-iface "$network"; then
-                        echo "$network" > "$STATE_DIR/net-profiles"   
+                        echo "$network" >> "$STATE_DIR/net-profiles"   
                         add_daemon net-profiles
                     fi
                 fi
@@ -60,7 +60,7 @@ case "$1" in
 
         # shutdown any profiles started by netcfg (or from NET_PROFILES in rc.conf)
         # JP: only attempt to disconnect the profiles _this daemon_ was told to control
-        cat "$STATE_DIR/net-profiles" 2>/dev/null | while read profile; do  # guard against any of the profile names containing spaces etc
+        for profile in $(cat "$STATE_DIR/net-profiles"); do
             /usr/bin/netcfg2 down "$profile"
         done
         rm -f "$STATE_DIR/net-profiles"
