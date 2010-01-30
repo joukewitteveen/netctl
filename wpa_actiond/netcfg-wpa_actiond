@@ -63,6 +63,7 @@ done
 
 
 [[ -z $WPA_DRIVER ]] && WPA_DRIVER="wext"
+WPA_OPTS="-W $WPA_OPTS"
 
 # Kill any existing wpa_supplicant on this interface
 stop_wpa "$interface"
