@@ -3,6 +3,11 @@
 . /etc/rc.conf
 . /etc/rc.d/functions
 
+if [[ ! -x /usr/sbin/ifplugd ]]; then
+   echo "Please install 'ifplugd' to use net-auto-wired"
+   exit 1
+fi  
+
 CFG=/etc/ifplugd/ifplugd.conf
 ACTION=/etc/ifplugd/netcfg.action
 PIDFILE=/var/run/ifplugd.$WIRED_INTERFACE.pid

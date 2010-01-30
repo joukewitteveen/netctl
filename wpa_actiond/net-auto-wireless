@@ -2,6 +2,12 @@
 
 . /etc/rc.conf
 . /etc/rc.d/functions
+
+if [[ ! -x /usr/sbin/wpa_actiond ]]; then
+   echo "Please install 'wpa_actiond' to use net-auto-wireless"
+   exit 1
+fi  
+
 if [ -z "${WIRELESS_INTERFACE}" ]; then
     echo "No interface name set. Set it by adding WIRELESS_INTERFACE=\"your_interface\" to rc.conf"
     exit 1

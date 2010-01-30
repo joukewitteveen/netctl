@@ -2,6 +2,11 @@
 
 . /usr/lib/network/network
 
+if [[ ! -x /usr/bin/dialog ]]; then
+   echo "Please install 'dialog' to use netcfg-menu"
+   exit 1
+fi  
+
 # JP: we'll use $STATE_DIR/menu to record what profile is being connected in this way
 rm -f "$STATE_DIR/menu"
 
