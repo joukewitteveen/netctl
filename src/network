@@ -37,9 +37,7 @@ load_profile()
 #   take all registered profiles down
 all_down()
 {
-    find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
-    | while read prof; do
-        # the pipe to while read... creates a subshell
+    for prof in $(find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n'); do
         profile_down "$prof"
     done
 }

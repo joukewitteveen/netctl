@@ -40,8 +40,6 @@ case "$1" in
         usage
         exit 0;;
     list|-l)
-        echo "Available Profiles"
-        echo "------------------"
         list_profiles
         exit 0;;
     current|-s|status)

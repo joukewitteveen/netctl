@@ -32,32 +32,26 @@ case "$1" in
                 add_daemon net-profiles
                 exit 0
             fi
+        elif [[ $NETWORKS = "menu" ]]; then
+            if /usr/bin/netcfg-menu "$NETWORKS_MENU_TIMEOUT"; then
+                mv "$STATE_DIR"/menu "$STATE_DIR"/net-profiles
+                add_daemon net-profiles
+                exit 0
+            fi
         else
             # No NET= passed at boot, go to NETWORKS=()
             for network in "${NETWORKS[@]}"; do
-                case "$network" in
-                    menu) # Pull up menu of networks
-                        if /usr/bin/netcfg-menu "$NETWORKS_MENU_TIMEOUT"; then
-                            mv "$STATE_DIR"/{menu,net-profiles}       # JP: user may want to disconnect profile by calling net-profiles stop
-                            add_daemon net-profiles
-                            exit 0
-                        fi
-                        break   # if netcfg-menu was called but failed: exit for loop
-                        ;;
-                    *) # Either interface or profile
-                        if [[ "$network" = "${network#!}" ]]; then # otherwise profile
-                            if /usr/bin/netcfg2 check-iface "$network"; then
-                                echo "$network" > "$STATE_DIR/net-profiles"       # JP: user may want to disconnect profile by calling net-profiles stop
-                                add_daemon net-profiles
-                                exit 0
-                            fi
-                        fi
-                        ;;
-                esac
+                if [[ "$network" = "${network#!}" ]]; then 
+                    if /usr/bin/netcfg2 check-iface "$network"; then
+                        echo "$network" > "$STATE_DIR/net-profiles"   
+                        add_daemon net-profiles
+                    fi
+                fi
             done
         fi
-
-        exit_err "No profile started."       # JP: don't add_daemon unless we were successful (above)
+        if [[ ! -f "$STATE_DIR"/net-profiles ]]; then        
+            exit_err "No profile started."       # JP: don't add_daemon unless we were successful (above)
+        fi
         ;;
     stop)
         if ck_daemon net-profiles; then
