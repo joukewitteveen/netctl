@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # ifplugd.action script for netcfg 
 
@@ -19,11 +19,11 @@ case "$2" in
         [[ "$INTERFACE" != "$1" ]] && continue
         [[ "$CONNECTION" != @(ethernet|ethernet-iproute) ]] && continue
         if [[ "$IP" == "dhcp" ]]; then
-            netcfg "$profile" && exit 0
+            netcfg "$profile" && exit 1
         else
             static_profiles+=("$profile")
         fi
-    ) done
+    ) || exit 0; done 
     for profile in "${static_profiles[@]}"; do (
         load_profile "$profile"
 		netcfg "$profile" && exit 0
