@@ -1,0 +1,5 @@
+INTERFACE="br0"
+CONNECTION="bridge"
+DESCRIPTION="Example Bridge connection"
+BRIDGE_INTERFACES="eth0 eth1 tap0"
+IP="dhcp"
