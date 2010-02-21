@@ -1,8 +1,8 @@
-CONNECTION="wireless"
+CONNECTION='wireless'
 INTERFACE=wlan0
-SECURITY="wpa-configsection"
-ESSID="University"
-IP="dhcp"
+SECURITY='wpa-configsection'
+ESSID='University
+IP='dhcp'
 CONFIGSECTION='
     ssid="University"
     key_mgmt=WPA-EAP

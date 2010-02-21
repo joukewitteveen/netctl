@@ -1,6 +1,6 @@
-CONNECTION="wireless"
-DESCRIPTION="A simple opened wireless connection"
-INTERFACE="wlan0"
-SECURITY="none"
-ESSID="MyNetwork"
-IP="dhcp"
+CONNECTION='wireless'
+DESCRIPTION='A simple opened wireless connection'
+INTERFACE='wlan0'
+SECURITY='none'
+ESSID='MyNetwork'
+IP='dhcp'

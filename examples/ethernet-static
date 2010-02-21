@@ -1,7 +1,7 @@
-CONNECTION="ethernet"
-DESCRIPTION="A basic static ethernet connection using iproute"
-INTERFACE="eth0"
-IP="static"
-ADDR="192.168.1.23"
-GATEWAY="192.168.1.1"
-DNS=("192.168.1.1")
+CONNECTION='ethernet'
+DESCRIPTION='A basic static ethernet connection using iproute'
+INTERFACE='eth0'
+IP='static'
+ADDR='192.168.1.23'
+GATEWAY='192.168.1.1'
+DNS=('192.168.1.1')

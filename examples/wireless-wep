@@ -1,7 +1,7 @@
-CONNECTION="wireless"
-DESCRIPTION="A simple WEP encrypted wireless connection"
-INTERFACE="wlan0"
-SECURITY="wep"
-ESSID="MyNetwork"
-KEY="1234567890"
-IP="dhcp"
+CONNECTION='wireless'
+DESCRIPTION='A simple WEP encrypted wireless connection'
+INTERFACE='wlan0'
+SECURITY='wep'
+ESSID='MyNetwork'
+KEY='1234567890'
+IP='dhcp'

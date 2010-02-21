@@ -1,7 +1,7 @@
-CONNECTION="ethernet"
-DESCRIPTION="A more versatile static ethernet connection using iproute"
-INTERFACE="eth0"
-IP="static"
+CONNECTION='ethernet'
+DESCRIPTION='A more versatile static ethernet connection using iproute'
+INTERFACE='eth0'
+IP='static'
 # Any valid iproute command can be placed in this array
-IPCFG=("addr add dev eth0 192.168.1.23/24 brd +" "route add default via 192.168.1.1") 
-DNS=("192.168.1.1")
+IPCFG=('addr add dev eth0 192.168.1.23/24 brd +' 'route add default via 192.168.1.1') 
+DNS=('192.168.1.1')
