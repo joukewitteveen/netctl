@@ -53,6 +53,7 @@ for profile in $(list_profiles); do
     [[ $CONNECTION != "wireless" ]] && exit 1
     [[ $INTERFACE != $interface ]] && exit 1
     # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
+    [[ -z "$SECURITY" ]] && SECURITY="none"
     [[ $SECURITY == "wpa-config" ]] && exit 1 
     
     config=$(make_wpa_config)
