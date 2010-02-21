@@ -2,7 +2,7 @@
 
 . /usr/lib/network/network
 
-NETCFG_VER=2.5.3
+NETCFG_VER=2.5.4
 
 version()
 {
