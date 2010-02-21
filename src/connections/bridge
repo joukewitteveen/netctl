@@ -1,0 +1,51 @@
+#! /bin/bash
+. /usr/lib/network/network
+BRCTL="/usr/sbin/brctl"
+
+bridge_up() {
+    local bridge_interface
+    load_profile "$1"
+
+    if [ -e "/sys/class/net/$INTERFACE" ]; then
+        if [ ! -d "/sys/class/net/$INTERFACE/brif" ]; then
+            report_fail "Interface $INTERFACE already exists and is not a bridge."
+            exit 1
+        fi
+    else
+        $BRCTL addbr $INTERFACE
+    fi
+
+    for bridge_client in $BRIDGE_INTERFACES; do
+      ip link set $bridge_client promisc on up
+      ip addr flush dev $bridge_client
+      $BRCTL addif $INTERFACE $bridge_client
+    done
+
+    bring_interface up "$INTERFACE"
+    "$CONN_DIR/ethernet" up "$1"
+    return 0
+}
+
+bridge_down() {
+    local bridge_interface
+    load_profile "$1"
+
+    for bridge_client in $BRIDGE_INTERFACES; do
+      ip link set $bridge_client promisc off down
+      $BRCTL delif $INTERFACE $bridge_client
+    done
+
+    "$CONN_DIR/ethernet" down "$1"
+    bring_interface down "$INTERFACE"
+    $BRCTL delbr $INTERFACE
+    return 0 
+}
+
+# Returns status of profile - is it still functional?
+bridge_status() {
+    true
+}
+
+bridge_$1 "$2"
+exit $?
+# vim: set ts=4 et sw=4:
