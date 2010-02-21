@@ -117,7 +117,7 @@ wpa_supplicant_scan_info() {
 }
 
 set_rf_state() {
-    local INTERFACE="$1" state="$2" PROFILE="$3"
+    local INTERFACE="$1" state="$2" RFKILL_NAME="$3"
 
     if [[ "$RFKILL" == "hard" ]]; then
         report_fail "Cannot set state on hardware rfkill switch"
@@ -125,10 +125,10 @@ set_rf_state() {
     fi
     local path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
     case "$state" in
-        up)
+        enabled)
             echo 1 > "$path/state"
         ;;
-        down)
+        disabled)
             echo 0 > "$path/state"
         ;;
     esac
@@ -170,6 +170,23 @@ get_rf_state() {
         *)
             echo "$state";;
     esac
+}
+
+enable_rf() {
+    local INTERFACE="$1" RFKILL="$2" RFKILL_NAME="$3"
+    # Enable rfkill if necessary, or fail if it is hardware
+    if [[ -n "$RFKILL" ]]; then
+        local state=$(get_rf_state "$INTERFACE") || return 1
+        if [[ "$state" != "enabled" ]]; then
+            if [[ "$RFKILL" == "soft" ]]; then
+                set_rf_state "$INTERFACE" enabled $RFKILL_NAME
+                sleep 1
+            else
+                report_fail "radio is disabled on $INTERFACE"
+                return 1
+            fi
+        fi
+    fi
 }
 
 # vim: ft=sh ts=4 et sw=4:

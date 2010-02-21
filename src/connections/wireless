@@ -4,24 +4,6 @@
 . $SUBR_DIR/wireless
 
 
-
-enable_rf() {
-    # Enable rfkill if necessary, or fail if it is hardware
-    if [[ -n "$RFKILL" ]]; then
-        local state=$(get_rf_state "$INTERFACE") || return 1
-        if [[ "$state" != "up" ]]; then
-            if [[ "$RFKILL" == "soft" ]]; then
-                set_rf_state "$INTERFACE" up
-                sleep 1
-            else
-                report_fail "radio is disabled on $INTERFACE"
-                return 1
-            fi
-        fi
-    fi
-}
-
-
 iwconfig_up() {
 
     quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
@@ -66,7 +48,7 @@ wireless_up() {
     PROFILE="$1"
     load_profile "$PROFILE"
 
-    enable_rf || return 1
+    enable_rf $INTERFACE $RFKILL $RFKILL_NAME || return 1
 
     # Check if interface exists
     is_interface "$INTERFACE" || { report_fail "interface $INTERFACE does not exist"; return 1; }
@@ -168,7 +150,7 @@ wireless_down() {
     # Any reason why a hardware switch should be considered on interface down?
     if [[ "$RFKILL" == "soft" ]]; then
         . "$SUBR_DIR/wireless"
-        set_rf_state "$INTERFACE" down || return 1
+        set_rf_state "$INTERFACE" disabled $RFKILL_NAME || return 1
     fi
 }
 

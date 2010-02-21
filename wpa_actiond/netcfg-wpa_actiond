@@ -13,10 +13,13 @@ case $1 in
         exit
         ;;
     stop)
+        [[ -z $2 ]] && echo "Please specify an interface to stop" && exit 1
+        interface=$2
+        [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
         stop_wpa $2
         kill $(cat "/var/run/wpa_actiond_${2}.pid")
-        if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
-            set_rf_state "$interface" down || exit $?
+        if [[ -n "$RFKILL" ]]; then 
+            set_rf_state "$interface" disabled $RFKILL_NAME || exit $?
         fi
         exit
         ;;
@@ -40,7 +43,7 @@ if [[ -f "$CONN_DIR/interfaces/$interface" ]]; then
 fi
 
 if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
-    set_rf_state "$interface" up || exit $?
+    enable_rf $interface $RFKILL $RFKILL_NAME || exit $?
 fi
 
 WPA_CONF="$(make_wpa_config_file $interface)"
