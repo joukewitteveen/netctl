@@ -71,8 +71,9 @@ ethernet_up() {
         ;;
     static)
         if [[ -n "$ADDR" ]]; then
-            report_debug ethernet_iproute_up ip addr add "$ADDR/24" brd + dev "$INTERFACE"
-            if ! ip addr add "$ADDR/24" brd + dev "$INTERFACE"; then
+            [[ -z $NETMASK ]] && NETMASK=24
+            report_debug ethernet_iproute_up ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE" 
+            if ! ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"; then
                 report_iproute "Could not configure interface"
             fi
         fi

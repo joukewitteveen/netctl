@@ -16,6 +16,8 @@ ADDR (requires IP of 'static')
 :   A single IP address to configure a static IP. For example:
 GATEWAY (requires IP of 'static')
 :   Set specified gateway
+NETMASK (requires IP of 'static')
+:   Set specified netmask. Defaults to 24
 IPCFG 
 :   Array of arguments to pass to 'ip'. The power of this options is that it allows both simple and complicated routing configurations, within the framework of netcfg.
 IFOPTS (deprecated, requires IP of 'static')
