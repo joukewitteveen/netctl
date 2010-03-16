@@ -85,6 +85,14 @@ ethernet_up() {
                 return 1
             fi
         fi
+        if [[ -n "$ROUTES" ]]; then
+            for route in "${ROUTES[@]}"; do
+                report_debug ethernet_iproute_up ip route add $route dev "$INTERFACE"
+                if ! ip route add $route dev "$INTERFACE" ; then
+                    report_iproute "Adding route '$route' failed"
+                fi
+            done
+        fi
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_iproute_up ip route add default via "$GATEWAY"
             if ! ip route add default via "$GATEWAY"; then
