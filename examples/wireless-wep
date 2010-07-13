@@ -5,3 +5,5 @@ SECURITY='wep'
 ESSID='MyNetwork'
 KEY='1234567890'
 IP='dhcp'
+# Uncomment this if your ssid is hidden
+#HIDDEN=yes

@@ -4,3 +4,5 @@ INTERFACE='wlan0'
 SECURITY='none'
 ESSID='MyNetwork'
 IP='dhcp'
+# Uncomment this if your ssid is hidden
+#HIDDEN=yes

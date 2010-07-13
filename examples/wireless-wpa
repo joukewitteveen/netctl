@@ -5,3 +5,5 @@ SECURITY='wpa'
 ESSID='MyNetwork'
 KEY='WirelessKey'
 IP='dhcp' 
+# Uncomment this if your ssid is hidden
+#HIDDEN=yes

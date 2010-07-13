@@ -88,6 +88,13 @@ make_wpa_config() {
         return 1
         ;;
     esac
+
+    # Hidden SSID
+    shopt -s nocasematch
+    if [[ $HIDDEN == "yes" ]]; then
+      echo "scan_ssid=1"
+    fi
+    shopt -u nocasematch
 }
 
 # vim: ft=sh ts=4 et sw=4:
