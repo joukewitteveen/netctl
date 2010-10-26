@@ -42,15 +42,22 @@ all_down()
     done
 }
 
+# Create the state dir and sub directories if they don't already exist
+check_make_state_dir()
+{
+    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles}
+    for d in interfaces profiles suspend; do
+        [[ ! -d "$STATE_DIR/$d" ]] && mkdir "$STATE_DIR/$d"
+    done
+}
+
 # interface_suspend interface/all [call_profile_down? default=yes]
 #   store a list of running profiles and take them down (unless $2 is "no")
 interface_suspend()
 {
     report_debug interface_suspend "$@"
 
-    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles}
-    [[ ! -d "$STATE_DIR/suspend" ]] && mkdir "$STATE_DIR/suspend"
-
+    check_make_state_dir
     find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
     | while read prof; do
         # the pipe to "while read" will create a subshell
@@ -96,7 +103,7 @@ profile_up()
     (
     # Keep inside subshell so that options from one profile don't cross to others
     # exit 1 used in a subshell is effectively exiting a new process
-    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
+    check_make_state_dir
 
     local status PROFILE="$1"   # save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
 
@@ -186,7 +193,7 @@ profile_up()
 profile_down()
 {
     (
-    [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles,suspend}
+    check_make_state_dir
 
     local status PROFILE="$1"   # save PROFILE in a variable so that it's available to PRE_UP/POST_DOWN etc hooks
 
