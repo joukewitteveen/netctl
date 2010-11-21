@@ -7,21 +7,29 @@
 
 auto_resume()
 {
-    all_resume
-    sleep 2
-    # if didn't successfully resume wifi, and running net-auto daemon, then restart the daemon
-    if [[ -f /var/run/daemons/net-auto && -x /usr/bin/netcfg-auto-wireless ]]; then
-        if ! check_iface "$1" >/dev/null; then          # ret=1 when iface down and available
-            /usr/bin/netcfg-auto-wireless "$1"
-        fi
+    if checkyesno ${RESTOREPROFILES:-no}; then
+        all_resume
+        sleep 2
     fi
+    restartservice net-auto-wireless
+    restartservice net-auto-wired
+    restartservice net-profiles
 }
 
+daemon_suspend_all()
+{
+    stopservice net-auto-wireless
+    stopservice net-auto-wired
+    stopservice net-profiles
+}
 
 case "$1" in
     hibernate|suspend_hybrid|suspend)
         report_notify "suspending all interfaces..."
-        interface_suspend all
+        daemon_suspend_all
+        if checkyesno "${RESTOREPROFILES:-no}"; then        
+            interface_suspend all
+        fi
         ;;
     thaw|resume)
         if "$CONN_DIR/wireless" query wlan0 enabled; then
