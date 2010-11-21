@@ -55,6 +55,9 @@ if [[ $(id -u) -gt 0 ]]; then
     exit_stderr "This script should be run as root."
 fi
 
+# Ensure cwd is not in a transient directory, which may prevent unmounting due to netcfg children
+cd /
+
 case "$1" in
 
     -c|check-iface|-u|up)
