@@ -2,7 +2,8 @@
 # wpa_check interface [timeout]
 wpa_check()
 {
-    local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}"
+    local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}" CONDITION="${3:-COMPLETED}"
+    # CONDITION is required as wired connections are ready at ASSOCIATED not COMPLETED FS#20150
 
     while [[ $timeout -lt "$TIMEOUT" ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
@@ -11,7 +12,7 @@ wpa_check()
         else
             eval $(wpa_cli -i "$INTERFACE" status | fgrep "wpa_state=")
         fi
-        [[ "$wpa_state" = "COMPLETED" ]]
+        [[ "$wpa_state" = "$CONDITION" ]]
         ) && return 0
         sleep 1
         let timeout++

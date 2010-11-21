@@ -39,7 +39,7 @@ ethernet_up() {
             return 1
         fi
 
-        if ! wpa_check "$INTERFACE"; then
+        if ! wpa_check "$INTERFACE" 15 "ASSOCIATED"; then
             bring_interface down "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
@@ -53,6 +53,7 @@ ethernet_up() {
             report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-$INTERFACE.pid" "$INTERFACE"
             if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-${INTERFACE}.pid" ${DHCLIENT_OPTIONS} "$INTERFACE"; then
                 report_fail "DHCP IP lease attempt failed."
+                stop_80211x
                 return 1
             fi
         else
@@ -65,6 +66,7 @@ ethernet_up() {
             dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
             if [[ "$PIPESTATUS" -ne 0 ]]; then
                 report_fail "DHCP IP lease attempt failed."
+                stop_80211x
                 return 1
             fi
         fi
@@ -143,6 +145,8 @@ ethernet_down() {
         fi
     fi
 
+    stop_80211x
+
     report_debug ethernet_down if_down
     if [[ "$CONNECTION" == "wireless" ]]; then
         bring_interface flush "$INTERFACE"
@@ -156,6 +160,15 @@ ethernet_down() {
 ethernet_status() {
     if ! ip link show dev "$INTERFACE" | fgrep -q "state UP"; then
         return 1
+    fi
+}
+
+# Stop wpa_supplicant if neccessary 
+stop_80211x() {
+    if checkyesno "${AUTH8021X:-no}"; then
+        . "$SUBR_DIR/8021x"
+        report_debug ethernet_down stop_wpa "$INTERFACE"
+        stop_wpa "$INTERFACE"
     fi
 }
 
