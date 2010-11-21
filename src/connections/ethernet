@@ -21,7 +21,7 @@ ethernet_up() {
     bring_interface up "$INTERFACE"
 
 
-    if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
+    if ! checkyesno "${SKIPNOCARRIER:-no}" && ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
         sleep ${CARRIER_TIMEOUT:-2} # Some cards are plain slow to come up. Don't fail immediately.
         if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
             report_iproute "No connection"
