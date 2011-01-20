@@ -109,7 +109,7 @@ wireless_up() {
 
     if  [[ ${SECURITY:(-4)} != "-old" ]]; then
         report_debug wireless_up "Configuration generated at $WPA_CONF"
-        [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wext"
+        [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="nl80211,wext"
         report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
         if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"

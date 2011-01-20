@@ -66,7 +66,7 @@ for profile in $(list_profiles); do
 done
 
 
-[[ -z $WPA_DRIVER ]] && WPA_DRIVER="wext"
+[[ -z $WPA_DRIVER ]] && WPA_DRIVER="nl80211,wext"
 WPA_OPTS="-W $WPA_OPTS"
 
 # Kill any existing wpa_supplicant on this interface

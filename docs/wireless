@@ -34,7 +34,7 @@ WPA_GROUP
 WPA_COUNTRY (optional, nl80211 based drivers)
 :   The country where the device will be used. This allows wpa_supplicant to enforce any local regulatory limitations and will allow all appropriate channels/frequencies for your device.
 WPA_DRIVER (optional)
-:   The wpa_supplicant driver interface to be used. Defaults to 'wext'. nl80211 based drivers are recommended to use 'nl80211'
+:   A comma-separated list of wpa_supplicant driver interfaces to try. Defaults to 'nl80211,wext'.
  
 ### rfkill (Radio Kill Switch) options 
 RFKILL 
