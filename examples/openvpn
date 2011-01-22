@@ -1,0 +1,5 @@
+CONNECTION="openvpn"
+INTERFACE="ignore"
+OVPN_CONFIG="/etc/openvpn/example/openvpn.conf"
+OVPN_PID_FILE="/tmp/openvpn.example.pid"
+OVPN_FLAGS=""

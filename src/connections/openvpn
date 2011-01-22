@@ -1,0 +1,57 @@
+#! /bin/bash
+# Originally contributed by Thomas Jost: https://bugs.archlinux.org/task/21490
+
+. /usr/lib/network/network
+
+openvpn_up() {
+    load_profile "$1"
+    [[ -z "$OVPN_CONFIG" ]] && OVPN_CONFIG="/etc/openvpn/openvpn.conf"
+    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/var/run/openvpn-$1.pid"
+    [[ -z "$OVPN_FLAGS" ]] && OVPN_FLAGS=""
+
+    OVPN_CONF_DIR="`dirname $OVPN_CONFIG`"
+    OVPN_CONF_FILE="`basename $OVPN_CONFIG`"
+
+    /usr/sbin/openvpn --writepid $OVPN_PID_FILE --daemon --cd "$OVPN_CONF_DIR" --config "$OVPN_CONF_FILE" $OVPN_FLAGS
+
+    if [[ $? -ne 0 ]]; then
+       report_fail "OpenVPN connection failed"
+       exit 1
+    fi
+
+    # Generate a new resolv.conf
+    if [[ -n "$DNS" ]]; then
+        [[ -e /etc/resolv.conf ]] && cp /etc/resolv.conf /tmp/openvpn-$1-resolv.conf
+        : >/etc/resolv.conf
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+
+        for dns in "${DNS[@]}"; do
+            echo "nameserver $dns" >>/etc/resolv.conf
+        done
+    elif [[ -n "$DNS1" ]]; then # support older 'ethernet' syntax.
+        [[ -e /etc/resolv.conf ]] && cp /etc/resolv.conf /tmp/openvpn-$1-resolv.conf
+        : >/etc/resolv.conf
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+        [[ -n "$DNS1" ]]   && echo "nameserver $DNS1" >>/etc/resolv.conf
+        [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
+    fi
+}
+
+openvpn_down() {
+    load_profile "$1"
+    [[ -z "$OVPN_PID_FILE" ]] && OVPN_PID_FILE="/var/run/openvpn-$1.pid"
+
+    kill $(head -1 $OVPN_PID_FILE)
+    rm $OVPN_PID_FILE
+
+    # Restore an old resolv.conf
+    if [[ -e /tmp/openvpn-$1-resolv.conf ]]; then
+        mv -f /tmp/openvpn-$1-resolv.conf /etc/resolv.conf
+    fi
+}
+
+openvpn_$1 "$2"
+exit $?
+# vim: ft=sh ts=4 et sw=4:
