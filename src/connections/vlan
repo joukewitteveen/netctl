@@ -1,0 +1,40 @@
+#! /bin/bash
+. /usr/lib/network/network
+
+vlan_up() {
+    local vlan_interface
+    load_profile "$1"
+
+    if [ -e /sys/class/net/$INTERFACE ]; then
+        report_fail "Interface $INTERFACE already exists."
+        exit 1
+    else
+        ip link set $VLAN_PHYS_DEV up
+        ip link add link $VLAN_PHYS_DEV name $INTERFACE type vlan id $VLAN_ID >/dev/null 2>&1
+    fi
+    bring_interface up "$INTERFACE"
+    "$CONN_DIR/ethernet" up "$1"
+    return 0
+}
+
+vlan_down() {
+    local vlan_interface
+    load_profile "$1"
+
+    "$CONN_DIR/ethernet" down "$1"
+    bring_interface down "$INTERFACE"
+    ip link delete $INTERFACE >/dev/null 2>&1
+    return 0
+}
+
+vlan_status() {
+    if [ -e /sys/class/net/$INTERFACE ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+vlan_$1 "$2"
+exit $?
+# vim: set ts=4 et sw=4:

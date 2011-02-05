@@ -1,0 +1,5 @@
+INTERFACE="eth0.55"
+VLAN_PHYS_DEV="eth0"
+VLAN_ID="55"
+CONNECTION="vlan"
+IP="dhcp"
