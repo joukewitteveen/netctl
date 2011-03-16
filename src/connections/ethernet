@@ -141,7 +141,7 @@ ethernet_down() {
     if [[ "$IP" == "dhcp" ]]; then
         if [[ -f "/var/run/dhcpcd-${INTERFACE}.pid" ]]; then
             report_debug ethernet_down dhcpcd -qx "$INTERFACE"
-            dhcpcd -qx "$INTERFACE" &>/dev/null
+            dhcpcd -qk "$INTERFACE" &>/dev/null
         fi
     fi
 
