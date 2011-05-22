@@ -1,0 +1,22 @@
+version 2.5.5
+- new connection types: openvpn (FS#21490), vlan
+- new option HIDDEN (for hidden SSIDs)
+- new option SKIPNOCARRIER (FS#21755)
+- minor fixes and improvements (FS#17190, FS#17546,
+  FS#20150, FS#20569, FS#21377, FS#23293)
+- better zsh completion file (FS#19823)
+
+netcfg 2.5.4
+- new connection type: bridge
+- new option NETMASK for ethernet
+
+netcfg 2.5.3
+- fixes to rfkill handling (FS#18391, FS#18385)
+- fix for FS#18411
+
+netcfg 2.5.2
+- fix for FS#17190
+
+netcfg 2.5.1
+- fix for FS#17190
+- additional examples
