@@ -2,6 +2,7 @@ version 2.5.5
 - new connection types: openvpn (FS#21490), vlan
 - new option HIDDEN (for hidden SSIDs)
 - new option SKIPNOCARRIER (FS#21755)
+- default WPA driver is now nl80211
 - minor fixes and improvements (FS#17190, FS#17546,
   FS#20150, FS#20569, FS#21377, FS#23293)
 - better zsh completion file (FS#19823)

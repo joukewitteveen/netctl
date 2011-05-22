@@ -21,7 +21,7 @@ netcfg is profile based network connection tool. It can connect to wireless, wir
 
 ## Download
 
-The latest version is 2.5.0rc1 
+The latest version is 2.5.5
 
 Arch users can install netcfg via pacman, it is located in the [core] repository. Testing versions can often be found in the [testing] repository.
 
@@ -29,7 +29,7 @@ Arch users can install netcfg via pacman, it is located in the [core] repository
 
 The source for netcfg can be found on the [Arch Linux ftp](ftp://ftp.archlinux.org/other/netcfg/), or [mirrored here](http://rayner.id.au/netcfg/source/)
 
-[Download latest source (2.5.0rc1)](ftp://ftp.archlinux.org/other/netcfg/netcfg-2.5.0rc1.tar.gz)
+[Download latest source (2.5.5)](ftp://ftp.archlinux.org/other/netcfg/netcfg-2.5.5.tar.gz)
 
 ### Optional dependencies
 
