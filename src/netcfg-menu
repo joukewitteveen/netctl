@@ -7,6 +7,8 @@ if [[ ! -x /usr/bin/dialog ]]; then
    exit 1
 fi  
 
+check_make_state_dir
+
 # JP: we'll use $STATE_DIR/menu to record what profile is being connected in this way
 rm -f "$STATE_DIR/menu"
 
