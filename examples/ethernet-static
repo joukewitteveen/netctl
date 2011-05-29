@@ -3,5 +3,6 @@ DESCRIPTION='A basic static ethernet connection using iproute'
 INTERFACE='eth0'
 IP='static'
 ADDR='192.168.1.23'
+#ROUTES=('192.168.0.0/24 via 192.168.1.2')
 GATEWAY='192.168.1.1'
 DNS=('192.168.1.1')
