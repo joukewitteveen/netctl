@@ -1,7 +1,8 @@
 CONNECTION='wireless'
 INTERFACE=wlan0
 SECURITY='wpa-configsection'
-ESSID='University
+# Uncomment this if your ssid is hidden
+#HIDDEN=yes
 IP='dhcp'
 CONFIGSECTION='
     ssid="University"
