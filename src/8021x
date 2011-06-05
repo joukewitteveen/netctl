@@ -71,15 +71,27 @@ make_wpa_config() {
         else
             echo "ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0"
         fi
+
+        if [[ -n "$AP" ]]; then
+            echo " bssid=$AP"
+        fi
         ;;
     none|none-old)
         echo "ssid=\"$ESSID\" \nkey_mgmt=NONE"
+
+        if [[ -n "$AP" ]]; then
+            echo " bssid=$AP"
+        fi
         ;;
     wpa)
         if [[ "${#KEY}" -eq 64 ]]; then
             echo "proto=RSN WPA\n ssid=\"$ESSID\" \npsk=$KEY"
         else
             echo "proto=RSN WPA\n ssid=\"$ESSID\" \npsk=\"$KEY\""
+        fi
+
+        if [[ -n "$AP" ]]; then
+            echo " bssid=$AP"
         fi
         ;;
     wpa-configsection)
