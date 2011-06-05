@@ -65,33 +65,10 @@ make_wpa_config_file() {
 # Requires already loaded profile
 make_wpa_config() {
     case $SECURITY in
-    wep|wep-old)
-        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
-            echo "ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=\"${KEY:2}\" \nwep_tx_keyidx=0"
-        else
-            echo "ssid=\"$ESSID\" \nkey_mgmt=NONE \nwep_key0=$KEY \nwep_tx_keyidx=0"
-        fi
-
+    wep|wep-old|wpa|none|none-old)
+        echo "ssid=\"$ESSID\""
         if [[ -n "$AP" ]]; then
-            echo " bssid=$AP"
-        fi
-        ;;
-    none|none-old)
-        echo "ssid=\"$ESSID\" \nkey_mgmt=NONE"
-
-        if [[ -n "$AP" ]]; then
-            echo " bssid=$AP"
-        fi
-        ;;
-    wpa)
-        if [[ "${#KEY}" -eq 64 ]]; then
-            echo "proto=RSN WPA\n ssid=\"$ESSID\" \npsk=$KEY"
-        else
-            echo "proto=RSN WPA\n ssid=\"$ESSID\" \npsk=\"$KEY\""
-        fi
-
-        if [[ -n "$AP" ]]; then
-            echo " bssid=$AP"
+            echo "bssid=$AP"
         fi
         ;;
     wpa-configsection)
@@ -99,6 +76,28 @@ make_wpa_config() {
         ;;
     *)
         return 1
+        ;;
+    esac
+
+    # Key management
+    case $SECURITY in
+    wep|wep-old)
+        echo "key_mgmt=NONE"
+        echo "wep_tx_idx=0"
+        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
+            echo "wep_key0=\"${KEY:2}\""
+        else
+            echo "wep_key0=$KEY"
+        fi
+    none|none-old)
+        echo "key_mgmt=NONE"
+        ;;
+    wpa)
+        if [[ "${#KEY}" -eq 64 ]]; then
+            echo "proto=RSN WPA\npsk=$KEY"
+        else
+            echo "proto=RSN WPA\npsk=\"$KEY\""
+        fi
         ;;
     esac
 
