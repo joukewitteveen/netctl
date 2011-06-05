@@ -1,0 +1,6 @@
+INTERFACE='tun0'
+CONNECTION='tuntap'
+MODE='tun'
+USER='nobody'
+GROUP='nobody'
+

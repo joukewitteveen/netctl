@@ -1,0 +1,34 @@
+#! /bin/bash
+. /usr/lib/network/network
+
+tuntap_up() {
+    load_profile "$1"
+
+    if [ -e /sys/class/net/$INTERFACE ]; then
+        report_fail "Interface $INTERFACE already exists."
+        exit 1
+    else
+        ip tuntap add dev "$INTERFACE" mode "$MODE" \
+            user "$USER" group "$GROUP" &>/dev/null
+    fi
+    return 0
+}
+
+tuntap_down() {
+    load_profile "$1"
+
+    ip tuntap del "$INTERFACE" mode "$MODE" &>/dev/null
+    return 0
+}
+
+tuntap_status() {
+    if [ -e /sys/class/net/$INTERFACE ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+tuntap_$1 "$2"
+exit $?
+# vim: set ts=4 et sw=4 tw=0:
