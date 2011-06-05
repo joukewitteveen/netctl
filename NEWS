@@ -1,3 +1,8 @@
+version 2.6
+- add support for static routes configuration (FS#18700)
+- add support for creating tun/tap interfaces (FS#15049)
+- does not install things in /var/run
+
 version 2.5.5
 - new connection types: openvpn (FS#21490), vlan
 - new option HIDDEN (for hidden SSIDs)
