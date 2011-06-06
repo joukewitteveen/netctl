@@ -7,3 +7,5 @@ KEY='1234567890'
 IP='dhcp'
 # Uncomment this if your ssid is hidden
 #HIDDEN=yes
+## Uncomment if you are using an ad-hoc connection
+#ADHOC=1
