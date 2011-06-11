@@ -137,6 +137,16 @@ ethernet_up() {
                 report_iproute "Adding gateway $GATEWAY6 failed"
             fi
         fi
+
+        # Add static IPv6 routes
+        if [[ -n "$ROUTES6" ]]; then
+            for route in "${ROUTES6[@]}"; do
+            report_debug ethernet_iproute_up ip -6 route add $route dev $INTERFACE
+                if ! ip -6 route add $route dev $INTERFACE ; then
+                    report_iproute "Adding route '$route' failed"
+                fi
+            done
+        fi
         ;;
     "")
         ;;
