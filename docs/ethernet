@@ -10,7 +10,7 @@ This connection method uses the iproute suite of tools and dhcpcd to gain an IP 
 ## Options
 INTERFACE (required)
 :    The wireless interface to configure
-IP (required)
+IP (required for IPv4)
 :   Can be either 'static' or 'dhcp'.  Static requires at least one of ADDR or IPCFG. 
 ADDR (requires IP of 'static')
 :   A single IP address to configure a static IP. For example:
@@ -18,10 +18,23 @@ GATEWAY (requires IP of 'static')
 :   Set specified gateway
 NETMASK (requires IP of 'static')
 :   Set specified netmask. Defaults to 24
-IPCFG 
+ROUTES
+:   An array of custom routes (<address range> via <gateway>)
+IPCFG
 :   Array of arguments to pass to 'ip'. The power of this options is that it allows both simple and complicated routing configurations, within the framework of netcfg.
 IFOPTS (deprecated, requires IP of 'static')
-:   Arguments to pass to 'ifconfig'. This allows you to use the syntax for the older 'ifconfig' tool. Retained for compatability. 
+:   Arguments to pass to 'ifconfig'. This allows you to use the syntax for the older 'ifconfig' tool. Retained for compatability.
+## IPv6 options
+IP6 (required for IPv6)
+:   Either 'dhcp', 'dhcp-noaddr', 'stateless', 'static'.
+ADDR6 (required for IP6=static)
+:   An IPv6 address or subnet.
+GATEWAY6 (for IP6=static)
+:   The gateway address for IPv6 routing.
+PREFIXLEN (for IP6=static)
+:   The netmask for the interface address.
+ROUTES6
+:   An array of custom routes (<address range> via <gateway>)
 ### DNS
 DNS
 :   Array of DNS nameservers. Simply specify the IP's of each of the DNS nameservers. 
@@ -34,12 +47,16 @@ HOSTNAME
 DNS1, DNS2 (deprecated)
 :   First and second DNS servers for /etc/resolv.conf
 ### DHCP
-DHCP_OPTIONS
+DHCP_OPTIONS (ipv4)
 :   String. Any extra arguments to pass to the dhcp client, presently dhcpcd.
 DHCP_TIMEOUT
 :   Integer. Maximum time to try for a DHCP IP. Default is 10 seconds.
 DHCLIENT
 :   yes/no. Use dhclient instead of dhcpcd. Defaults to no
+DHCLIENT_OPTIONS (ipv4)
+:   String. Extra options to pass to dhclient for IPv4.
+DHCLIENT6_OPTIONS (ipv6)
+:   String. Extra options to pass to dhclient for IPv6.
 ### 802.11x Authentication
 AUTH8021X 
 :   Use 802.11x authentication. Enable with 'yes'. 
