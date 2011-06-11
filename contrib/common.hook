@@ -15,7 +15,7 @@ function RUNDAEMON {
             force=1
             shift
         elif [[ "$1" = "-d" ]]; then
-            [[ -e "/var/run/daemons/$2" ]]
+            [[ -e "/run/daemons/$2" ]]
             if [ $? -eq 0 ]; then
                 case "$dep" in
                     yes) ;;

@@ -54,9 +54,9 @@ ethernet_up() {
     case "$IP" in
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
-            rm -r "/var/run/dhclient-${INTERFACE}.pid" >/dev/null 2>&1
-            report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-$INTERFACE.pid" "$INTERFACE"
-            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/var/run/dhclient-${INTERFACE}.pid" ${DHCLIENT_OPTIONS} "$INTERFACE"; then
+            rm -r "/run/dhclient-${INTERFACE}.pid" >/dev/null 2>&1
+            report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/run/dhclient-$INTERFACE.pid" "$INTERFACE"
+            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/run/dhclient-${INTERFACE}.pid" ${DHCLIENT_OPTIONS} "$INTERFACE"; then
                 report_fail "DHCP IP lease attempt failed."
                 stop_80211x
                 return 1
@@ -125,7 +125,7 @@ ethernet_up() {
     case "$IP6" in
     dhcp*)
         if [[ -x /usr/sbin/dhclient ]]; then
-            _DHCLIENT_PIDFILE=/var/run/dhclient6-${INTERFACE}.pid
+            _DHCLIENT_PIDFILE=/run/dhclient6-${INTERFACE}.pid
             if [[ "$IP6" = "dhcp-noaddr" ]]; then
                 sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=1
                 DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
