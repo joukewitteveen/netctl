@@ -46,6 +46,11 @@ ethernet_up() {
         fi
     fi
 
+    if [[ -z "$IP" && -z "$IP6" ]]; then
+        report_iproute "At least one of IP or IP6 should be specified"
+        return 1
+    fi
+
     case "$IP" in
     dhcp)
         if checkyesno "${DHCLIENT:-no}"; then
@@ -100,6 +105,8 @@ ethernet_up() {
             fi
         fi
         ;;
+    "")
+        ;;
       *)
         report_iproute "IP must be either 'dhcp' or 'static'"
         ;;
@@ -114,6 +121,29 @@ ethernet_up() {
             fi
         done
     fi
+
+    case "$IP6" in
+    static)
+        if [[ -n "$ADDR6" ]]; then
+            [[ -z $PREFIXLEN ]] && PREFIXLEN=64
+            report_debug ethernet_iproute_up ip -6 addr add "$ADDR6/$PREFIXLEN" dev "$INTERFACE" 
+            if ! ip -6 addr add "$ADDR6/$PREFIXLEN" dev "$INTERFACE"; then
+                report_iproute "Could not configure interface"
+            fi
+        fi
+        if [[ -n "$GATEWAY6" ]]; then
+            report_debug ethernet_iproute_up ip -6 route add default via "$GATEWAY6"
+            if ! ip -6 route add default via "$GATEWAY6"; then
+                report_iproute "Adding gateway $GATEWAY6 failed"
+            fi
+        fi
+        ;;
+    "")
+        ;;
+    *)
+        report_iproute "IP6 must be 'static'"
+        ;;
+    esac
 
     # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
