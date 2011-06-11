@@ -123,6 +123,26 @@ ethernet_up() {
     fi
 
     case "$IP6" in
+    dhcp*)
+        if [[ -x /usr/sbin/dhclient ]]; then
+            _DHCLIENT_PIDFILE=/var/run/dhclient6-${INTERFACE}.pid
+            if [[ "$IP6" = "dhcp-noaddr" ]]; then
+                sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=1
+                DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
+            else
+                sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
+            fi
+            rm -r ${_DHCLIENT_PIDFILE} &>/dev/null
+            report_debug ethernet_up dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} "$INTERFACE"
+            if ! dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} ${DHCLIENT6_OPTIONS} "$INTERFACE"; then
+                report_fail "DHCPv6 IP lease attempt failed."
+                stop_80211x
+                return 1
+            fi
+        else
+            report_fail "You need to install dhclient to use DHCPv6."
+        fi
+        ;;
     stateless)
         sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=1
         ;;
@@ -155,7 +175,7 @@ ethernet_up() {
     "")
         ;;
     *)
-        report_iproute "IP6 must be 'stateless' or 'static'"
+        report_iproute "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless' or 'static'"
         ;;
     esac
 
