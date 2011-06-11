@@ -86,7 +86,7 @@ wpa_supplicant_scan_info() {
     [[ -z "$INTERFACE" ]] && return 1
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
-    wpa_supplicant -B -i"$INTERFACE" -Dnl80211,wext -C/var/run/wpa_supplicant -P/var/run/wpa_supplicant.pid || return 1
+    wpa_supplicant -B -i"$INTERFACE" -Dnl80211,wext -C/run/wpa_supplicant -P/run/wpa_supplicant.pid || return 1
     wpa_cli -i "$INTERFACE" scan &> /dev/null
     sleep 2.5
     wpa_cli -i "$INTERFACE" scan_results |
@@ -104,7 +104,7 @@ wpa_supplicant_scan_info() {
     # Re-sort by strength as the removal disorders the list
     # Cut to the AP/essid fields only
 
-    kill "$(cat /var/run/wpa_supplicant.pid)"
+    kill "$(cat /run/wpa_supplicant.pid)"
 
     # File of 0 length, ie. no ssid's.
     if [[ ! -s "$essids" ]]; then

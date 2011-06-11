@@ -53,7 +53,7 @@ def fail(msg=None, report_type="fail"):
     if msg:
         report(report_type, msg)
     try:
-        pid = open("/var/run/wpa_supplicant.pid").read()
+        pid = open("/run/wpa_supplicant.pid").read()
     except IOError:
         pass
     else:
@@ -75,7 +75,7 @@ def start(profile, essid):
     #    subprocess.call(["iwconfig", profile['INTERFACE'], profile['IWCONFIG']])
 
     # Base arguments
-    args=["wpa_supplicant", "-Bu", "-P/var/run/wpa_supplicant.pid"]
+    args=["wpa_supplicant", "-Bu", "-P/run/wpa_supplicant.pid"]
     
     try:
         args.append(profile['WPA_OPTS'])
@@ -187,7 +187,7 @@ def start(profile, essid):
   
 def stop(profile):
     ret = subprocess.call([ETHERNET_IPROUTE, "down", sys.argv[2]])
-    os.kill(int(open("/var/run/wpa_supplicant.pid").read()),SIGTERM)
+    os.kill(int(open("/run/wpa_supplicant.pid").read()),SIGTERM)
     sys.exit(ret)
 
 if __name__ == "__main__":

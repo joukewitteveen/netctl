@@ -30,10 +30,10 @@ start_wpa()
     shift 3
     local WPA_OPTS="$*"
 
-    wpa_supplicant -B -P "/var/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" -c "$WPA_CONF" $WPA_OPTS
+    wpa_supplicant -B -P "/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" -c "$WPA_CONF" $WPA_OPTS
     sleep 1
 
-    if [[ ! -f "/var/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
+    if [[ ! -f "/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
         return 1
     fi
 }
@@ -43,8 +43,8 @@ stop_wpa()
     wpa_cli -i "$1" terminate &> /dev/null
     sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
                     # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
-    if [[ -f "/var/run/wpa_supplicant_$1.pid" ]]; then
-        kill "$(cat "/var/run/wpa_supplicant_$1.pid")" &>/dev/null &
+    if [[ -f "/run/wpa_supplicant_$1.pid" ]]; then
+        kill "$(cat "/run/wpa_supplicant_$1.pid")" &>/dev/null &
     fi
 }
 
@@ -56,7 +56,7 @@ make_wpa_config_file() {
     # make empty tmp dir with correct permissions, rename it
     rm -rf "$WPA_CONF"
     mv -f "$(mktemp -d)" "$WPA_CONF" || return 1
-    echo "ctrl_interface=/var/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
+    echo "ctrl_interface=/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
     echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
     [[ $WPA_COUNTRY ]] && echo "country=$WPA_COUNTRY" >> "$WPA_CONF/wpa.conf"
     [[ -n "$ADHOC" ]] && echo "ap_scan=2" >> "$WPA_CONF/wpa.conf"
