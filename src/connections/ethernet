@@ -123,7 +123,11 @@ ethernet_up() {
     fi
 
     case "$IP6" in
+    stateless)
+        sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=1
+        ;;
     static)
+        sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
         if [[ -n "$ADDR6" ]]; then
             [[ -z $PREFIXLEN ]] && PREFIXLEN=64
             report_debug ethernet_iproute_up ip -6 addr add "$ADDR6/$PREFIXLEN" dev "$INTERFACE" 
@@ -151,7 +155,7 @@ ethernet_up() {
     "")
         ;;
     *)
-        report_iproute "IP6 must be 'static'"
+        report_iproute "IP6 must be 'stateless' or 'static'"
         ;;
     esac
 
