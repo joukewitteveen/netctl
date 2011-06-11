@@ -22,11 +22,11 @@ all_profiles() {
 }
 
 up_profiles() {
-	_files -W "/var/run/network/profiles"
+	_files -W "/run/network/profiles"
 }
 
 up_ifaces() {
-	_files -W "/var/run/network/interfaces"
+	_files -W "/run/network/interfaces"
 }
 
 _arguments -C \

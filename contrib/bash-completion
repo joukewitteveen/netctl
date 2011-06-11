@@ -2,12 +2,12 @@
 
 _connected_prfls ()
 {
-  COMPREPLY=( $( compgen -W "$( ls /var/run/network/profiles/ )" -- $cur ) )
+  COMPREPLY=( $( compgen -W "$( ls /run/network/profiles/ )" -- $cur ) )
 }
 
 _connected_intfs ()
 {
-  COMPREPLY=( $( compgen -W "$( ls /var/run/network/interfaces/)" -- $cur ) )
+  COMPREPLY=( $( compgen -W "$( ls /run/network/interfaces/)" -- $cur ) )
 }
 
 _netcfg ()
