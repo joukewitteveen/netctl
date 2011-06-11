@@ -118,7 +118,7 @@ ethernet_up() {
     # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
         report_debug ethernet_iproute_up hostname "$HOSTNAME"
-        if ! hostname "$HOSTNAME"; then
+        if ! echo "$HOSTNAME" > /proc/sys/kernel/hostname; then
             report_iproute "Cannot set hostname to $HOSTNAME"
         fi
     fi
