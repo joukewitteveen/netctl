@@ -16,13 +16,17 @@ KEY (required for SECURITY of 'wpa' or 'wep' only)
 ESSID (this or AP is required)
 :   Name of network to connect to.
 AP (this or ESSID is required)
-:   AP of the network to connect to.
+:   AP (BSSID) of the network to connect to.
+HIDDEN (optional)
+:   Define this to connect to hidden ESSIDs.
+ADHOC (optional)
+:   Define this to use ad-hoc mode for wireless.
 TIMEOUT (optional)
 :   Time to wait for association. Defaults to 15 seconds. 
 SCAN (optional)
 :   yes/no Scan for a wireless network rather than blindly attempting to connect. Hidden SSID networks do not appear in a scan. 
-IWCONFIG (optional)
-:   Arguments to pass to iwconfig before attempting to configure the connection. For example, BSSID.
+IWCONFIG (optional, deprecated)
+:   Arguments to pass to iwconfig before attempting to configure the connection.
 
 ### WPA options  
 WPA_CONF (for SECURITY of 'wpa-config' only)
