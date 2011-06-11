@@ -17,7 +17,7 @@ case $1 in
         interface=$2
         [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
         stop_wpa $2
-        kill $(cat "/var/run/wpa_actiond_${2}.pid")
+        kill $(cat "/run/wpa_actiond_${2}.pid")
         if [[ -n "$RFKILL" ]]; then 
             set_rf_state "$interface" disabled $RFKILL_NAME || exit $?
         fi
@@ -25,7 +25,7 @@ case $1 in
         ;;
     *)
         interface=$1; shift
-        PIDFILE="/var/run/wpa_actiond_${interface}.pid"
+        PIDFILE="/run/wpa_actiond_${interface}.pid"
         EXTRA_AUTOWIFI_OPTIONS="$*"
         ;;
 esac
