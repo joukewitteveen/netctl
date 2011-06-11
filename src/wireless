@@ -87,9 +87,9 @@ wpa_supplicant_scan_info() {
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
     wpa_supplicant -B -i"$INTERFACE" -Dnl80211,wext -C/run/wpa_supplicant -P/run/wpa_supplicant.pid || return 1
-    wpa_cli -i "$INTERFACE" scan &> /dev/null
+    wpa_cli -p /run/wpa_supplicant -i "$INTERFACE" scan &> /dev/null
     sleep 2.5
-    wpa_cli -i "$INTERFACE" scan_results |
+    wpa_cli -p /run/wpa_supplicant -i "$INTERFACE" scan_results |
         grep -v "^Selected" |
         grep -v "^bssid" |
         sort -rn -k3 |

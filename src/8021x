@@ -8,9 +8,9 @@ wpa_check()
     while [[ $timeout -lt "$TIMEOUT" ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if [[ $timeout -lt 2 ]]; then
-            eval $(wpa_cli -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
+            eval $(wpa_cli -p /run/wpa_supplicant -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
         else
-            eval $(wpa_cli -i "$INTERFACE" status | fgrep "wpa_state=")
+            eval $(wpa_cli -p /run/wpa_supplicant -i "$INTERFACE" status | fgrep "wpa_state=")
         fi
         [[ "$wpa_state" = "$CONDITION" ]]
         ) && return 0
@@ -40,7 +40,7 @@ start_wpa()
 
 stop_wpa()
 {
-    wpa_cli -i "$1" terminate &> /dev/null
+    wpa_cli -p /run/wpa_supplicant -i "$1" terminate &> /dev/null
     sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
                     # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
     if [[ -f "/run/wpa_supplicant_$1.pid" ]]; then
