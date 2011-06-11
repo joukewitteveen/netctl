@@ -91,6 +91,7 @@ make_wpa_config() {
         else
             echo "wep_key0=$KEY"
         fi
+        ;;
     none|none-old)
         echo "key_mgmt=NONE"
         ;;
