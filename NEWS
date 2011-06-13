@@ -2,6 +2,7 @@ version 2.6
 - add support for IPv6 configuration (FS#18699)
 - add support for static routes configuration (FS#18700)
 - add support for creating tun/tap interfaces (FS#15049)
+- bridge: add support for several brctl options (FS#16625)
 - wireless: add support for explicit BSSID (FS#24582)
 - wireless: add support for ad-hoc connections (FS#19683)
 - use /run instead of /var/run
