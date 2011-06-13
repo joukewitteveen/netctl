@@ -20,6 +20,13 @@ bridge_up() {
       ip addr flush dev $bridge_client
       $BRCTL addif $INTERFACE $bridge_client
     done
+    # Set options
+    if [ -n "$FWD_DELAY" ]; then
+        $BRCTL setfd $INTERFACE "$FWD_DELAY"
+    fi
+    if [ -n "$MAX_AGE" ]; then
+        $BRCTL setmaxage $INTERFACE "$MAX_AGE"
+    fi
 
     bring_interface up "$INTERFACE"
     "$CONN_DIR/ethernet" up "$1"
