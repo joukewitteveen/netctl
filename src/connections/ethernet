@@ -149,11 +149,12 @@ ethernet_up() {
     static)
         sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
         if [[ -n "$ADDR6" ]]; then
-            [[ -z $PREFIXLEN ]] && PREFIXLEN=64
-            report_debug ethernet_iproute_up ip -6 addr add "$ADDR6/$PREFIXLEN" dev "$INTERFACE" 
-            if ! ip -6 addr add "$ADDR6/$PREFIXLEN" dev "$INTERFACE"; then
-                report_iproute "Could not configure interface"
-            fi
+            for addr in "${ADDR6[@]}"; do
+                report_debug ethernet_iproute_up ip -6 addr add "$addr" dev "$INTERFACE"
+                if ! ip -6 addr add "$addr" dev "$INTERFACE"; then
+                    report_iproute "Could not add address $addr to interface"
+                fi
+            done
         fi
         if [[ -n "$GATEWAY6" ]]; then
             report_debug ethernet_iproute_up ip -6 route add default via "$GATEWAY6"

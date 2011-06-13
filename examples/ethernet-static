@@ -9,7 +9,6 @@ DNS=('192.168.1.1')
 
 ## For IPv6 static address configuration
 #IP6='static'
-#ADDR6='1234:5678:9abc:def::1'
-#PREFIXLEN=64
+#ADDR6=('1234:5678:9abc:def::1/64' '1234:3456::123/96')
 #ROUTES6=('abcd::1234')
 #GATEWAY6='1234:0:123::abcd'

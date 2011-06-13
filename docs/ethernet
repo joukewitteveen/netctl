@@ -28,11 +28,9 @@ IFOPTS (deprecated, requires IP of 'static')
 IP6 (required for IPv6)
 :   Either 'dhcp', 'dhcp-noaddr', 'stateless', 'static'.
 ADDR6 (required for IP6=static)
-:   An IPv6 address or subnet.
+:   An array of IPv6 addresses: prefix length may be specified via '1234:bcd::11/64' syntax.
 GATEWAY6 (for IP6=static)
 :   The gateway address for IPv6 routing.
-PREFIXLEN (for IP6=static)
-:   The netmask for the interface address.
 ROUTES6
 :   An array of custom routes (<address range> via <gateway>)
 ### DNS
