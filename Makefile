@@ -7,7 +7,7 @@ install:
 				$(DESTDIR)/etc/network.d/{examples,hooks,interfaces} \
 				$(DESTDIR)/etc/rc.d \
 				$(DESTDIR)/usr/share/man/{man5,man8} \
-				
+	install -d $(DESTDIR)/lib/systemd/system
 	# Documentation
 	install -m644 examples/* $(DESTDIR)/etc/network.d/examples/
 	install -m644 src/iftab $(DESTDIR)/etc/iftab
@@ -25,6 +25,7 @@ install:
 	install -Dm755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/netcfg.action
 	# Daemons
 	install -m755 src/net-{profiles,rename} wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
+	install -m644 wpa_actiond/net-auto-wireless.service ifplugd/net-auto-wired.service $(DESTDIR)/lib/systemd/system
 	# Shell Completion
 	install -Dm644 contrib/bash-completion $(DESTDIR)/etc/bash_completion.d/netcfg
 	install -Dm644 contrib/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_netcfg
