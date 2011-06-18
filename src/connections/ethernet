@@ -105,10 +105,10 @@ ethernet_up() {
             fi
         fi
         ;;
-    "")
+    ""|no)
         ;;
       *)
-        report_iproute "IP must be either 'dhcp' or 'static'"
+        report_iproute "IP must be either 'dhcp', 'static' or 'no'"
         ;;
     esac
 
@@ -173,10 +173,11 @@ ethernet_up() {
             done
         fi
         ;;
-    "")
+    ""|no)
+        sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
         ;;
     *)
-        report_iproute "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless' or 'static'"
+        report_iproute "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
         ;;
     esac
 
