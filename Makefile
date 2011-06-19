@@ -15,7 +15,7 @@ install:
 	install -m644 src/iftab $(DESTDIR)/etc/iftab
 	install -m644 man/*.8 $(DESTDIR)/usr/share/man/man8
 	# Libs
-	install -m644 src/{network,wireless,8021x,globals} $(DESTDIR)/usr/lib/network
+	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network
 	install -m755 src/connections/* ${DESTDIR}/usr/lib/network/connections
 	ln -s ethernet $(DESTDIR)/usr/lib/network/connections/ethernet-iproute
 	# Hooks

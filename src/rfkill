@@ -1,0 +1,75 @@
+set_rf_state() {
+    local INTERFACE="$1" state="$2" RFKILL_NAME="$3"
+
+    if [[ "$RFKILL" == "hard" ]]; then
+        report_fail "Cannot set state on hardware rfkill switch"
+        return 1
+    fi
+    local path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
+    case "$state" in
+        enabled)
+            echo 1 > "$path/state"
+        ;;
+        disabled)
+            echo 0 > "$path/state"
+        ;;
+    esac
+}
+
+get_rf_path() {
+    local INTERFACE="$1" RFKILL_NAME="$2" path
+
+    if [[ -n "$RFKILL_NAME" ]]; then
+        for path in /sys/class/rfkill/*; do
+            if [[ "$(cat "$path/name")" == "$RFKILL_NAME" ]]; then
+                echo "$path"
+                return 0
+            fi
+        done
+        report_fail "no rfkill switch with name $RFKILL_NAME"
+    else
+        path="/sys/class/net/$INTERFACE/rfkill"
+        if [[ -d "$path" ]]; then
+            echo "$path"
+            return 0
+        fi
+        report_fail "no rfkill switch available on interface $INTERFACE"
+    fi
+    return 1
+}
+
+get_rf_state() {
+    local INTERFACE="$1" PROFILE="$2" path state
+
+    path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
+    state=$(cat "$path/state")
+
+    case "$state" in
+        0|2)
+            echo "disabled";;
+        1)
+            echo "enabled";;
+        *)
+            echo "$state";;
+    esac
+}
+
+enable_rf() {
+    local INTERFACE="$1" RFKILL="$2" RFKILL_NAME="$3"
+    # Enable rfkill if necessary, or fail if it is hardware
+    if [[ -n "$RFKILL" ]]; then
+        local state=$(get_rf_state "$INTERFACE") || return 1
+        if [[ "$state" != "enabled" ]]; then
+            if [[ "$RFKILL" == "soft" ]]; then
+                set_rf_state "$INTERFACE" enabled $RFKILL_NAME
+                sleep 1
+            else
+                report_fail "radio is disabled on $INTERFACE"
+                return 1
+            fi
+        fi
+    fi
+}
+
+# vim: ft=sh ts=4 et sw=4:
+

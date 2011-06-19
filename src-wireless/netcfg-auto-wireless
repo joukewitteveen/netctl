@@ -2,7 +2,8 @@
 # Originally contributed by Neuro: http://bbs.archlinux.org/viewtopic.php?pid=278148#p278148
 
 . /usr/lib/network/network
-. /usr/lib/network/wireless
+. $SUBR_DIR/rfkill
+. $SUBR_DIR/8021x
 
 # wifi_auto
 #   autoconnect wireless interface
