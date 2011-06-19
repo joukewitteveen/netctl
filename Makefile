@@ -10,11 +10,12 @@ install:
 				$(DESTDIR)/etc/rc.d \
 				$(DESTDIR)/usr/share/man/{man5,man8} \
 	install -d $(DESTDIR)/lib/systemd/system
-	# Documentation
+	# Configuration files
 	install -m644 config/netcfg $(DESTDIR)/etc/conf.d/netcfg
-	install -m644 examples/* $(DESTDIR)/etc/network.d/examples/
-	install -m644 src/iftab $(DESTDIR)/etc/iftab
-	install -m644 man/*.8 $(DESTDIR)/usr/share/man/man8
+	install -m644 config/iftab $(DESTDIR)/etc/iftab
+	# Documentation
+	install -m644 docs/examples/* $(DESTDIR)/etc/network.d/examples/
+	install -m644 docs/man/*.8 $(DESTDIR)/usr/share/man/man8
 	# Libs
 	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network
 	install -m755 src/connections/* ${DESTDIR}/usr/lib/network/connections
@@ -50,8 +51,9 @@ docs:
 
 tarball: docs 
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" scripts/netcfg
+	rm -rf netcfg-$(VERSION)
 	mkdir -p netcfg-$(VERSION)
-	cp -r src scripts src-wireless ifplugd wpa_actiond examples contrib man Makefile LICENSE README netcfg-$(VERSION)
+	cp -r docs config src scripts src-wireless ifplugd wpa_actiond contrib Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
 
