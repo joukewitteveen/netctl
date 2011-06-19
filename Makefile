@@ -5,18 +5,16 @@ VPATH = doc
 .PHONY: install docs
 
 install:
-	install -d $(DESTDIR)/usr/lib/network/{connections,hooks} \
-				$(DESTDIR)/etc/network.d/{examples,hooks,interfaces} \
-				$(DESTDIR)/etc/rc.d \
-				$(DESTDIR)/usr/share/man/{man5,man8} \
-	install -d $(DESTDIR)/lib/systemd/system
 	# Configuration files
-	install -m644 config/netcfg $(DESTDIR)/etc/conf.d/netcfg
+	install -d $(DESTDIR)/etc/network.d/{examples,hooks,interfaces}
+	install -D -m644 config/netcfg $(DESTDIR)/etc/conf.d/netcfg
 	install -m644 config/iftab $(DESTDIR)/etc/iftab
-	# Documentation
 	install -m644 docs/examples/* $(DESTDIR)/etc/network.d/examples/
+	# Documentation
+	install -d $(DESTDIR)/usr/share/man/man8
 	install -m644 docs/man/*.8 $(DESTDIR)/usr/share/man/man8
 	# Libs
+	install -d $(DESTDIR)/usr/lib/network/{connections,hooks}
 	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network
 	install -m755 src/connections/* $(DESTDIR)/usr/lib/network/connections
 	ln -s wireless $(DESTDIR)/usr/lib/network/connections/wireless-dbus
@@ -30,7 +28,9 @@ install:
 	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} ifplugd/net-auto-wired $(DESTDIR)/usr/bin
 	install -Dm755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/netcfg.action
 	# Daemons
+	install -d $(DESTDIR)/etc/rc.d
 	install -m755 scripts/net-{profiles,rename} wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
+	install -d $(DESTDIR)/lib/systemd/system
 	install -m644 wpa_actiond/net-auto-wireless.service ifplugd/net-auto-wired.service $(DESTDIR)/lib/systemd/system
 	# Shell Completion
 	install -Dm644 contrib/bash-completion $(DESTDIR)/etc/bash_completion.d/netcfg
