@@ -99,7 +99,7 @@ wireless_down() {
 
     report_debug wireless_down stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
-    rm -rf "${TMPDIR:-/tmp}/wpa.$INTERFACE"
+    rm -rf "$STATE_DIR/wpa.$INTERFACE"
 
     bring_interface down "$INTERFACE"
 
