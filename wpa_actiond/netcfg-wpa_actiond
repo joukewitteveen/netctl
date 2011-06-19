@@ -1,7 +1,7 @@
 #! /bin/bash
 . /usr/lib/network/network
-. /usr/lib/network/8021x
-. /usr/lib/network/wireless
+. $SUBR_DIR/8021x
+. $SUBR_DIR/rfkill
 
 AUTOWIFI="/usr/sbin/wpa_actiond"
 ACTION_SCRIPT="/usr/bin/netcfg-wpa_actiond-action"
