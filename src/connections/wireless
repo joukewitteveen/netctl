@@ -25,15 +25,6 @@ wireless_up() {
     report_debug wireless_up stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
 
-    # Most drivers (mac80211) need mode set before device is brought up
-    if [[ $(iwgetid -sm "$INTERFACE") -ne Managed ]]; then
-        report_debug wireless_up iwconfig "$INTERFACE" mode managed
-        iwconfig "$INTERFACE" mode managed
-    fi
-
-    report_debug wireless_up ifup
-    bring_interface up "$INTERFACE" || return 1
-
     # Start wpa_supplicant
     if [ "$SECURITY" = "wpa-config" ]; then
         WPA_CONF="${WPA_CONF:-/etc/wpa_supplicant.conf}"
@@ -63,8 +54,9 @@ wireless_up() {
         fi
     fi
 
-    # Manually set iwconfig options
+    # Manually set iwconfig options (DEPRECATED)
     if [[ -n "$IWCONFIG" ]]; then
+        report_warn "The use of IWCONFIG option is deprecated."
         report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG
         iwconfig "$INTERFACE" $IWCONFIG
     fi
@@ -87,6 +79,12 @@ wireless_up() {
             report_fail "Invalid SECURITY setting: $SECURITY"
             ;;
     esac
+
+    # Bring interface up after starting wpa_supplicant
+    # This is important since cards such as iwl3945 do not support
+    # mode switching when they are already up.
+    report_debug wireless_up ifup
+    bring_interface up "$INTERFACE" || return 1
 
     report_debug wireless_up wpa_check
     if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
