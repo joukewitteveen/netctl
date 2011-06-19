@@ -2,6 +2,8 @@
 . /usr/lib/network/network
 . $SUBR_DIR/8021x
 . $SUBR_DIR/rfkill
+. /etc/rc.conf
+. /etc/conf.d/netcfg
 
 AUTOWIFI="/usr/sbin/wpa_actiond -p /run/wpa_supplicant"
 ACTION_SCRIPT="/usr/bin/netcfg-wpa_actiond-action"
@@ -49,7 +51,7 @@ fi
 
 WPA_CONF="$(make_wpa_config_file $interface)"
 
-for profile in $(list_profiles); do
+for profile in ${AUTO_PROFILES:-$(list_profiles)}; do
     echo $profile
     (
     load_profile $profile
