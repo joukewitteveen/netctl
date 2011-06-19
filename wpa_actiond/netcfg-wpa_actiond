@@ -3,7 +3,7 @@
 . $SUBR_DIR/8021x
 . $SUBR_DIR/rfkill
 
-AUTOWIFI="/usr/sbin/wpa_actiond"
+AUTOWIFI="/usr/sbin/wpa_actiond -p /run/wpa_supplicant"
 ACTION_SCRIPT="/usr/bin/netcfg-wpa_actiond-action"
 
 case $1 in
