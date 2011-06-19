@@ -1,3 +1,7 @@
+version 2.6.1
+- fix missing mkdir for net-auto-wireless
+- add basic configuration capabilities to tun/tap interfaces
+
 version 2.6
 - add support for IPv6 configuration (FS#18699)
 - add support for static routes configuration (FS#18700)

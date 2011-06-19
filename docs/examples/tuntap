@@ -4,3 +4,8 @@ MODE='tun'
 USER='nobody'
 GROUP='nobody'
 
+## Example IP configuration
+#IP='static'
+#SKIPNOCARRIER='yes'
+#ADDR='10.10.1.2'
+

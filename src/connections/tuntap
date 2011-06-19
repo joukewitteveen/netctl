@@ -11,12 +11,16 @@ tuntap_up() {
         ip tuntap add dev "$INTERFACE" mode "$MODE" \
             user "$USER" group "$GROUP" &>/dev/null
     fi
+    bring_interface up "$INTERFACE"
+    "$CONN_DIR/ethernet" up "$1"
     return 0
 }
 
 tuntap_down() {
     load_profile "$1"
 
+    "$CONN_DIR/ethernet" down "$1"
+    bring_interface down "$INTERFACE"
     ip tuntap del "$INTERFACE" mode "$MODE" &>/dev/null
     return 0
 }
