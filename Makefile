@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.6
+VERSION=2.6rc1
 VPATH = doc
 
 .PHONY: install docs
@@ -45,13 +45,12 @@ install-docs: docs
 	install -m644 contrib/* $(DESTDIR)/usr/share/doc/netcfg/contrib/
 	
 docs:
-	cd docs; \
-	./make.sh
+	cd docs && ./make.sh
 
 tarball: docs 
-	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" src/netcfg
+	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" scripts/netcfg
 	mkdir -p netcfg-$(VERSION)
-	cp -r src src-wireless ifplugd wpa_actiond examples contrib man Makefile LICENSE README netcfg-$(VERSION)
+	cp -r src scripts src-wireless ifplugd wpa_actiond examples contrib man Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
 

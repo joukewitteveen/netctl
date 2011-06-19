@@ -17,3 +17,7 @@ For wireless support:
 Deprecated dependencies:
 - net-tools (only used in IFOPTS option)
 - wireless_tools (only used for IWCONFIG option, still necessary for wireless connection)
+
+For documentation generation:
+- python-markdown, or pandoc
+
