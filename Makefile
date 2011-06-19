@@ -19,12 +19,12 @@ install:
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# Scripts
-	install -Dm755 src/netcfg $(DESTDIR)/usr/bin/netcfg2
-	install -Dm755 src/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
+	install -Dm755 scripts/netcfg $(DESTDIR)/usr/bin/netcfg2
+	install -Dm755 scripts/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
 	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} ifplugd/net-auto-wired $(DESTDIR)/usr/bin
 	install -Dm755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/netcfg.action
 	# Daemons
-	install -m755 src/net-{profiles,rename} wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
+	install -m755 scripts/net-{profiles,rename} wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
 	install -m644 wpa_actiond/net-auto-wireless.service ifplugd/net-auto-wired.service $(DESTDIR)/lib/systemd/system
 	# Shell Completion
 	install -Dm644 contrib/bash-completion $(DESTDIR)/etc/bash_completion.d/netcfg
