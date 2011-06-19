@@ -2,6 +2,8 @@ DESTDIR=
 VERSION=2.6
 VPATH = doc
 
+.PHONY: install docs
+
 install:
 	install -d $(DESTDIR)/usr/lib/network/{connections,hooks} \
 				$(DESTDIR)/etc/network.d/{examples,hooks,interfaces} \
