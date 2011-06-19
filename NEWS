@@ -5,8 +5,10 @@ version 2.6
 - bridge: add support for several brctl options (FS#16625)
 - wireless: add support for explicit BSSID (FS#24582)
 - wireless: add support for ad-hoc connections (FS#19683)
+- wireless: no longer require wireless_tools to work
 - use /run instead of /var/run
-- drops dependency on net-tools package
+- drops hard dependency on net-tools package
+- drops hard dependency on wireless_tools package
 
 version 2.5.5
 - new connection types: openvpn (FS#21490), vlan
