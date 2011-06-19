@@ -56,6 +56,18 @@ wpa_reconfigure() {
     return $?
 }
 
+wpa_check_current_essid() {
+    # usage: wpa_check_current_essid $interface $essid
+    # check that wpa_supplicant is connected to the right essid
+    local INTERFACE=$1 ESSID=$2 status
+    status=$($WPA_CLI -i "$INTERFACE" status | grep "^ssid=")
+    if (( $? == 0 )) && [[ "$status" == "ssid=$ESSID" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 wpa_find_essid() {
     # usage: wpa_find_essid $INTERFACE $ESSID
     # look for existence of a given essid. Assumes wpa_supplicant is
