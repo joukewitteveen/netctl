@@ -1,0 +1,19 @@
+Dependencies:
+- Linux
+- Bash 4.x
+- GNU Coreutils
+- iproute2
+- dialog: for interactive menu
+- ifplugd: for automatic connection
+
+For DHCP support:
+- dhcpcd
+- dhclient (for DHCPv6)
+
+For wireless support:
+- wpa_supplicant
+- wpa_actiond: for automatic connection
+
+Deprecated dependencies:
+- net-tools (only used in IFOPTS option)
+- wireless_tools (only used for IWCONFIG option, still necessary for wireless connection)
