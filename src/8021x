@@ -50,6 +50,12 @@ stop_wpa()
     fi
 }
 
+wpa_reconfigure() {
+    local INTERFACE=$1
+    $WPA_CLI -i "$INTERFACE" reconfigure
+    return $?
+}
+
 wpa_find_essid() {
     # usage: wpa_find_essid $INTERFACE $ESSID
     # look for existence of a given essid. Assumes wpa_supplicant is
