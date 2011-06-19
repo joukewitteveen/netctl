@@ -4,6 +4,7 @@
 . /usr/lib/network/network
 . $SUBR_DIR/rfkill
 . $SUBR_DIR/8021x
+. /etc/conf.d/netcfg
 
 # wifi_auto
 #   autoconnect wireless interface
@@ -30,9 +31,11 @@ wifi_auto()
 
     local found_profile
 
+    [ -z "$AUTO_PROFILES" ] && AUTO_PROFILES=$(list_profiles)
+
     # JP: add ability to use AP instead of ESSID
     while read ap essid; do
-        while read network; do
+        echo $AUTO_PROFILES | while read network; do
             (
                 unset CONNECTION INTERFACE AP ESSID
                 load_profile "$network"
@@ -58,7 +61,7 @@ wifi_auto()
                 1) found_profile="$network"
                     ;;
             esac
-        done < <(list_profiles)         # avoid subshell we'd get by piping list_profiles to while read
+        done
     done < "$networks"                  # avoid subshell; list_networks returns name of a tmp file
     rm -f "$networks"               # shouldn't we delete the tmp file?
 

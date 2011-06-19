@@ -11,6 +11,7 @@ install:
 				$(DESTDIR)/usr/share/man/{man5,man8} \
 	install -d $(DESTDIR)/lib/systemd/system
 	# Documentation
+	install -m644 config/netcfg $(DESTDIR)/etc/conf.d/netcfg
 	install -m644 examples/* $(DESTDIR)/etc/network.d/examples/
 	install -m644 src/iftab $(DESTDIR)/etc/iftab
 	install -m644 man/*.8 $(DESTDIR)/usr/share/man/man8

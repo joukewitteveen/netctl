@@ -4,6 +4,10 @@
 
 [[ -f /usr/lib/network/network ]] || exit $NA
 . /usr/lib/network/network
+. /etc/rc.conf
+. /etc/conf.d/netcfg
+
+WIRELESS_INTERFACE=${WIRELESS_INTERFACE:-wlan0}
 
 auto_resume()
 {
@@ -32,23 +36,23 @@ case "$1" in
         fi
         ;;
     thaw|resume)
-        if [ -f "$STATE_DIR/interface/wlan0" ]; then
+        if [ -f "$STATE_DIR/interface/${WIRELESS_INTERFACE}" ]; then
             report_notify "resuming all interfaces..."
-            auto_resume wlan0
+            auto_resume ${WIRELESS_INTERFACE}
         else
             report_notify "resuming all interfaces except wireless..."
-            all_resume wlan0
+            all_resume ${WIRELESS_INTERFACE}
         fi
         ;;
     radio_off)
         report_notify "suspending wireless interface..."
-        interface_suspend wlan0 no
-        set_iface disabled wlan0
-        bring_interface forcedown wlan0
+        interface_suspend ${WIRELESS_INTERFACE} no
+        set_iface disabled ${WIRELESS_INTERFACE}
+        bring_interface forcedown ${WIRELESS_INTERFACE}
         ;;
     radio_on)
         report_notify "resuming wireless interface..."
-        auto_resume wlan0
+        auto_resume ${WIRELESS_INTERFACE}
         if [ -x /etc/pm/power.d/??wifi ]; then
             /usr/bin/on_ac_power    # this is in pm-utils
             case $? in

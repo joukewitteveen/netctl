@@ -1,0 +1,6 @@
+## Define to the name of your wireless interface for net-auto-wireless
+WIRELESS_INTERFACE="wlan0"
+
+## List of profiles that can be started by net-auto-wireless
+## defaults to the list of all wireless profiles
+#AUTO_PROFILES="profile1 profile2"
