@@ -13,65 +13,6 @@ wep_check()
     return 1
 }
 
-# Check if a particular network is within range
-# find_essid interface essid connection
-find_essid() {
-    local INTERFACE="$1" ESSID="$2" RETRIES=10 try=0 res scanned
-    while [[ "$try" -lt "$RETRIES" ]]; do
-        sleep 0.5
-        let try++
-        found=$(
-                res=$(iwlist "$INTERFACE" scan 2>/dev/null)
-                [[ -z "$res" ]] && exit 1
-                # if results were non-null, process them and exit 0
-                echo "$res" | sed -nr 's/^\s+ESSID:"([^"]*)"$/\1/p' | fgrep -xm1 "$ESSID"
-               ) && {
-                scanned=1
-                report_debug find_essid "\"$found\""
-                # we only bother with at most 5 successful scans
-                if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
-              }
-        if [[ -n "$found" ]]; then
-            echo "$found"       # JP: echo literal ESSID
-            return 0 # network found
-        fi
-    done
-    if [[ "$scanned" -ne 1 ]]; then
-        report_debug find_essid "unable to scan"
-    fi
-    return 1
-}
-
-# Check if a particular network is within range
-# find_ap interface ap
-find_ap() {
-    local INTERFACE="$1" ap=$(echo "$2" | tr 'abcdef' 'ABCDEF') RETRIES=10 try=0 res scanned
-    while [[ "$try" -lt "$RETRIES" ]]; do
-        sleep 0.5
-        let try++
-        found=$(
-            res=$(iwlist "$INTERFACE" scan 2> /dev/null)
-            [[ -z "$res" ]] && exit 1
-            # if results were non-null, process them and exit 0
-            echo "$res" | sed -nr '/^\s+Cell .. - Address: ([[:xdigit:]:]+)$/ { s//\1/; N; s/(.*)\n\s+ESSID:"([^"]*)"$/\1\t\2/p }' \
-            | egrep -m1 "^$ap\t"
-            ) && {
-                    scanned=1
-                    report_debug find_ap "\"$found\""
-                    # we only bother with at most 5 successful scans
-                    if (( try < RETRIES-4 )); then try=$((RETRIES-4)); fi
-                 }
-        if [[ -n "$found" ]]; then
-            echo "$found" | cut -f2     # JP: echo literal ESSID
-            return 0
-        fi
-    done
-    if [[ "$scanned" -ne 1 ]]; then
-        report_debug find_ap "unable to scan"
-    fi
-    return 1
-}
-
 set_rf_state() {
     local INTERFACE="$1" state="$2" RFKILL_NAME="$3"
 
