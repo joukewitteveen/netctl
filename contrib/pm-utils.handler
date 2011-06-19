@@ -32,7 +32,7 @@ case "$1" in
         fi
         ;;
     thaw|resume)
-        if "$CONN_DIR/wireless" query wlan0 enabled; then
+        if [ -f "$STATE_DIR/interface/wlan0" ]; then
             report_notify "resuming all interfaces..."
             auto_resume wlan0
         else
