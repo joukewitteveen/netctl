@@ -4,45 +4,6 @@
 . $SUBR_DIR/wireless
 
 
-iwconfig_up() {
-
-    quirk prescan && iwlist "$INTERFACE" scan &> /dev/null # bcm43xx
-
-    # 'none' uses iwconfig like wep. Use sane default if WEP_OPTS=""
-    if [[ -z "$WEP_OPTS" ]]; then
-        if [[ "$SECURITY" = "wep-old" ]]; then
-            if [[ -n "$AP" ]]; then
-                WEP_OPTS="ap \"$AP\" key $KEY"
-            else
-                WEP_OPTS="essid \"$ESSID\" key $KEY"
-            fi
-        elif [[ "$SECURITY" = "none-old" ]]; then
-            if [[ -n "$AP" ]]; then
-                WEP_OPTS="ap \"$AP\""
-            else
-                WEP_OPTS="essid \"$ESSID\""
-            fi
-        fi
-    fi
-
-    quirk "predown" && bring_interface down "$INTERFACE" # madwifi FS#10585
-
-    report_debug wireless_up iwconfig "$INTERFACE" $WEP_OPTS
-
-    if ! iwconfig "$INTERFACE" $WEP_OPTS; then
-        report_fail "Could not set wireless configuration."
-        return 1
-    fi
-
-    quirk "predown" && bring_interface up "$INTERFACE" # madwifi FS#10585
-
-    report_debug ethernet_up wep_check
-    if ! wep_check "$INTERFACE" "$TIMEOUT"; then
-        report_fail "WEP Association Failed"
-        return 1
-    fi
-}
-
 wireless_up() {
 
     PROFILE="$1"
@@ -90,11 +51,12 @@ wireless_up() {
     # Set to 'none' if not set
     [[ -z "$SECURITY" ]] && SECURITY="none"
 
+    if [[ "$SECURITY" != "${SECURITY%-old}" ]]; then
+        report_warn "SECURITY=none-old, wep-old are deprecated, please use none, wep instead!"
+        SECURITY=${SECURITY%-old}
+    fi
+
     case "$SECURITY" in
-        *-old)
-            report_debug "Using older iwconfig based path"
-            iwconfig_up || return 1
-            ;;
         wpa-config)
             [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf" # defaults
             ;;
@@ -135,14 +97,9 @@ wireless_down() {
 
     "$CONN_DIR/ethernet" down "$PROFILE"
 
-    if [[ ${SECURITY:(-4)} == "-old" ]]; then
-        report_debug wireless_down iwconfig "$INTERFACE" essid off key off
-        iwconfig "$INTERFACE" essid off key off &> /dev/null
-    else
-        report_debug wireless_down stop_wpa "$INTERFACE"
-        stop_wpa "$INTERFACE"
-        rm -rf "${TMPDIR:-/tmp}/wpa.$INTERFACE"
-    fi
+    report_debug wireless_down stop_wpa "$INTERFACE"
+    stop_wpa "$INTERFACE"
+    rm -rf "${TMPDIR:-/tmp}/wpa.$INTERFACE"
 
     bring_interface down "$INTERFACE"
 
@@ -168,5 +125,5 @@ wireless_status() {
 wireless_$1 "$2" "$3"
 exit $?
 
-# vim: ft=sh ts=4 et sw=4:
+# vim: ft=sh ts=4 et sw=4 tw=0:
 

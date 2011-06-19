@@ -10,7 +10,7 @@ This connection method uses  wpa_supplicant to configure a wireless network conn
 INTERFACE (required)
 :   The wireless interface to configure
 SECURITY (required for security of 'wep', 'wpa', 'wpa-configsection' or 'wpa-config')
-:   One of 'wpa', 'wep', 'none', 'wpa-configsection' or 'wpa-config'. Defaults to 'none'. Old iwconfig based configuration code can be used with 'wep-old' and 'none-old'.
+:   One of 'wpa', 'wep', 'none', 'wpa-configsection' or 'wpa-config'. Defaults to 'none'.
 KEY (required for SECURITY of 'wpa' or 'wep' only)
 :   Wireless encryption key. 
 ESSID (this or AP is required)
