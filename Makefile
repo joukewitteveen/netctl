@@ -18,12 +18,14 @@ install:
 	install -m644 docs/man/*.8 $(DESTDIR)/usr/share/man/man8
 	# Libs
 	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network
-	install -m755 src/connections/* ${DESTDIR}/usr/lib/network/connections
+	install -m755 src/connections/* $(DESTDIR)/usr/lib/network/connections
+	ln -s wireless $(DESTDIR)/usr/lib/network/connections/wireless-dbus
 	ln -s ethernet $(DESTDIR)/usr/lib/network/connections/ethernet-iproute
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# Scripts
 	install -Dm755 scripts/netcfg $(DESTDIR)/usr/bin/netcfg2
+	ln -s netcfg2 $(DESTDIR)/usr/bin/netcfg
 	install -Dm755 scripts/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
 	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} ifplugd/net-auto-wired $(DESTDIR)/usr/bin
 	install -Dm755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/netcfg.action
