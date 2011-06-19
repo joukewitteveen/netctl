@@ -3,6 +3,7 @@
 
 . /usr/lib/network/network
 . /usr/lib/network/wireless
+. /usr/lib/network/8021x
 
 # wifi_auto
 #   autoconnect wireless interface
