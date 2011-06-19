@@ -26,7 +26,7 @@ IFOPTS (deprecated, requires IP of 'static')
 :   Arguments to pass to 'ifconfig'. This allows you to use the syntax for the older 'ifconfig' tool. Retained for compatability.
 ## IPv6 options
 IP6 (required for IPv6)
-:   Either 'dhcp', 'dhcp-noaddr', 'stateless', 'static'.
+:   Either 'dhcp', 'dhcp-noaddr', 'stateless', 'static'. Leave unset to disable IPv6.
 ADDR6 (required for IP6=static)
 :   An array of IPv6 addresses: prefix length may be specified via '1234:bcd::11/64' syntax.
 GATEWAY6 (for IP6=static)
