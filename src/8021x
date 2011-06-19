@@ -50,6 +50,55 @@ stop_wpa()
     fi
 }
 
+wpa_find_essid() {
+    # usage: wpa_find_essid $INTERFACE $ESSID
+    # look for existence of a given essid. Assumes wpa_supplicant is
+    # running
+    result=$(wpa_supplicant_scan_and_find "$1" 5 "$2")
+    ret=$?
+    echo $result
+    report_debug wpa_find_essid "\"$result\""
+    return $ret
+}
+
+wpa_find_ap() {
+    # usage: wpa_find_essid $INTERFACE $ESSID
+    # look for existence of a given essid. Assumes wpa_supplicant is
+    # running
+    bssid=${2,,} # set to lowercase
+    result=$(wpa_supplicant_scan_and_find "$1" 1 "$bssid")
+    ret=$?
+    echo $result
+    report_debug wpa_find_ap "\"$result\""
+    return $ret
+}
+
+wpa_supplicant_scan_and_find() {
+    #usage: wpa_supplicant_scan_and_find $INTERFACE $FIELD $ITEM
+    # field = 1 for bssid, 5 for essid
+    # item = string to lookup
+    local INTERFACE="$1" FIELD="$2" ITEM="$3" RETRIES=5 try scan_ok
+    scan_ok=0
+    $WPA_CLI -i "$INTERFACE" scan &> /dev/null
+    for ((try=0; try < $RETRIES; try++)); do
+        local found
+        sleep 2
+        found=$($WPA_CLI -i "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | grep -F -x -m 1 "${ITEM}")
+        (( $? == 0 )) && scan_ok=1
+
+        # ITEM has been found, echo it
+        if [[ -n "$found" ]]; then
+            echo "$found"
+            return 0
+        fi
+        $WPA_CLI -i "$INTERFACE" scan &> /dev/null
+    done
+    if (( $scan_ok != 1 )); then
+        report_debug wpa_supplicant_scan_and_find "unable to retrieve scan results"
+    fi
+    return 1
+}
+
 # Return a filename containing a list of network APs and ESSIDs found (sorted by decreasing signal strength)
 # list_networks interface
 list_networks() {
@@ -156,5 +205,5 @@ make_wpa_config() {
     fi
 }
 
-# vim: ft=sh ts=4 et sw=4:
+# vim: ft=sh ts=4 et sw=4 tw=0:
 
