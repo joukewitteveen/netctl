@@ -7,7 +7,8 @@ suspend_netcfg() {
     case $NETCFG_SUSPEND in
         daemons)
             stopservice net-profiles
-            stopservice net-auto
+            stopservice net-auto-wired
+            stopservice net-auto-wireless
         ;;
         retain|*)
             netcfg all-suspend
@@ -19,7 +20,8 @@ resume_netcfg() {
     case $NETCFG_SUSPEND in
         daemons)
             restartservice net-profiles
-            restartservice net-auto
+            restartservice net-auto-wired
+            restartservice net-auto-wireless
             ;;
         retain|*)
             netcfg all-resume
