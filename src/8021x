@@ -187,7 +187,7 @@ make_wpa_config() {
     wep|wep-old|wpa|none|none-old)
         echo "ssid=\"$ESSID\""
         if [[ -n "$AP" ]]; then
-            echo "bssid=$AP"
+            echo "bssid=${AP,,}"
         fi
         [[ -n "$ADHOC" ]] && echo "mode=1"
         ;;

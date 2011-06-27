@@ -42,7 +42,7 @@ wireless_up() {
         report_debug wireless_up scanning
         local OLDESSID="$ESSID"
         if [[ -n "$AP" ]]; then
-            ESSID=$(wpa_find_ap "$INTERFACE" "$AP")
+            BSSID=$(wpa_find_ap "$INTERFACE" "$AP")
         else
             ESSID=$(wpa_find_essid "$INTERFACE" "$ESSID")
         fi
