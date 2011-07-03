@@ -203,7 +203,7 @@ make_wpa_config() {
     case $SECURITY in
     wep|wep-old)
         echo "key_mgmt=NONE"
-        echo "wep_tx_idx=0"
+        echo "wep_tx_keyidx=0"
         if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
             echo "wep_key0=\"${KEY:2}\""
         else
