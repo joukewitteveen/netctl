@@ -228,6 +228,14 @@ ethernet_down() {
             fi
         fi
     fi
+    if [[ "$IP6" == dhcp* ]]; then
+        if [[ -f "/run/dhclient6-$INTERFACE.pid" ]]; then
+            report_debug ethernet_down dhclient -6 -q -x "$INTERFACE"
+            dhclient -6 -q -x "$INTERFACE" &>/dev/null
+            report_debug ethernet_down /bin/kill $(cat /run/dhclient6-$INTERFACE.pid)
+            /bin/kill $(cat /run/dhclient6-$INTERFACE.pid) &>/dev/null
+        fi
+    fi
 
     stop_80211x
 
