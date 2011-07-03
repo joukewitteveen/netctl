@@ -168,6 +168,10 @@ make_wpa_config_file() {
 
     # make empty tmp dir with correct permissions, rename it
     check_make_state_dir
+    # create symlink for old compatibility
+    if [ ! -e /var/run/wpa_supplicant ]; then
+        ln -s /run/wpa_supplicant /var/run
+    fi
     rm -rf "$WPA_CONF"
     mv -f "$(mktemp -d --tmpdir=$STATE_DIR)" "$WPA_CONF" || return 1
     echo "ctrl_interface=/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
