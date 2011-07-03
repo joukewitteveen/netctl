@@ -213,9 +213,19 @@ ethernet_down() {
     load_profile "$1"
 
     if [[ "$IP" == "dhcp" ]]; then
-        if [[ -f "/var/run/dhcpcd-${INTERFACE}.pid" ]]; then
-            report_debug ethernet_down dhcpcd -qx "$INTERFACE"
-            dhcpcd -qk "$INTERFACE" &>/dev/null
+        if checkyesno "${DHCLIENT:-no}"; then
+            if [[ -f "/run/dhclient-$INTERFACE.pid" ]]; then
+                report_debug ethernet_down dhclient -q -r "$INTERFACE"
+                dhclient -q -x "$INTERFACE" &>/dev/null
+                #dhclient -q -r "$INTERFACE" &>/dev/null
+                report_debug ethernet_down /bin/kill $(cat /run/dhclient-$INTERFACE.pid)
+                /bin/kill $(cat /run/dhclient-$INTERFACE.pid) &>/dev/null
+            fi
+        else
+            if [[ -f "/var/run/dhcpcd-$INTERFACE.pid" ]]; then
+                report_debug ethernet_down dhcpcd -qk "$INTERFACE"
+                dhcpcd -qk "$INTERFACE" &>/dev/null
+            fi
         fi
     fi
 
