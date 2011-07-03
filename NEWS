@@ -1,3 +1,8 @@
+version 2.6.2
+- fix broken WEP support (FS#24896)
+- fix dhcpcd/dhclient not stopped properly (FS#23293)
+- fix specifying access point by BSSID (FS#24906)
+
 version 2.6.1
 - fix missing mkdir for net-auto-wireless
 - add basic configuration capabilities to tun/tap interfaces
