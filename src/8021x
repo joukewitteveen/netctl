@@ -169,6 +169,7 @@ make_wpa_config_file() {
     # make empty tmp dir with correct permissions, rename it
     check_make_state_dir
     # create symlink for old compatibility
+    mkdir -p /run/wpa_supplicant
     if [ ! -e /var/run/wpa_supplicant ]; then
         ln -s /run/wpa_supplicant /var/run
     fi
