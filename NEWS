@@ -1,3 +1,6 @@
+version 2.6.3
+- fix infinite symlink loop (FS#25077)
+
 version 2.6.2
 - fix broken WEP support (FS#24896)
 - fix dhcpcd/dhclient not stopped properly (FS#23293)
