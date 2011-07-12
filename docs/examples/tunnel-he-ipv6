@@ -1,0 +1,11 @@
+CONNECTION='tunnel'
+DESCRIPTION='A example ipv6 tunnel with Hurricane Electric'
+
+INTERFACE='he-ipv6'
+MODE='sit'
+REMOTE='216.66.80.26'
+#LOCAL='172.16.0.1'
+
+IP6='static'
+ADDR6='2001:470:1f08:d87::2/64'
+ROUTES6=('::/0')
