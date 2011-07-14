@@ -54,6 +54,9 @@ wireless_up() {
         fi
     fi
 
+    report_debug wireless_up stop_wpa "$INTERFACE"
+    stop_wpa "$INTERFACE"
+
     # Manually set iwconfig options (DEPRECATED)
     if [[ -n "$IWCONFIG" ]]; then
         report_warn "The use of IWCONFIG option is deprecated."
@@ -68,12 +71,6 @@ wireless_up() {
         none|wep|wpa|wpa-configsection)
             echo -e "network={ \n$(make_wpa_config) \n}" >> "$WPA_CONF"
             report_debug wireless_up "Configuration generated at $WPA_CONF"
-            report_debug wireless_up wpa_reconfigure "$INTERFACE"
-            if ! wpa_reconfigure "$INTERFACE"; then
-                report_fail "WPA configuration failed!"
-                stop_wpa "$INTERFACE"
-                return 1
-            fi
             ;;
         *)
             report_fail "Invalid SECURITY setting: $SECURITY"
@@ -85,6 +82,12 @@ wireless_up() {
     # mode switching when they are already up.
     report_debug wireless_up ifup
     bring_interface up "$INTERFACE" || return 1
+
+    report_debug wireless_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
+    if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
+        report_fail "wpa_supplicant did not start, possible configuration error"
+        return 1
+    fi
 
     report_debug wireless_up wpa_check
     if ! wpa_check "$INTERFACE" "$TIMEOUT"; then
