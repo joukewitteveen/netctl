@@ -46,6 +46,8 @@ bridge
 :   Network bridge setup using **brctl**(8).
 tuntap
 :   TUN/TAP interfaces.
+tunnel
+:   Tunnel interfaces.
 vlan
 :   VLAN setup.
 openvpn
@@ -232,6 +234,20 @@ VLAN_PHYS_DEV
 :   The name of the associated physical interface.
 VLAN_ID
 :   See **ip**(8).
+
+Options for 'tunnel' connections
+================================
+
+Standard 'ethernet' options apply for IP configuration.
+
+INTERFACE
+:   The name of the tunnel interface.
+MODE
+:   The tunnel type (e.g. 'sit'). See **ip**(8) for available modes.
+LOCAL
+:   The address of the local end of the tunnel.
+REMOTE
+:   The address of the remote end of the tunnel.
 
 Options for 'openvpn' connections
 ================================
