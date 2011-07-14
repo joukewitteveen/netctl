@@ -12,9 +12,9 @@ install:
 	install -m644 docs/examples/* $(DESTDIR)/etc/network.d/examples/
 	# Documentation
 	install -d $(DESTDIR)/usr/share/man/man5
-	install -m644 docs/man/*.5 $(DESTDIR)/usr/share/man/man5
+	install -m644 docs/*.5 $(DESTDIR)/usr/share/man/man5
 	install -d $(DESTDIR)/usr/share/man/man8
-	install -m644 docs/man/*.8 $(DESTDIR)/usr/share/man/man8
+	install -m644 docs/*.8 $(DESTDIR)/usr/share/man/man8
 	# Libs
 	install -d $(DESTDIR)/usr/lib/network/{connections,hooks}
 	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network
