@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.6.3
+VERSION=2.6.4
 VPATH = doc
 
 .PHONY: install docs

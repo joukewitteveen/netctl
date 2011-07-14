@@ -1,3 +1,7 @@
+version 2.6.4
+- documentation update
+- modify wireless workflow to avoid issues with association
+
 version 2.6.3
 - fix infinite symlink loop (FS#25077)
 
