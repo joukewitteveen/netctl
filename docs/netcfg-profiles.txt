@@ -43,7 +43,7 @@ wireless
 :   Wireless connection, with **wpa_supplicant**(1) as configuration
     back-end.
 bridge
-:   Network bridge setup.
+:   Network bridge setup using **brctl**(8).
 tuntap
 :   TUN/TAP interfaces.
 vlan
@@ -189,3 +189,57 @@ RFKILL_NAME
 :   Some switches sysfs entries are not linked with the interface. To
     match them up, configure the name from /sys/class/rfkill/rfkillX/name
     here so that netcfg can identify which to control.
+
+Options for 'bridge' connections
+================================
+
+The options of 'ethernet' connections apply to set up standard IP connectivity.
+
+BRIDGE_INTERFACES
+:   List of network interfaces taking part in the bridge.
+
+FWD_DELAY
+:   Forward delay of the bridge, see **brctl**(8)
+MAX_AGE
+:   maxage parameter, see **brctl**(8)
+
+Options for 'tuntap' connections
+================================
+
+The options of 'ethernet' connections apply to set up standard IP connectivity.
+
+MODE
+:   Set to 'tun' or 'tap'.
+USER
+:   The owning user of the tun/tap interface.
+GROUP
+:   The owning group of the tun/tap interface.
+
+Options for 'ppp' connections
+================================
+
+PEER
+:   The **pppd**(8) peer to use.
+PPP_TIMEOUT
+:   **pppd**(8) timeout.
+
+Options for 'vlan' connections
+================================
+
+INTERFACE
+:   The name of the virtual interface.
+VLAN_PHYS_DEV
+:   The name of the associated physical interface.
+VLAN_ID
+:   See **ip**(8).
+
+Options for 'openvpn' connections
+================================
+
+OVPN_CONFIG
+:   Path to the **openvpn**(8) config file.
+OVPN_PID_FILE
+:   Path to the **openvpn**(8) PID file.
+OVPN_FLAGS
+:   Options to pass to **openvpn**(8) invocation.
+
