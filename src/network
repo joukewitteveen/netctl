@@ -2,10 +2,8 @@
 . /usr/lib/network/globals
 # will load hooks and they in turn will load /etc/rc.d/functions if they need to
 
-### Profile loading
-##
-# load_profile profile
-#   source profile, checking whether it exists and is usable
+## Loads a profile.
+# $1: profile name
 load_profile()
 {
     [[ -z "$1" ]] && return 1
@@ -31,10 +29,11 @@ load_profile()
     fi
 }
 
-### Profile up/down
-##
-# all_down
-#   take all registered profiles down
+##################
+# Profile up/down
+##################
+
+## Take all registered profiles down.
 all_down()
 {
     for prof in $(find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n'); do
@@ -42,7 +41,7 @@ all_down()
     done
 }
 
-# Create the state dir and sub directories if they don't already exist
+## Create the state dir and sub directories if they don't already exist.
 check_make_state_dir()
 {
     [[ ! -d "$STATE_DIR" ]] && mkdir -p "$STATE_DIR"/{interfaces,profiles}
@@ -51,8 +50,9 @@ check_make_state_dir()
     done
 }
 
-# interface_suspend interface/all [call_profile_down? default=yes]
-#   store a list of running profiles and take them down (unless $2 is "no")
+## Save the list of running profiles and take them down if needed
+# $1: interface name or "all"
+# $2: take associated profiles down (optional, default="yes")
 interface_suspend()
 {
     report_debug interface_suspend "$@"
@@ -72,14 +72,13 @@ interface_suspend()
     done
 }
 
-# all_suspend
-#   store a list of running profiles and take them down
+## Save the list of all running profiles and take them down
 all_suspend() {
     interface_suspend all
 }
-# all_resume
-#   resume suspended interfaces
-#   optional arguments: interfaces not to resume (e.g., because they're disabled)
+
+## Restore saved profiles (for resume purposes).
+# $@: a list of interfaces not to resume (e.g., because they're disabled)
 all_resume()
 {
     report_debug all_resume "$@"
@@ -95,9 +94,8 @@ all_resume()
     done
 }
 
-# profile_up profile
-#   put all profiles up
-#
+## Puts up a profile.
+# $1: the profile name
 profile_up()
 {
     (
@@ -187,9 +185,8 @@ profile_up()
     ); return $?
 }
 
-# profile_down profile
-#   take profile down
-#
+## Puts a profile down.
+# $1: the profile name
 profile_down()
 {
     (
@@ -240,7 +237,9 @@ profile_down()
     ); return $?
 }
 
-# Check if variable is a member of an array
+## Check if variable is a member of an array
+# $1: the variable to find
+# $2...: the array elements
 inarray()
 {
     local item search="$1"
@@ -253,6 +252,8 @@ inarray()
     return 1
 }
 
+## Check if a given quirk is enabled
+# $1: the quirk name
 quirk() {
     inarray "$1" "${QUIRKS[@]}"
     return $?
@@ -349,6 +350,9 @@ is_interface() {
     return 0
 }
 
+## Changes a network interface state.
+# $1: up, flush, or down.
+# $2: the interface name
 bring_interface()
 {
     local INTERFACE="$2"
