@@ -1,5 +1,5 @@
 #! /bin/bash
-PAGES=(index ethernet features wireless)
+PAGES=(index features netcfg netcfg-profiles)
 
 for page in ${PAGES[@]}; do
     rm ${page}.html

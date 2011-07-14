@@ -11,6 +11,8 @@ install:
 	install -m644 config/iftab $(DESTDIR)/etc/iftab
 	install -m644 docs/examples/* $(DESTDIR)/etc/network.d/examples/
 	# Documentation
+	install -d $(DESTDIR)/usr/share/man/man5
+	install -m644 docs/man/*.5 $(DESTDIR)/usr/share/man/man5
 	install -d $(DESTDIR)/usr/share/man/man8
 	install -m644 docs/man/*.8 $(DESTDIR)/usr/share/man/man8
 	# Libs
