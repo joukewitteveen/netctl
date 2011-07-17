@@ -1,3 +1,6 @@
+version 2.6.5
+- specify device name explicitly when setting gateways
+
 version 2.6.4
 - documentation update
 - modify wireless workflow to avoid issues with association
