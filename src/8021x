@@ -1,5 +1,3 @@
-WPA_CTRL_PATH=/run/wpa_supplicant
-
 # Uses wpa_supplicant to check for association to a network
 # wpa_check interface [timeout]
 wpa_check()
@@ -7,6 +5,7 @@ wpa_check()
     local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}" CONDITION="${3:-COMPLETED}"
     # CONDITION is required as wired connections are ready at ASSOCIATED not COMPLETED FS#20150
 
+    report_debug wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status
     while [[ $timeout -lt "$TIMEOUT" ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if [[ $timeout -lt 2 ]]; then
@@ -97,6 +96,7 @@ wpa_supplicant_scan_and_find() {
     # item = string to lookup
     local INTERFACE="$1" FIELD="$2" ITEM="$3" RETRIES=5 try scan_ok
     scan_ok=0
+    report_debug wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan
     wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
     for ((try=0; try < $RETRIES; try++)); do
         local found
