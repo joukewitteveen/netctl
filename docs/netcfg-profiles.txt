@@ -1,7 +1,7 @@
-% NETCFG-PROFILES(5) netcfg 2.6.4 | Arch Linux
+% NETCFG-PROFILES(5) netcfg 2.6.5 | Arch Linux
 % Rémy Oudompheng <remy@archlinux.org>
   James Rayner <james@archlinux.org>
-% 14 July 2011
+% 17 July 2011
 
 NAME
 ====
