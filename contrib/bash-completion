@@ -18,9 +18,9 @@ _netcfg ()
 	cur="${COMP_WORDS[COMP_CWORD]}"
 	prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-	opts="-c -d -a -i -h -v"
+	opts="-c -d -a -i -h -v -r"
 	lopts="--help --version"
-	cmds="check-iface down all-down iface-down all-resume all-suspend"
+	cmds="check-iface down all-down iface-down all-resume all-suspend reconnect"
 	prfls="`find /etc/network.d -maxdepth 1 -not -type d -printf '%f\n'`"
 
 	case "${cur}" in
@@ -44,7 +44,7 @@ _netcfg ()
 	            	_connected_intfs
 			return 0
 	            	;;
-	        -d|down)
+	        -d|down|-r|reconnect)
 			_connected_prfls
 	        	return 0
        			;;
