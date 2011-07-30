@@ -1,3 +1,10 @@
+version 2.6.6
+- fix wrong rc scripts names in suspend hook (FS#20330)
+- bash-completion: add -r to option list (FS#25188)
+
+version 2.6.5
+- specify device name explicitly when setting gateways
+
 version 2.6.4
 - documentation update
 - modify wireless workflow to avoid issues with association
