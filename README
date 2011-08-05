@@ -17,6 +17,9 @@ For wireless support:
 For bonding support
 - ifenslave
 
+For bridge support:
+- bridge-utils
+
 Deprecated dependencies:
 - net-tools (only used in IFOPTS option)
 - wireless_tools (only used for IWCONFIG option, still necessary for wireless connection)
