@@ -1,3 +1,6 @@
+version 2.6.7
+- fix wrong quoting of $profile (FS#25362)
+
 version 2.6.6
 - fix wrong rc scripts names in suspend hook (FS#20330)
 - fix wireless failure when using wpa-config and a custom
@@ -8,7 +11,7 @@ version 2.6.5
 - specify device name explicitly when setting gateways
 
 version 2.6.4
-- documentation update
+- documentation update, new man page "netcfg-profiles"
 - modify wireless workflow to avoid issues with association
 
 version 2.6.3
