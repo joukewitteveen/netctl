@@ -1,5 +1,7 @@
 version 2.6.7
 - fix wrong quoting of $profile (FS#25362)
+- fix wrong parsing of wpa_supplicant configuration (FS#25464)
+- fix conflict with old ROUTES variable (FS#25432)
 
 version 2.6.6
 - fix wrong rc scripts names in suspend hook (FS#20330)
