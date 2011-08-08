@@ -31,7 +31,7 @@ wireless_up() {
         WPA_CONF="${WPA_CONF:-/etc/wpa_supplicant.conf}"
         # Use defined control path (FS#24949)
         if grep "ctrl_interface=" "$WPA_CONF" &>/dev/null; then
-            WPA_CTRL_PATH=$(grep "ctrl_interface=" "$WPA_CONF" | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
+            WPA_CTRL_PATH=$(grep -m 1 "^ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
         fi
     else
         WPA_CONF=$(make_wpa_config_file $INTERFACE)
