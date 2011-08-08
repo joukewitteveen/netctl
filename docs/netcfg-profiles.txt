@@ -1,7 +1,7 @@
-% NETCFG-PROFILES(5) netcfg 2.6.5 | Arch Linux
+% NETCFG-PROFILES(5) netcfg 2.6.7 | Arch Linux
 % Rémy Oudompheng <remy@archlinux.org>
   James Rayner <james@archlinux.org>
-% 17 July 2011
+% 8 August 2011
 
 NAME
 ====
@@ -76,13 +76,7 @@ NETMASK (requires IP of 'static')
 :   Set specified netmask. Defaults to 24
 ROUTES
 :   An array of custom routes (of the form *address range* via *gateway*)
-IPCFG
-:   Array of arguments to pass to 'ip'. The power of this options is that
-    it allows both simple and complicated routing configurations, within the
-    framework of netcfg.
-IFOPTS (deprecated, requires IP of 'static')
-:   Arguments to pass to 'ifconfig'. This allows you to use the syntax
-    for the older 'ifconfig' tool. Retained for compatability.
+
 ## IPv6 options
 IP6 (required for IPv6)
 :   Either 'dhcp', 'dhcp-noaddr', 'stateless', 'static'. Leave unset to disable IPv6.
@@ -92,6 +86,7 @@ GATEWAY6 (for IP6=static)
 :   The gateway address for IPv6 routing.
 ROUTES6
 :   An array of custom routes (of the form *address range* via *gateway*)
+
 ### DNS configuration
 DNS
 :   Array of DNS nameservers. Simply specify the IP's of each of the DNS nameservers.
@@ -103,6 +98,7 @@ HOSTNAME
 :   Set the system hostname. Ensure any hostname is correctly referenced in /etc/hosts.
 DNS1, DNS2 (deprecated)
 :   First and second DNS servers for /etc/resolv.conf
+
 ### DHCP configuration
 DHCP_OPTIONS (ipv4)
 :   String. Any extra arguments to pass to the dhcp client, presently dhcpcd.
@@ -114,6 +110,7 @@ DHCLIENT_OPTIONS (ipv4)
 :   String. Extra options to pass to dhclient for IPv4.
 DHCLIENT6_OPTIONS (ipv6)
 :   String. Extra options to pass to dhclient for IPv6.
+
 ### 802.11x Authentication
 AUTH8021X
 :   Use 802.11x authentication. Enable with 'yes'.
@@ -122,6 +119,17 @@ WPA_CONF (required for an AUTH8021X of 'yes' only)
 WPA_OPTS (optional for an AUTH8021X of 'yes')
 :   Extra arguments for wpa_supplicant not specified otherwise. Any
     option here must specify wpa_supplicant driver. Defaults to '-Dwired'.
+
+### Miscellaneous options
+IPCFG
+:   Array of arguments to pass to 'ip'. The power of this options is that
+    it allows both simple and complicated routing configurations, within the
+    framework of netcfg.
+IFOPTS (deprecated, requires IP of 'static')
+:   Arguments to pass to 'ifconfig'. This allows you to use the syntax
+    for the older 'ifconfig' tool. Retained for compatability.
+SKIPNOCARRIER
+:   yes/no. Don't abort interface setup if no carrier is found.
 
 ## Examples
 ### Using ADDR and GATEWAY to set static IP and gateway

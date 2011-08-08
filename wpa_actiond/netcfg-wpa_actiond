@@ -51,10 +51,14 @@ fi
 
 WPA_CONF="$(make_wpa_config_file $interface)"
 
-for profile in ${AUTO_PROFILES:-$(list_profiles)}; do
-    echo $profile
+if [[ -n "${AUTO_PROFILES}" ]]; then
+    for prof in ${AUTO_PROFILES}; do echo $prof; done
+else
+    list_profiles
+fi | while read profile; do
+    echo "$profile"
     (
-    load_profile $profile
+    load_profile "$profile"
 
     [[ $CONNECTION != "wireless" ]] && exit 1
     [[ $INTERFACE != $interface ]] && exit 1

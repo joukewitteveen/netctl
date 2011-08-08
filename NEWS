@@ -1,12 +1,19 @@
+version 2.6.7
+- fix wrong quoting of $profile (FS#25362)
+- fix wrong parsing of wpa_supplicant configuration (FS#25464)
+- fix conflict with old ROUTES variable (FS#25432)
+
 version 2.6.6
 - fix wrong rc scripts names in suspend hook (FS#20330)
+- fix wireless failure when using wpa-config and a custom
+  ctrl_interface path (FS#24949)
 - bash-completion: add -r to option list (FS#25188)
 
 version 2.6.5
 - specify device name explicitly when setting gateways
 
 version 2.6.4
-- documentation update
+- documentation update, new man page "netcfg-profiles"
 - modify wireless workflow to avoid issues with association
 
 version 2.6.3

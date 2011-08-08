@@ -1,4 +1,4 @@
-% NETCFG(8) netcfg 2.6.5 | Arch Linux
+% NETCFG(8) netcfg 2.6.7 | Arch Linux
 % Rémy Oudompheng <remy@archlinux.org>
   James Rayner <james@archlinux.org>
 % July 2011

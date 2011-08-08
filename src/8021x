@@ -1,5 +1,3 @@
-WPA_CLI="wpa_cli -p /run/wpa_supplicant"
-
 # Uses wpa_supplicant to check for association to a network
 # wpa_check interface [timeout]
 wpa_check()
@@ -7,12 +5,13 @@ wpa_check()
     local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}" CONDITION="${3:-COMPLETED}"
     # CONDITION is required as wired connections are ready at ASSOCIATED not COMPLETED FS#20150
 
+    report_debug wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status
     while [[ $timeout -lt "$TIMEOUT" ]]; do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if [[ $timeout -lt 2 ]]; then
-            eval $($WPA_CLI -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
+            eval $(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
         else
-            eval $($WPA_CLI -i "$INTERFACE" status | fgrep "wpa_state=")
+            eval $(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | fgrep "wpa_state=")
         fi
         [[ "$wpa_state" = "$CONDITION" ]]
         ) && return 0
@@ -42,7 +41,7 @@ start_wpa()
 
 stop_wpa()
 {
-    $WPA_CLI -i "$1" terminate &> /dev/null
+    wpa_cli -p "$WPA_CTRL_PATH" -i "$1" terminate &> /dev/null
     sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
                     # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
     if [[ -f "/run/wpa_supplicant_$1.pid" ]]; then
@@ -52,7 +51,7 @@ stop_wpa()
 
 wpa_reconfigure() {
     local INTERFACE=$1
-    $WPA_CLI -i "$INTERFACE" reconfigure
+    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" reconfigure
     return $?
 }
 
@@ -60,7 +59,7 @@ wpa_check_current_essid() {
     # usage: wpa_check_current_essid $interface $essid
     # check that wpa_supplicant is connected to the right essid
     local INTERFACE=$1 ESSID=$2 status
-    status=$($WPA_CLI -i "$INTERFACE" status | grep "^ssid=")
+    status=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | grep "^ssid=")
     if (( $? == 0 )) && [[ "$status" == "ssid=$ESSID" ]]; then
         return 0
     else
@@ -97,11 +96,12 @@ wpa_supplicant_scan_and_find() {
     # item = string to lookup
     local INTERFACE="$1" FIELD="$2" ITEM="$3" RETRIES=5 try scan_ok
     scan_ok=0
-    $WPA_CLI -i "$INTERFACE" scan &> /dev/null
+    report_debug wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan
+    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
     for ((try=0; try < $RETRIES; try++)); do
         local found
         sleep 2
-        found=$($WPA_CLI -i "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | grep -F -x -m 1 "${ITEM}")
+        found=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | grep -F -x -m 1 "${ITEM}")
         (( $? == 0 )) && scan_ok=1
 
         # ITEM has been found, echo it
@@ -109,7 +109,7 @@ wpa_supplicant_scan_and_find() {
             echo "$found"
             return 0
         fi
-        $WPA_CLI -i "$INTERFACE" scan &> /dev/null
+        wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
     done
     if (( $scan_ok != 1 )); then
         report_debug wpa_supplicant_scan_and_find "unable to retrieve scan results"
@@ -132,9 +132,9 @@ wpa_supplicant_scan_info() {
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
     wpa_supplicant -B -i"$INTERFACE" -Dnl80211,wext -C/run/wpa_supplicant -P/run/wpa_supplicant.pid || return 1
-    $WPA_CLI -i "$INTERFACE" scan &> /dev/null
+    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
     sleep 2.5
-    $WPA_CLI -i "$INTERFACE" scan_results |
+    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results |
         grep -v "^Selected" |
         grep -v "^bssid" |
         sort -rn -k3 |
