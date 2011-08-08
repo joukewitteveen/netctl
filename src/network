@@ -6,6 +6,7 @@
 # $1: profile name
 load_profile()
 {
+    unset ROUTES
     [[ -z "$1" ]] && return 1
     if [[ ! -f "$PROFILE_DIR/$1" ]]; then
         report_err "Profile \"$1\" does not exist"
