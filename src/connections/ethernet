@@ -37,7 +37,12 @@ ethernet_up() {
         . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wired"
-
+        # Set wpa_supplicant control path (FS#25473)
+        WPA_CTRL_PATH=/var/run/wpa_supplicant
+        if grep "^ *ctrl_interface=" "$WPA_CONF" &>/dev/null; then
+            WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
+        fi
+ 
         report_debug ethernet_iproute_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
         if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
