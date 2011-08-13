@@ -132,6 +132,19 @@ ethernet_up() {
         done
     fi
 
+    # Load ipv6 module if necessary (FS#25530)
+    case "$IP6" in
+    dhcp*|stateless|static)
+        [ -d "/proc/sys/net/ipv6" ] || modprobe ipv6
+        ;;
+    ""|no)
+        [ -d /proc/sys/net/ipv6 ] && sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
+        ;;
+    *)
+        report_iproute "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
+        ;;
+    esac
+
     case "$IP6" in
     dhcp*)
         if [[ -x /usr/sbin/dhclient ]]; then
@@ -182,12 +195,6 @@ ethernet_up() {
                 fi
             done
         fi
-        ;;
-    ""|no)
-        sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
-        ;;
-    *)
-        report_iproute "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
         ;;
     esac
 
