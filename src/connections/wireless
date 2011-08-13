@@ -122,7 +122,6 @@ wireless_down() {
     # Handle wireless kill switches
     # Any reason why a hardware switch should be considered on interface down?
     if [[ "$RFKILL" == "soft" ]]; then
-        . "$SUBR_DIR/wireless"
         set_rf_state "$INTERFACE" disabled $RFKILL_NAME || return 1
     fi
 }
