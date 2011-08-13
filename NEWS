@@ -1,3 +1,8 @@
+version 2.6.8
+- fix broken 802.11 in non-wireless setups (FS#25473)
+- fix rfkill errors in net-auto-wireless (FS#25514)
+- fix error message about non-existing net.ipv6.conf... (FS#25530)
+
 version 2.6.7
 - fix wrong quoting of $profile (FS#25362)
 - fix wrong parsing of wpa_supplicant configuration (FS#25464)
