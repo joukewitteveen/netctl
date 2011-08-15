@@ -30,8 +30,8 @@ wireless_up() {
     if [ "$SECURITY" = "wpa-config" ]; then
         WPA_CONF="${WPA_CONF:-/etc/wpa_supplicant.conf}"
         # Use defined control path (FS#24949)
-        if grep "ctrl_interface=" "$WPA_CONF" &>/dev/null; then
-            WPA_CTRL_PATH=$(grep -m 1 "^ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
+        if grep "^ *ctrl_interface=" "$WPA_CONF" &>/dev/null; then
+            WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
         fi
     else
         WPA_CONF=$(make_wpa_config_file $INTERFACE)
@@ -122,7 +122,6 @@ wireless_down() {
     # Handle wireless kill switches
     # Any reason why a hardware switch should be considered on interface down?
     if [[ "$RFKILL" == "soft" ]]; then
-        . "$SUBR_DIR/wireless"
         set_rf_state "$INTERFACE" disabled $RFKILL_NAME || return 1
     fi
 }

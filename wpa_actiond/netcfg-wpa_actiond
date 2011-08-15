@@ -21,7 +21,8 @@ case $1 in
         netcfg -i "$interface"
         stop_wpa "$interface"
         kill $(cat "/run/wpa_actiond_${2}.pid")
-        if [[ -n "$RFKILL" ]]; then 
+        # only try to disable software rfkill switches (FS#25514)
+        if [[ "$RFKILL" == "soft" ]]; then
             set_rf_state "$interface" disabled $RFKILL_NAME || exit $?
         fi
         exit
