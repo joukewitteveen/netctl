@@ -42,6 +42,8 @@ ethernet
 wireless
 :   Wireless connection, with **wpa_supplicant**(1) as configuration
     back-end.
+bond
+:   Bonded network interfaces using **ifenslave**.
 bridge
 :   Network bridge setup using **brctl**(8).
 tuntap
@@ -261,6 +263,14 @@ LOCAL
 :   The address of the local end of the tunnel.
 REMOTE
 :   The address of the remote end of the tunnel.
+
+Options for 'bond' connections
+==============================
+
+Standard 'ethernet' options apply for IP configuration.
+
+SLAVE_INTERFACES (Bash array)
+:   An array of names of interfaces to be bound together.
 
 Options for 'openvpn' connections
 ================================

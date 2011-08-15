@@ -1,3 +1,8 @@
+version 2.7
+- add support for tunnel interfaces
+- add support for interface bonding (FS#24802)
+- add support for hexadecimal ESSIDs (FS#24333)
+
 version 2.6.8
 - fix broken 802.11 in non-wireless setups (FS#25473)
 - fix rfkill errors in net-auto-wireless (FS#25514)
