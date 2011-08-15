@@ -159,7 +159,12 @@ SECURITY (required for security of 'wep', 'wpa', 'wpa-configsection' or 'wpa-con
 KEY (required for SECURITY of 'wpa' or 'wep' only)
 :   Wireless encryption key.
 ESSID (this or AP is required)
-:   Name of network to connect to.
+:   Name of network to connect to, or hexadecimal digits (see
+    'ESSID_TYPE')
+ESSID_TYPE (optional, defaults to 'ascii')
+:   Set to 'ascii' or 'hex', if set to 'hex', ESSID will be interpreted
+    as an hexadecimal SSID and written unquoted to the wpa_supplicant
+    configuration file.
 AP (this or ESSID is required)
 :   AP (BSSID) of the network to connect to.
 HIDDEN (optional)

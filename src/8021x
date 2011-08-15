@@ -186,7 +186,19 @@ make_wpa_config_file() {
 make_wpa_config() {
     case $SECURITY in
     wep|wep-old|wpa|none|none-old)
-        echo "ssid=\"$ESSID\""
+        case "${ESSID_TYPE:-ascii}" in
+            ascii)
+                echo "ssid=\"$ESSID\""
+                ;;
+            hex)
+            # Hex ESSID is written unquoted ans lowercase (FS#24333)
+                echo "ssid=${ESSID,,}"
+                ;;
+            *)
+                report_fail "ESSID_TYPE must be set to 'ascii' or 'hex'."
+                return 1
+                ;;
+        esac
         if [[ -n "$AP" ]]; then
             echo "bssid=${AP,,}"
         fi

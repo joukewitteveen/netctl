@@ -2,8 +2,13 @@ CONNECTION='wireless'
 DESCRIPTION='A simple WPA encrypted wireless connection'
 INTERFACE='wlan0'
 SECURITY='wpa'
+
 ESSID='MyNetwork'
+## Uncomment if the supplied ESSID is hexadecimal
+#ESSID_TYPE='hex'
 KEY='WirelessKey'
+
 IP='dhcp' 
+
 # Uncomment this if your ssid is hidden
 #HIDDEN=yes
