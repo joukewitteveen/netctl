@@ -1,5 +1,5 @@
 DESTDIR=
-VERSION=2.6.8
+VERSION=2.7
 VPATH = doc
 
 .PHONY: install docs
@@ -24,16 +24,28 @@ install:
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# Scripts
-	install -Dm755 scripts/netcfg $(DESTDIR)/usr/bin/netcfg2
+	install -d $(DESTDIR)/usr/bin
+	install -m755 scripts/netcfg $(DESTDIR)/usr/bin/netcfg2
 	ln -s netcfg2 $(DESTDIR)/usr/bin/netcfg
-	install -Dm755 scripts/netcfg-menu $(DESTDIR)/usr/bin/netcfg-menu
-	install -m755 wpa_actiond/netcfg-wpa_actiond{,-action} ifplugd/net-auto-wired $(DESTDIR)/usr/bin
-	install -Dm755 ifplugd/netcfg.action $(DESTDIR)/etc/ifplugd/netcfg.action
+	install -m755 \
+	    scripts/netcfg-menu \
+	    scripts/netcfg-wpa_actiond \
+	    scripts/netcfg-wpa_actiond-action \
+	    $(DESTDIR)/usr/bin
+	install -Dm755 scripts/ifplugd.action $(DESTDIR)/etc/ifplugd/netcfg.action
 	# Daemons
 	install -d $(DESTDIR)/etc/rc.d
-	install -m755 scripts/net-{profiles,rename} wpa_actiond/net-auto-wireless ifplugd/net-auto-wired $(DESTDIR)/etc/rc.d
+	install -m755 \
+	    rc.d/net-profiles \
+	    rc.d/net-rename \
+	    rc.d/net-auto-wireless \
+	    rc.d/net-auto-wired \
+	    $(DESTDIR)/etc/rc.d
 	install -d $(DESTDIR)/lib/systemd/system
-	install -m644 wpa_actiond/net-auto-wireless.service ifplugd/net-auto-wired.service $(DESTDIR)/lib/systemd/system
+	install -m644 \
+	    systemd/net-auto-wireless.service \
+	    systemd/net-auto-wired.service \
+	    $(DESTDIR)/lib/systemd/system
 	# Shell Completion
 	install -Dm644 contrib/bash-completion $(DESTDIR)/etc/bash_completion.d/netcfg
 	install -Dm644 contrib/zsh-completion $(DESTDIR)/usr/share/zsh/site-functions/_netcfg
@@ -57,7 +69,7 @@ tarball: docs
 	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/g" scripts/netcfg
 	rm -rf netcfg-$(VERSION)
 	mkdir -p netcfg-$(VERSION)
-	cp -r docs config src scripts src-wireless ifplugd wpa_actiond contrib Makefile LICENSE README netcfg-$(VERSION)
+	cp -r docs config rc.d src scripts src-wireless systemd contrib Makefile LICENSE README netcfg-$(VERSION)
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
 
