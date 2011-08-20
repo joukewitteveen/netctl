@@ -14,8 +14,8 @@ bond_up() {
     bring_interface up "$INTERFACE"
     "$CONN_DIR/ethernet" up "$1"
 
-    for slave in ${SLAVE_INTERFACES[@]}; do
-        bring_interface up "$INTERFACE"
+    for slave in "${SLAVE_INTERFACES[@]}"; do
+        bring_interface up "$slave"
         $IFENSLAVE $INTERFACE $slave
     done
 
@@ -25,7 +25,7 @@ bond_up() {
 bond_down() {
     load_profile "$1"
 
-    for slave in ${SLAVE_INTERFACES[@]}; do
+    for slave in "${SLAVE_INTERFACES[@]}"; do
         $IFENSLAVE $INTERFACE -d $slave
     done
 
