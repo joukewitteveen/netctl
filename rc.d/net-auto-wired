@@ -2,6 +2,7 @@
 
 . /etc/rc.conf
 . /etc/rc.d/functions
+. /etc/conf.d/netcfg
 
 if [[ ! -x /usr/sbin/ifplugd ]]; then
    echo "Please install 'ifplugd' to use net-auto-wired"
