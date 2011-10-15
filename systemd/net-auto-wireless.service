@@ -1,6 +1,6 @@
 [Unit]
 Description=Provides automatic netcfg wireless connection
-After=dbus.service
+Before=network.target
 
 [Service]
 EnvironmentFile=/etc/rc.conf
@@ -11,4 +11,4 @@ RemainAfterExit=yes
 Type=forking
 
 [Install]
-WantedBy=network.target
+WantedBy=multi-user.target
