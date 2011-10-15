@@ -31,7 +31,13 @@ start_wpa()
     shift 3
     local WPA_OPTS="$*"
 
-    wpa_supplicant -B -P "/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" -c "$WPA_CONF" $WPA_OPTS
+    if [[ -n "$WPA_CONF" ]]; then
+        WPA_CONF="-c$WPA_CONF"
+    else
+        WPA_CONF="-C$WPA_CTRL_PATH"
+    fi
+
+    wpa_supplicant -B -P "/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" "$WPA_CONF" $WPA_OPTS
     sleep 1
 
     if [[ ! -f "/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
@@ -124,14 +130,18 @@ list_networks() {
 }
 
 wpa_supplicant_scan_info() {
-    local INTERFACE="$1" fields="$2" essids
+    local INTERFACE="$1" fields="$2" essids spawned_wpa=0
     # temp file used, as keeping ESSID's with spaces in their name in arrays
     # is hard, obscure and kinda nasty. This is simpler and clearer.
 
     [[ -z "$INTERFACE" ]] && return 1
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
-    wpa_supplicant -B -i"$INTERFACE" -Dnl80211,wext -C/run/wpa_supplicant -P/run/wpa_supplicant.pid || return 1
+    if [[ "$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" ping 2> /dev/null)" != "PONG" ]]; then
+        start_wpa "$INTERFACE" "" nl80211,wext || return 1
+        spawned_wpa=1
+    fi
+
     wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
     sleep 2.5
     wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results |
@@ -149,7 +159,7 @@ wpa_supplicant_scan_info() {
     # Re-sort by strength as the removal disorders the list
     # Cut to the AP/essid fields only
 
-    kill "$(cat /run/wpa_supplicant.pid)"
+    (( $spawned_wpa == 1 )) && stop_wpa "$INTERFACE"
 
     # File of 0 length, ie. no ssid's.
     if [[ ! -s "$essids" ]]; then
