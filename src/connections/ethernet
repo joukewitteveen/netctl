@@ -22,6 +22,11 @@ ethernet_up() {
         fi
     fi
 
+    # Disable IPv6 before the interface to prevent SLAAC
+    if [[ "$IP6" == "no"]]; then
+        sysctl -q -w net.ipv6.conf.$INTERFACE.disable_ipv6=1
+    fi
+
     report_debug ethernet_iproute_up ifup
     bring_interface up "$INTERFACE"
 
@@ -137,7 +142,7 @@ ethernet_up() {
     dhcp*|stateless|static)
         [ -d "/proc/sys/net/ipv6" ] || modprobe ipv6
         ;;
-    ""|no)
+    no)
         [ -d /proc/sys/net/ipv6 ] && sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
         ;;
     *)
