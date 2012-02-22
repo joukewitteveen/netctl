@@ -6,7 +6,7 @@ VPATH = doc
 
 install:
 	# Configuration files
-	install -d $(DESTDIR)/etc/network.d/{examples,hooks,interfaces}
+	install -d $(DESTDIR)/etc/network.d/{examples,interfaces}
 	install -D -m644 config/netcfg $(DESTDIR)/etc/conf.d/netcfg
 	install -m644 config/iftab $(DESTDIR)/etc/iftab
 	install -m644 docs/examples/* $(DESTDIR)/etc/network.d/examples/
