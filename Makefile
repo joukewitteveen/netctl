@@ -31,6 +31,7 @@ install:
 	    scripts/netcfg-menu \
 	    scripts/netcfg-wpa_actiond \
 	    scripts/netcfg-wpa_actiond-action \
+	    scripts/wifi-menu \
 	    $(DESTDIR)/usr/bin
 	install -Dm755 scripts/ifplugd.action $(DESTDIR)/etc/ifplugd/netcfg.action
 	# Daemons
