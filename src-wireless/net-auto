@@ -9,7 +9,7 @@ case "$1" in
         fi
         # Ensure any device renaming has occurred as intended
         for daemon in "${DAEMONS[@]}"; do
-            if [[ "$daemon" = "${daemon#!}" && "$daemon" = "net-rename" ]]; then
+            if [[ "$daemon" = "net-rename" ]]; then
                 if ck_daemon net-rename; then
                     /etc/rc.d/net-rename start
                 fi

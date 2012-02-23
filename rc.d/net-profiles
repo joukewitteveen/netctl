@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . /usr/lib/network/globals
+. /etc/rc.conf
 . /etc/conf.d/netcfg
 
 case "$1" in
@@ -11,7 +12,7 @@ case "$1" in
 
         # Ensure any device renaming has occurred as intended
         for daemon in "${DAEMONS[@]}"; do
-            if [[ "$daemon" = "${daemon#!}" && "$daemon" = "net-rename" ]]; then
+            if [[ "$daemon" = "net-rename" ]]; then
                 if ck_daemon net-rename; then
                     /etc/rc.d/net-rename start
                 fi
@@ -42,15 +43,23 @@ case "$1" in
         else
             # No NET= passed at boot, go to NETWORKS=()
             for network in "${NETWORKS[@]}"; do
-                if [[ "$network" = "${network#!}" ]]; then 
+                if [[ "$network" = "${network#@}" ]]; then
                     if /usr/bin/netcfg2 check-iface "$network"; then
-                        echo "$network" >> "$STATE_DIR/net-profiles"   
+                        echo "$network" >> "$STATE_DIR/net-profiles"
                         add_daemon net-profiles
                     fi
+                else
+                    # It is up to the user to make sure no backgrounded profile
+                    # uses an interface that is used by another active profile.
+                    if /usr/bin/netcfg2 "${network#@}"; then
+                        echo "${network#@}" >> "$STATE_DIR/net-profiles"
+                        add_daemon net-profiles
+                    fi >/dev/null &
+                    PROFILE_BKGD=1
                 fi
             done
         fi
-        if [[ ! -f "$STATE_DIR"/net-profiles ]]; then        
+        if [[ ! -f "$STATE_DIR"/net-profiles && -z "$PROFILE_BKGD" ]]; then
             exit_err "No profile started."       # JP: don't add_daemon unless we were successful (above)
         fi
         ;;
