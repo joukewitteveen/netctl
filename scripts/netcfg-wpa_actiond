@@ -67,9 +67,7 @@ fi | while read profile; do
     [[ -z "$SECURITY" ]] && SECURITY="none"
     [[ $SECURITY == "wpa-config" ]] && exit 1 
     
-    config=$(make_wpa_config)
-    
-    echo -e "network={ \n$config \nid_str=\"$profile\" \n}" >> $WPA_CONF
+    echo -e "network={ \n$(make_wpa_config) \nid_str=\"$profile\" \n}" >> $WPA_CONF
     )
 done
 

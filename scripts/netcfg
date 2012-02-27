@@ -24,6 +24,7 @@ usage()
     echo "-i, iface-down     Take down profile active on specified interface"
     echo "-l, list           List all available profiles"
     echo "-r, reconnect      Disconnect and reconnect specified profile"
+    echo "-R, iface-recon    Reconnect profile active on specified interface"
     echo "-u, up             Start specified profile"
     echo "-v, version        Output version information and exit"
     echo "    all-resume     Resume previously suspended profiles and reconnect them"
@@ -80,6 +81,8 @@ case "$1" in
     -r|reconnect)
         profile_down "$2"
         profile_up "$2";;
+    -R|iface-recont)
+        interface_reconnect "$2";;
     all-resume)
         all_resume;;
     all-suspend)

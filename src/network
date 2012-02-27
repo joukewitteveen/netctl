@@ -265,12 +265,28 @@ quirk() {
 #
 interface_down()
 {
-    local status=$(check_iface "$1")
-    case "$status" in
-        disabled) return 0 ;;
-        "") return 0 ;;
+    local profile=$(check_iface "$1")
+    case "$profile" in
+        ""|disabled) return 0 ;;
         external) return 1 ;;
-        *) profile_down "$status" ;;
+        *) profile_down "$profile" ;;
+    esac
+}
+
+
+# interface_reconnect interface
+#   reconnects the profile active on interface
+interface_reconnect()
+{
+    local profile=$(check_iface "$1")
+    case "$profile" in
+        ""|disabled|external)
+            return 1
+        ;;
+        *)
+            profile_down "$profile"
+            profile_up "$profile"
+        ;;
     esac
 }
 
