@@ -35,7 +35,7 @@ def read_config(config):
 def wep_hex2dec(key):
     if len(key) not in [10, 26]:
         fail("Bad key", report_type="err")
-    
+
     x=0
     new_key=[]
     while x<len(key):
@@ -76,7 +76,7 @@ def start(profile, essid):
 
     # Base arguments
     args=["wpa_supplicant", "-Bu", "-P/run/wpa_supplicant.pid"]
-    
+
     try:
         args.append(profile['WPA_OPTS'])
     except KeyError:
@@ -103,7 +103,7 @@ def start(profile, essid):
     bus = dbus.SystemBus()
     wpas_obj = bus.get_object(WPAS_DBUS_SERVICE, WPAS_DBUS_OPATH)
     wpas = dbus.Interface(wpas_obj, WPAS_DBUS_INTERFACE)
-   
+
     # Add/Get interface path
     try:
         driver=profile["WPA_DRIVER"]
@@ -117,12 +117,12 @@ def start(profile, essid):
 
     # Get interface object
     if_obj = bus.get_object(WPAS_DBUS_SERVICE, path)
-    iface = dbus.Interface(if_obj, WPAS_DBUS_INTERFACES_INTERFACE);  
-    
+    iface = dbus.Interface(if_obj, WPAS_DBUS_INTERFACES_INTERFACE);
+
     # Add and select the network. Networks already specified for wpa-config
     if profile['SECURITY'] in ['wpa','wep','none']:
         report('debug', 'wireless_dbus', 'add and select network')
-        
+
         path = iface.addNetwork()
         net_obj = bus.get_object(WPAS_DBUS_SERVICE, path)
         rnet = dbus.Interface(net_obj, WPAS_DBUS_NETWORKS_INTERFACE)
@@ -132,8 +132,8 @@ def start(profile, essid):
         essid = profile["ESSID"]
 
     if profile['SECURITY'] == "wpa":
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid), 
-                                "psk": dbus.String(profile['KEY'])}, 
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid),
+                                "psk": dbus.String(profile['KEY'])},
                                signature="sv")
         report('debug', 'wireless_dbus', 'connect to network with security=wpa')
         rnet.set(opts)
@@ -141,7 +141,7 @@ def start(profile, essid):
         key=profile['KEY']
         if key[:2] == "s:": # String key prefixed by "s:"
             keydbus=key[2:]
-        else: # Hex key 
+        else: # Hex key
             key=wep_hex2dec(key)
             keydbus = dbus.ByteArray()
             for l in key:
@@ -155,11 +155,11 @@ def start(profile, essid):
         report('debug', 'wireless_dbus', 'connect to network with security=wep')
         rnet.set(opts)
     elif profile['SECURITY'] == "none":
-        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid)}, 
+        opts = dbus.Dictionary({"ssid": dbus.ByteArray(essid)},
                                signature="sv")
         report('debug', 'wireless_dbus', 'connect to network with security=none')
         rnet.set(opts)
-       
+
     # Determine timeout
     try:
         timeout = int(profile["TIMEOUT"])
@@ -174,7 +174,7 @@ def start(profile, essid):
         state = iface.state()
         if state == "COMPLETED":
             break
-        
+
         if n == timeout:
             fail("Association/Authentication failed:" + state)
 
@@ -184,7 +184,7 @@ def start(profile, essid):
     except subprocess.CalledProcessError:
         fail()
     sys.exit(0)
-  
+
 def stop(profile):
     ret = subprocess.call([ETHERNET_IPROUTE, "down", sys.argv[2]])
     os.kill(int(open("/run/wpa_supplicant.pid").read()),SIGTERM)

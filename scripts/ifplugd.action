@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ifplugd.action script for netcfg 
+# ifplugd.action script for netcfg
 
 . /etc/rc.conf
 . /etc/rc.d/functions
@@ -10,8 +10,8 @@ shopt -s extglob
 case "$2" in
   up)
     # Look for a dhcp based profile to try first
-    # dhcp can actually outright fail, whereas 
-    # it's difficult to tell if static succeeded 
+    # dhcp can actually outright fail, whereas
+    # it's difficult to tell if static succeeded
     # Also check profile is same iface and is right connection
     echo "up"
     declare -a preferred_profiles
@@ -49,6 +49,6 @@ case "$2" in
   *)
     echo "Wrong arguments" > /dev/stderr
   ;;
-esac  
+esac
 
 exit 1

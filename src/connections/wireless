@@ -27,7 +27,7 @@ wireless_up() {
 
     # Start wpa_supplicant
     WPA_CTRL_PATH=/run/wpa_supplicant
-    if [ "$SECURITY" = "wpa-config" ]; then
+    if [[ "$SECURITY" = "wpa-config" ]]; then
         WPA_CONF="${WPA_CONF:-/etc/wpa_supplicant.conf}"
         # Use defined control path (FS#24949)
         if grep "^ *ctrl_interface=" "$WPA_CONF" &>/dev/null; then
@@ -74,7 +74,7 @@ wireless_up() {
         wpa-config)
             ;;
         none|wep|wpa|wpa-configsection)
-            echo -e "network={ \n$(make_wpa_config) \n}" >> "$WPA_CONF"
+            printf "%s\n" "network={" "$(make_wpa_config)" "}" >> "$WPA_CONF"
             report_debug wireless_up "Configuration generated at $WPA_CONF"
             ;;
         *)

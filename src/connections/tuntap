@@ -4,7 +4,7 @@
 tuntap_up() {
     load_profile "$1"
 
-    if [ -e /sys/class/net/$INTERFACE ]; then
+    if [[ -e /sys/class/net/$INTERFACE ]]; then
         report_fail "Interface $INTERFACE already exists."
         exit 1
     else
@@ -26,7 +26,7 @@ tuntap_down() {
 }
 
 tuntap_status() {
-    if [ -e /sys/class/net/$INTERFACE ]; then
+    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
         return 0
     else
         return 1

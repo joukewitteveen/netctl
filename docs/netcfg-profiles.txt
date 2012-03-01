@@ -1,7 +1,8 @@
-% NETCFG-PROFILES(5) netcfg 2.6.8 | Arch Linux
-% Rémy Oudompheng <remy@archlinux.org>
+% NETCFG-PROFILES(5) netcfg 2.7 | Arch Linux
+% Jouke Witteveen <j.witteveen@gmail.com>
+  Rémy Oudompheng <remy@archlinux.org>
   James Rayner <james@archlinux.org>
-% 14 August 2011
+% 29 February 2012
 
 NAME
 ====
@@ -56,6 +57,8 @@ openvpn
 :   OpenVPN setup.
 ppp
 :   PPP connections setup.
+pppoe
+:   PPPoE connections setup.
 
 The configuration variable for these connection types is described in the
 following sections.

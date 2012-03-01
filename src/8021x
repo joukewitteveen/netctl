@@ -16,7 +16,7 @@ wpa_check()
         [[ "$wpa_state" = "$CONDITION" ]]
         ) && return 0
         sleep 1
-        let timeout++
+        (( ++timeout ))
     done
     echo "$wpa_state"
     # wpa_cli -i "$INTERFACE" terminate >/dev/null 2>&1   # callers sometimes called stop_wpa, which does more but seems redundant
@@ -178,9 +178,9 @@ make_wpa_config_file() {
 
     # make empty tmp dir with correct permissions, rename it
     check_make_state_dir
-    # create symlink for old compatibility
+    # create symlink for old compatibility (Jouke: is this still needed?)
     mkdir -p /run/wpa_supplicant
-    if [ ! -e /var/run/wpa_supplicant ]; then
+    if [[ ! -e /var/run/wpa_supplicant ]]; then
         ln -s /run/wpa_supplicant /var/run
     fi
     rm -rf "$WPA_CONF"
@@ -237,10 +237,11 @@ make_wpa_config() {
         echo "key_mgmt=NONE"
         ;;
     wpa)
+        echo "proto=RSN WPA"
         if [[ "${#KEY}" -eq 64 ]]; then
-            echo "proto=RSN WPA\npsk=$KEY"
+            echo "psk=$KEY"
         else
-            echo "proto=RSN WPA\npsk=\"$KEY\""
+            echo "psk=\"$KEY\""
         fi
         ;;
     esac

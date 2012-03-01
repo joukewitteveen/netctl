@@ -61,8 +61,8 @@ pppoe_down() {
     PIDFILE="/var/run/ppp-$1.pid"
 
     if [[ -e $PIDFILE ]]; then
-        PID=$(cat "$PIDFILE")
-        [[ -n "$PID" ]] && kill "$PID"
+        read PID < "$PIDFILE"
+        [[ "$PID" ]] && kill "$PID"
     fi
 
     rm "${cfg}"

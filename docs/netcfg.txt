@@ -1,7 +1,8 @@
-% NETCFG(8) netcfg 2.6.8 | Arch Linux
-% Rémy Oudompheng <remy@archlinux.org>
+% NETCFG(8) netcfg 2.7 | Arch Linux
+% Jouke Witteveen <j.witteveen@gmail.com>
+  Rémy Oudompheng <remy@archlinux.org>
   James Rayner <james@archlinux.org>
-% 2011-08-14
+% 2012-02-29
 
 NAME
 ====
@@ -37,12 +38,12 @@ current
 :   Report currently running profiles
 `-c`, check-iface *profile*
 :   Start the specified profile, only if it's interface is not currently up.
-
 `-u`, up *profile*
 :   Start the specified profile
 `-r`, reconnect *profile*
 :   Disconnect and reconnect the specified profile
-
+`-R`, iface-recon *interface*
+:   Reconnect profile active on specified interface
 `-d`, down *profile*
 :   Stop the specified profile
 `-i`, iface-down *interface*

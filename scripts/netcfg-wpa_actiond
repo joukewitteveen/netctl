@@ -43,11 +43,11 @@ fi
 [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
 
 if [[ -f "$CONN_DIR/interfaces/$interface" ]]; then
-    netcfg -i $interface
+    netcfg -i "$interface"
 fi
 
 if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
-    enable_rf $interface $RFKILL $RFKILL_NAME || exit $?
+    enable_rf "$interface" "$RFKILL" "$RFKILL_NAME" || exit $?
 fi
 
 WPA_CONF="$(make_wpa_config_file $interface)"
@@ -65,9 +65,9 @@ fi | while read profile; do
     [[ $INTERFACE != $interface ]] && exit 1
     # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
     [[ -z "$SECURITY" ]] && SECURITY="none"
-    [[ $SECURITY == "wpa-config" ]] && exit 1 
-    
-    echo -e "network={ \n$(make_wpa_config) \nid_str=\"$profile\" \n}" >> $WPA_CONF
+    [[ $SECURITY == "wpa-config" ]] && exit 1
+
+    printf "%s\n" "network={" "$(make_wpa_config)" "id_str=\"$profile\"" "}" >> $WPA_CONF
     )
 done
 

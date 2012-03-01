@@ -10,7 +10,7 @@ if [[ ! -x /usr/sbin/wpa_actiond ]]; then
    exit 1
 fi
 
-if [ -z "${WIRELESS_INTERFACE}" ]; then
+if [[ -z "${WIRELESS_INTERFACE}" ]]; then
     echo "No interface name set. Add to /etc/conf.d/netcfg a line"
     echo "  WIRELESS_INTERFACE=\"your_interface\""
     exit 1
@@ -31,8 +31,7 @@ case "$1" in
         done
 
         stat_busy "Starting netcfg auto-wireless mode for interface ${WIRELESS_INTERFACE}"
-        /usr/bin/netcfg-wpa_actiond "${WIRELESS_INTERFACE}" >/dev/null
-        if [ $? -eq 0 ]; then
+        if /usr/bin/netcfg-wpa_actiond "${WIRELESS_INTERFACE}" >/dev/null; then
             add_daemon net-auto-wireless
             stat_done
         else
@@ -42,8 +41,7 @@ case "$1" in
     stop)
         if ! ck_daemon net-auto-wireless; then
             stat_busy "Stopping netcfg auto-wireless mode for interface ${WIRELESS_INTERFACE}"
-            /usr/bin/netcfg-wpa_actiond stop "${WIRELESS_INTERFACE}" >/dev/null
-            if [ $? -eq 0 ]; then
+            if /usr/bin/netcfg-wpa_actiond stop "${WIRELESS_INTERFACE}" >/dev/null; then
                 rm_daemon net-auto-wireless
                 stat_done
             else

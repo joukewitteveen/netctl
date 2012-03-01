@@ -19,7 +19,7 @@ wifi_auto()
         set_rf_state "$interface" up || exit $?
     fi
 
-    bring_interface up "$interface" # uses iproute methods---is it there any value to providing option to use ifconfig?
+    bring_interface up "$interface"  # uses iproute methods - is there an option to use ifconfig?
     networks=$(list_networks "$interface")
 
     if [[ -z "$networks" ]]; then
@@ -31,7 +31,7 @@ wifi_auto()
 
     local found_profile
 
-    [ -z "$AUTO_PROFILES" ] && AUTO_PROFILES=$(list_profiles)
+    [[ "$AUTO_PROFILES" ]] || AUTO_PROFILES=$(list_profiles)
 
     # JP: add ability to use AP instead of ESSID
     while read ap essid; do

@@ -23,8 +23,8 @@ ethernet_up() {
     fi
 
     # Disable IPv6 before the interface to prevent SLAAC
-    if [[ "$IP6" == "no"]]; then
-        sysctl -q -w net.ipv6.conf.$INTERFACE.disable_ipv6=1
+    if [[ "$IP6" == "no" ]]; then
+        sysctl -q -w "net.ipv6.conf.$INTERFACE.disable_ipv6=1"
     fi
 
     report_debug ethernet_iproute_up ifup
@@ -32,7 +32,8 @@ ethernet_up() {
 
 
     if ! checkyesno "${SKIPNOCARRIER:-no}" && ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
-        sleep ${CARRIER_TIMEOUT:-2} # Some cards are plain slow to come up. Don't fail immediately.
+        # Some cards are plain slow to come up. Don't fail immediately.
+        sleep ${CARRIER_TIMEOUT:-2}
         if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
             report_iproute "No connection"
         fi
@@ -47,7 +48,7 @@ ethernet_up() {
         if grep "^ *ctrl_interface=" "$WPA_CONF" &>/dev/null; then
             WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
         fi
- 
+
         report_debug ethernet_iproute_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
         if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
@@ -94,7 +95,7 @@ ethernet_up() {
     static)
         if [[ -n "$ADDR" ]]; then
             [[ -z $NETMASK ]] && NETMASK=24
-            report_debug ethernet_iproute_up ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE" 
+            report_debug ethernet_iproute_up ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"
             if ! ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"; then
                 report_iproute "Could not configure interface"
             fi
@@ -140,10 +141,12 @@ ethernet_up() {
     # Load ipv6 module if necessary (FS#25530)
     case "$IP6" in
     dhcp*|stateless|static)
-        [ -d "/proc/sys/net/ipv6" ] || modprobe ipv6
+        [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
         ;;
     no)
-        [ -d /proc/sys/net/ipv6 ] && sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
+        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=0"
+        ;;
+    "")  # undefined IP6 does not prevent RA's from being received -> nop
         ;;
     *)
         report_iproute "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
@@ -153,12 +156,12 @@ ethernet_up() {
     case "$IP6" in
     dhcp*)
         if [[ -x /usr/sbin/dhclient ]]; then
-            _DHCLIENT_PIDFILE=/run/dhclient6-${INTERFACE}.pid
+            _DHCLIENT_PIDFILE="/run/dhclient6-${INTERFACE}.pid"
             if [[ "$IP6" = "dhcp-noaddr" ]]; then
-                sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=1
+                sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=1"
                 DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
             else
-                sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
+                sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=0"
             fi
             rm -r ${_DHCLIENT_PIDFILE} &>/dev/null
             report_debug ethernet_up dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} "$INTERFACE"
@@ -172,10 +175,10 @@ ethernet_up() {
         fi
         ;;
     stateless)
-        sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=1
+        sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=1"
         ;;
     static)
-        sysctl -q -w net.ipv6.conf.$INTERFACE.accept_ra=0
+        sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=0"
         if [[ -n "$ADDR6" ]]; then
             for addr in "${ADDR6[@]}"; do
                 report_debug ethernet_iproute_up ip -6 addr add "$addr" dev "$INTERFACE"
@@ -194,8 +197,8 @@ ethernet_up() {
         # Add static IPv6 routes
         if [[ -n "$ROUTES6" ]]; then
             for route in "${ROUTES6[@]}"; do
-            report_debug ethernet_iproute_up ip -6 route add $route dev $INTERFACE
-                if ! ip -6 route add $route dev $INTERFACE ; then
+            report_debug ethernet_iproute_up ip -6 route add "$route" dev "$INTERFACE"
+                if ! ip -6 route add "$route" dev "$INTERFACE"; then
                     report_iproute "Adding route '$route' failed"
                 fi
             done
@@ -267,7 +270,7 @@ ethernet_down() {
     else
         bring_interface down "$INTERFACE"
     fi
-    return 0 
+    return 0
 }
 
 # Returns status of profile - is it still functional?
@@ -277,7 +280,7 @@ ethernet_status() {
     fi
 }
 
-# Stop wpa_supplicant if neccessary 
+# Stop wpa_supplicant if neccessary
 stop_80211x() {
     if checkyesno "${AUTH8021X:-no}"; then
         . "$SUBR_DIR/8021x"

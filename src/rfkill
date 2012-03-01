@@ -42,7 +42,7 @@ get_rf_state() {
     local INTERFACE="$1" PROFILE="$2" path state
 
     path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
-    state=$(cat "$path/state")
+    read state < "$path/state"
 
     case "$state" in
         0|2)

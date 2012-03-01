@@ -8,9 +8,9 @@
 if [[ ! -x /usr/sbin/ifplugd ]]; then
    echo "Please install 'ifplugd' to use net-auto-wired"
    exit 1
-fi  
+fi
 
-if [ -z "${WIRED_INTERFACE}" ]; then
+if [[ -z "${WIRED_INTERFACE}" ]]; then
   echo "No interface name set. Add to /etc/conf.d/netcfg a line"
   echo "  WIRED_INTERFACE=\"your_interface\""
   exit 1
@@ -19,7 +19,7 @@ fi
 CFG=/etc/ifplugd/ifplugd.conf
 ACTION=/etc/ifplugd/netcfg.action
 PIDFILE=/var/run/ifplugd.$WIRED_INTERFACE.pid
-[[ -f $PIDFILE ]] && PID=$(cat $PIDFILE)
+[[ -f $PIDFILE ]] && read PID < $PIDFILE
 
 # Source ifplugd configuration
 [ -f $CFG ] && . $CFG
@@ -31,8 +31,8 @@ case "$1" in
     fi
     stat_busy "Starting netcfg auto-wired mode for interface ${WIRED_INTERFACE}"
     A="`eval echo \$\{ARGS_${WIRED_INTERFACE}\}`"
-    [ -z "$A" ] && A="$ARGS"
-    [ -z "$PID" ] && /usr/sbin/ifplugd -i $WIRED_INTERFACE -r $ACTION $A
+    [[ "$A" ]] || A="$ARGS"
+    [[ "$PID" ]] || /usr/sbin/ifplugd -i $WIRED_INTERFACE -r $ACTION $A
     # ifplugd may return non-zero, but still succeed if -w is passed, as default in upstream config.
     sleep 1
     if [[ -f $PIDFILE ]]; then
@@ -45,8 +45,7 @@ case "$1" in
   stop)
     if ! ck_daemon net-auto-wired; then
       stat_busy "Stopping netcfg auto-wired mode for interface ${WIRED_INTERFACE}"
-      [ -n "$PID" ] && /usr/sbin/ifplugd -k -i $WIRED_INTERFACE -r $ACTION
-      if [ $? -eq 0 ]; then
+      if [[ "$PID" ]] && /usr/sbin/ifplugd -k -i $WIRED_INTERFACE -r $ACTION; then
         rm_daemon net-auto-wired
         stat_done
       else
@@ -60,6 +59,6 @@ case "$1" in
     "$0" start
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart}"  
+    echo "Usage: $0 {start|stop|restart}"
 esac
 exit 0

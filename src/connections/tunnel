@@ -4,7 +4,7 @@
 tunnel_up() {
     load_profile "$1"
 
-    if [ -e "/sys/class/net/$INTERFACE" ]; then
+    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
         report_fail "Interface $INTERFACE already exists."
         exit 1
     else

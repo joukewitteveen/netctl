@@ -35,9 +35,9 @@ case "$1" in
             exit_stderr "net-auto not running"
         fi
 
-        for iface in $(cat "$STATE_DIR/net-auto"); do
+        while read iface; do
             /usr/bin/netcfg2 iface-down "$iface"
-        done
+        done < "$STATE_DIR/net-auto"
         rm -f "$STATE_DIR/net-auto"
         rm_daemon net-auto
         ;;
