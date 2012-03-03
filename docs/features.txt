@@ -1,80 +1,143 @@
-% Netcfg feature documentation
-% James Rayner
-% 19/10/2009
+Netcfg Features
+---------------
 
-## Network Profile management
+Network Profile management
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+netcfg is profile based. Each network has an individual profile. These
+profiles can be individually connected/disconnected at any time. The
+profile configuration varies depending on whether it's a wireless,
+ethernet (wired) or other type of connection. The available options are
+documented on the netcfg website and in the included examples. The
+installed and available connection types can be seen at
+'/usr/lib/network/connections/'
 
-netcfg is profile based. Each network has an individual profile. These profiles can be individually connected/disconnected at any time. The profile configuration varies depending on whether it's a wireless, ethernet (wired) or other type of connection. The available options are documented on the netcfg website and in the included examples. The installed and available connection types can be seen at /usr/lib/network/connections/
+To connect to a profile called `mynetwork' which would be located at
+'/etc/network.d/mynetwork', you may run:
 
-To connect to a profile called 'mynetwork' which would be located at /etc/network.d/mynetwork, you may run:
-    
-    netcfg mynetwork
+----------------
+netcfg mynetwork
+----------------
 
 To disconnect from the same profile you could run one of:
 
-    netcfg -d mynetwork
-    netcfg down mynetwork
+---------------------
+netcfg -d mynetwork
+netcfg down mynetwork
+---------------------
 
 To reconnect:
 
-    netcfg -r mynetwork
+-------------------
+netcfg -r mynetwork
+-------------------
 
 For more options, see ''netcfg help''
 
-## Start a specific list of profiles on boot
 
-net-profiles allows you to start some profiles on boot. Specify the profiles you want netcfg to start (in this order) in the NETWORKS line in /etc/conf.d/netcfg. Prefix a profile with a @ to start it in the background. For example:
+Start a specific list of profiles on boot
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+net-profiles allows you to start some profiles on boot. Specify the
+profiles you want netcfg to start (in this order) in the +NETWORKS+ line
+in '/etc/conf.d/netcfg'. Prefix a profile with a @ to start it in the
+background. For example:
 
-    NETWORKS=(@adsl @mywireless lan)
-    
-To run on boot, add 'net-profiles' to your DAEMONS line.
+--------------------------------
+NETWORKS=(@adsl @mywireless lan)
+--------------------------------
 
-## Wireless automatic connection and roaming support
+To run on boot, add `net-profiles' to your +DAEMONS+ line in
+'/etc/rc.conf'.
 
-Through the use of wpa_actiond which calls commands on a wpa_supplicant event, netcfg now has automatic connection and roaming support.
+
+Wireless automatic connection and roaming support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Through the use of wpa_actiond which calls commands on a wpa_supplicant
+event, netcfg now has automatic connection and roaming support.
 
 To use this:
 
-1. Install core/wpa_actiond
-2. In /etc/rc.conf set WIRELESS_INTERFACE to your wireless interface, eg: 
+.  Install core/wpa_actiond
+.  In '/etc/rc.conf' set +WIRELESS_INTERFACE+ to your wireless interface, eg:
++
+---------------------------
+WIRELESS_INTERFACE="wlan0" 
+---------------------------
+.  Run `/etc/rc.d/net-auto-wireless start`
 
-        WIRELESS_INTERFACE="wlan0" 
-    
-3. Run /etc/rc.d/net-auto-wireless start
+To run on boot, add `net-auto-wireles' to your +DAEMONS+ line.
 
-To run on boot, add 'net-auto-wireles' to your DAEMONS line.
 
-## Per interface configuration
+Per interface configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuration that applies to all profiles using an interface can be set
+at '/etc/network.d/interfaces/$INTERFACE'. For example:
 
-Configuration that applies to all profiles using an interface can be set at /etc/network.d/interfaces/$INTERFACE. For example:
+------------------------------
+/etc/network.d/interfaces/eth0
+------------------------------
 
-    /etc/network.d/interfaces/eth0
+This is useful for wpa_supplicant options, radio kill switch support,
+pre/post up/down scripts and net-auto-wireless. It is loaded before a
+profile is loaded so that any profile based options will take priority.
 
-This is useful for wpa_supplicant options, radio kill switch support, pre/post up/down scripts and net-auto-wireless. It is loaded before a profile is loaded so that any profile based options will take priority. 
 
-## Execute commands before/after interface up/down
+Execute commands before/after interface up/down
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If your interface requires special actions prior/after the
+establishment/closure of a connection, you may use the +PRE_UP+, POST_UP,
++PRE_DOWN+, +POST_DOWN+ properties. For example, if you want to start
+daemon abc before connecting:
 
-If your interface requires special actions prior/after the establishment/closure of a connection, you may use the PRE_UP, POST_UP, PRE_DOWN, POST_DOWN properties.
-For example, if you want to start daemon abc before connecting:
+----------------------------
+PRE_UP="/etc/rc.d/abc start"
+----------------------------
 
-    PRE_UP="/etc/rc.d/abc start"
- 
-Or if you want to mount your network shares after a successful connection, you could use:
+Or if you want to mount your network shares after a successful
+connection, you could use:
 
-    POST_UP="sleep 5; mount /mnt/shares/desktop 2>/dev/null;"
+---------------------------------------------------------
+POST_UP="sleep 5; mount /mnt/shares/desktop 2>/dev/null;"
+---------------------------------------------------------
 
-If the commands specified in these properties return anything other than 0 (success), netcfg aborts the current operation. If you command might fail, create a separate bash script with an "exit 0;" at the end. Alternatively you may add "|| true" to the end of the command that may fail.
+If the commands specified in these properties return anything other than
+0 (success), netcfg aborts the current operation. If you command might
+fail, create a separate bash script with an "exit 0;" at the end.
+Alternatively you may add "|| true" to the end of the command that may
+fail.
 
-## Output Hooks
 
-netcfg has limited support to load hooks that handle output. By default it loads the "arch" hook which provides the familiar output that you see. A syslog logging hook is also included. These can be found at /usr/lib/network/hooks
+Output Hooks
+~~~~~~~~~~~~
+netcfg has limited support to load hooks that handle output. By default
+it loads the "arch" hook which provides the familiar output that you
+see. A syslog logging hook is also included. These can be found at
+'/usr/lib/network/hooks/'
 
-## Menu based profile selection
 
-You may select a profile to connect to from a menu. This requires the 'dialog' package installed. To display a menu, simply run 'netcfg-menu'. If you wish to have a menu on boot, set NETWORKS=(menu) in your /etc/rc.conf and ensure that net-profiles is in the DAEMONS array.
+Menu based profile selection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You may select a profile to connect to from a menu. This requires the
+'dialog' package installed. To display a menu, simply run `netcfg-menu`.
+If you wish to have a menu on boot, set +NETWORKS=(menu)+ in your
+'/etc/conf.d/netcfg' and ensure that `net-profiles' is in the +DAEMONS+
+array.
 
-## Debugging
 
-To run netcfg with debugging output, set the NETCFG_DEBUG environment variable to "yes", for example: 
+Menu based wireless network selection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can also connect to a wireless network using a menu. To display the
+menu, run `wifi-menu [-o] [interface]`. The _interface_ defaults to the
++WIRELESS_INTERFACE+ from '/etc/conf.d/netcfg'. When `-o' is specified,
+passwords are obscured (ie masked and saved in hexadecimal form). The
+tool generates a profile file if no suitable profile was found.
 
-    NETCFG_DEBUG="yes" netcfg <arguments>
+
+Debugging
+~~~~~~~~~
+To run netcfg with debugging output, set the NETCFG_DEBUG environment
+variable to "yes", for example:
+
+-------------------------------------
+NETCFG_DEBUG="yes" netcfg <arguments>
+-------------------------------------
+
