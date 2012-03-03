@@ -62,13 +62,6 @@ wireless_up() {
     report_debug wireless_up stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
 
-    # Manually set iwconfig options (DEPRECATED)
-    if [[ -n "$IWCONFIG" ]]; then
-        report_warn "The use of IWCONFIG option is deprecated."
-        report_debug wireless_up iwconfig "$INTERFACE" $IWCONFIG
-        iwconfig "$INTERFACE" $IWCONFIG
-    fi
-
     # Build configuration file
     case "$SECURITY" in
         wpa-config)

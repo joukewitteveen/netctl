@@ -70,10 +70,6 @@ def start(profile, essid):
     #    print " - Could not bring interface up"
     #    return False
 
-    # Manually set any iwconfig options - redundant, use custom wpa_supplicant config instead.
-    #if profile.has_key('IWCONFIG'):
-    #    subprocess.call(["iwconfig", profile['INTERFACE'], profile['IWCONFIG']])
-
     # Base arguments
     args=["wpa_supplicant", "-Bu", "-P/run/wpa_supplicant.pid"]
 

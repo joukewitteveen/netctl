@@ -5,6 +5,8 @@ version 2.7
 - add support for PPPoE connections
 - add support for profile backgrounding in net-profiles (FS#23934)
 - add interactive wifi connection tool wifi-menu
+- add netcfg option to reconnect an interface
+- assorted fixes
 
 version 2.6.8
 - fix broken 802.11 in non-wireless setups (FS#25473)

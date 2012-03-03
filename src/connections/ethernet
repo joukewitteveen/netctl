@@ -44,7 +44,7 @@ ethernet_up() {
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wired"
         # Set wpa_supplicant control path (FS#25473)
-        WPA_CTRL_PATH=/var/run/wpa_supplicant
+        WPA_CTRL_PATH=/run/wpa_supplicant
         if grep "^ *ctrl_interface=" "$WPA_CONF" &>/dev/null; then
             WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
         fi
@@ -79,9 +79,9 @@ ethernet_up() {
             fi
         else
             # Clear remaining pid files.
-            rm -f "/var/run/dhcpcd-$INTERFACE".{pid,cache} >/dev/null 2>&1
+            rm -f "/run/dhcpcd-$INTERFACE".{pid,cache} >/dev/null 2>&1
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
-            [[ -n "$DNS1" || -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
+            [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
             report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
             dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
@@ -98,12 +98,6 @@ ethernet_up() {
             report_debug ethernet_iproute_up ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"
             if ! ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"; then
                 report_iproute "Could not configure interface"
-            fi
-        fi
-        if [[ -n "$IFOPTS" ]]; then
-            if ! ifconfig "$INTERFACE" $IFOPTS up; then
-                report_iproute "Bringing interface up failed."
-                return 1
             fi
         fi
         if [[ -n "$ROUTES" ]]; then
@@ -219,16 +213,9 @@ ethernet_up() {
         : >/etc/resolv.conf
         [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
         [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
-
         for dns in "${DNS[@]}"; do
             echo "nameserver $dns" >>/etc/resolv.conf
         done
-    elif [[ -n "$DNS1" ]]; then # support older 'ethernet' syntax.
-        : >/etc/resolv.conf
-        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
-        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
-        [[ -n "$DNS1" ]]   && echo "nameserver $DNS1" >>/etc/resolv.conf
-        [[ -n "$DNS2" ]]   && echo "nameserver $DNS2" >>/etc/resolv.conf
     fi
 
     return 0
@@ -247,7 +234,7 @@ ethernet_down() {
                 /bin/kill $(cat /run/dhclient-$INTERFACE.pid) &>/dev/null
             fi
         else
-            if [[ -f "/var/run/dhcpcd-$INTERFACE.pid" ]]; then
+            if [[ -f "/run/dhcpcd-$INTERFACE.pid" ]]; then
                 report_debug ethernet_down dhcpcd -qk "$INTERFACE"
                 dhcpcd -qk "$INTERFACE" &>/dev/null
             fi

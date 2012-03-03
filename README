@@ -5,6 +5,7 @@ Dependencies:
 - iproute2
 - dialog: for interactive menu
 - ifplugd: for automatic connection
+- wireless_tools: for net_rename
 
 For DHCP support:
 - dhcpcd
@@ -20,10 +21,6 @@ For bonding support
 For bridge support:
 - bridge-utils
 
-Deprecated dependencies:
-- net-tools (only used in IFOPTS option)
-- wireless_tools (only used for IWCONFIG option, still necessary for wireless connection)
-
 For documentation generation:
-- python-markdown, or pandoc
+- asciidoc
 
