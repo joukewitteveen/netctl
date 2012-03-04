@@ -60,17 +60,18 @@ install-docs: docs
 docs:
 	$(MAKE) -C $@
 
-tarball: docs
-	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/" scripts/netcfg
+tarball: netcfg-$(VERSION).tar.gz
+netcfg-$(VERSION).tar.gz:
 	-rm -rf netcfg-$(VERSION)
 	mkdir -p netcfg-$(VERSION)
 	cp -r docs config rc.d src scripts src-wireless systemd contrib Makefile LICENSE README netcfg-$(VERSION)
+	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/" netcfg-$(VERSION)/scripts/netcfg
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
 
-upload:
-	md5sum netcfg-$(VERSION)*.gz > MD5SUMS.$(VERSION)
-	scp netcfg-$(VERSION)*.gz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
+upload: netcfg-$(VERSION).tar.gz
+	md5sum netcfg-$(VERSION).tar.gz > MD5SUMS.$(VERSION)
+	scp netcfg-$(VERSION).tar.gz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
 
 clean:
 	$(MAKE) -C docs clean
