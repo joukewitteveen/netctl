@@ -21,7 +21,7 @@ get_rf_path() {
 
     if [[ -n "$RFKILL_NAME" ]]; then
         for path in /sys/class/rfkill/*; do
-            if [[ "$(cat "$path/name")" == "$RFKILL_NAME" ]]; then
+            if [[ "$(< "$path/name")" == "$RFKILL_NAME" ]]; then
                 echo "$path"
                 return 0
             fi

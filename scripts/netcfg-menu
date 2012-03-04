@@ -53,7 +53,7 @@ case $ret in
         (( ret == 0 )) && echo "$DEFAULT" > "$STATE_DIR/menu"
         ;;
     0)  # User selection
-        profile_up "$(cat "$ANSWER")"
+        profile_up "$(< "$ANSWER")"
         ret=$?
         (( ret == 0 )) && mv "$ANSWER" "$STATE_DIR/menu"
         ;;
