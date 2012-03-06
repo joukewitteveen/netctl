@@ -1,0 +1,32 @@
+# Maintainer: Jouke Witteveen <j.witteveen@gmail.com>
+
+pkgname=netcfg
+pkgver=%pkgver%
+pkgrel=1
+pkgdesc="Network configuration and profile scripts"
+url="http://archlinux.org"
+license=("BSD")
+backup=(etc/iftab etc/conf.d/netcfg)
+depends=("coreutils" "dhcpcd>=4.0" "iproute2")
+makedepends=('asciidoc')
+optdepends=('dialog: Required for menu based profile and wifi selectors'
+            'bridge-utils: To set up bridge connections'
+            'wpa_supplicant: required for wireless network support'
+            'wpa_actiond: Required for automatic wireless connection with rc.d/net-auto-wireless'
+            'ifplugd: Required for automatic wired connection with rc.d/net-auto-wired'
+            'wireless_tools: Required for net-rename'
+           )
+source=(ftp://ftp.archlinux.org/other/netcfg/netcfg-${pkgver}.tar.gz)
+arch=(any)
+md5sums=('%md5sum%')
+
+package() {
+  cd "$srcdir/netcfg-${pkgver}"
+  make DESTDIR="$pkgdir" install
+  install -D -m644 LICENSE "$pkgdir/usr/share/licenses/netcfg/LICENSE"
+
+  # Shell Completion
+  install -D -m644 contrib/bash-completion "$pkgdir/etc/bash_completion.d/netcfg"
+  install -D -m644 contrib/zsh-completion "$pkgdir/usr/share/zsh/site-functions/_netcfg"
+}
+

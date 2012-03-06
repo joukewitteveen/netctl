@@ -1,6 +1,6 @@
 export VERSION = 2.7
 
-.PHONY: install install-wireless install-docs docs tarball upload clean
+.PHONY: install install-wireless install-docs docs tarball pkgbuild upload clean
 
 install: install-docs
 	# Configuration files
@@ -12,14 +12,14 @@ install: install-docs
 	install -d $(DESTDIR)/usr/lib/network/{connections,hooks}
 	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network/
 	install -m755 src/connections/* $(DESTDIR)/usr/lib/network/connections/
-	ln -s wireless $(DESTDIR)/usr/lib/network/connections/wireless-dbus
-	ln -s ethernet $(DESTDIR)/usr/lib/network/connections/ethernet-iproute
+	-ln -s wireless $(DESTDIR)/usr/lib/network/connections/wireless-dbus
+	-ln -s ethernet $(DESTDIR)/usr/lib/network/connections/ethernet-iproute
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# Scripts
 	install -d $(DESTDIR)/usr/bin
 	install -m755 scripts/netcfg $(DESTDIR)/usr/bin/netcfg2
-	ln -s netcfg2 $(DESTDIR)/usr/bin/netcfg
+	-ln -s netcfg2 $(DESTDIR)/usr/bin/netcfg
 	install -m755 \
 	    scripts/netcfg-menu \
 	    scripts/netcfg-wpa_actiond \
@@ -69,6 +69,9 @@ netcfg-$(VERSION).tar.gz:
 	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
 	rm -rf netcfg-$(VERSION)
 
+pkgbuild: netcfg-$(VERSION).tar.gz
+	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum netcfg-$(VERSION).tar.gz | cut -d ' ' -f 1)/" contrib/PKGBUILD > PKGBUILD
+
 upload: netcfg-$(VERSION).tar.gz
 	md5sum netcfg-$(VERSION).tar.gz > MD5SUMS.$(VERSION)
 	scp netcfg-$(VERSION).tar.gz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
@@ -77,5 +80,5 @@ clean:
 	$(MAKE) -C docs clean
 	-@rm -vrf netcfg-$(VERSION) 2>/dev/null
 	-@rm -vrf pkg 2>/dev/null
-	-@rm -vf *.gz MD5SUMS.* 2>/dev/null
+	-@rm -vf PKGBUILD *.gz MD5SUMS.* 2>/dev/null
 
