@@ -45,7 +45,7 @@ OPTIONS
   Reconnect profile active on specified interface
 *-d, down* _profile_::
   Stop the specified profile
-*-i, iface-down* _interface_::
+*-D, iface-down* _interface_::
   Stop the profile up on the specified interface.
 *-a, all-down*::
   Stop all connected profiles

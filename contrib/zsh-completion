@@ -38,7 +38,7 @@ _arguments -C \
 '(- *)-r[Disconnect and reconnect the specified profile]:Active profiles:up_profiles' \
 '(- *)-R[Reconnect profile active on specified interface]:Active interface:up_ifaces' \
 '(- *)-d[Take specified profile down]:Active profile:up_profiles' \
-'(- *)-i[Take down profile active on specified interface]:Active interface:up_ifaces' \
+'(- *)-D[Take down profile active on specified interface]:Active interface:up_ifaces' \
 '(- *)-a[Take all active profiles down]' \
 '(- *)*:All options:all_options'
 

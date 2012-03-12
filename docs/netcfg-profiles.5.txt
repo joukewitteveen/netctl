@@ -12,7 +12,9 @@ The *netcfg*(8) profiles are plain text files that defines variables for
 netcfg behaviour. They must be compliant with *bash*(1) shell syntax and
 usually do not execute any code.
 
-They are named '/etc/network.d/$\{profile_name}'.
+They are named '/etc/network.d/$\{profile_name}', where
++$\{profile_name\}+ must not contain a newline character and should not
+start with the `@'-sign.
 
 
 OVERVIEW

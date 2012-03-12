@@ -18,7 +18,7 @@ case $1 in
         [[ -z $2 ]] && echo "Please specify an interface to stop" && exit 1
         interface=$2
         [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
-        netcfg -i "$interface"
+        netcfg -D "$interface"
         stop_wpa "$interface"
         kill $(< "/run/wpa_actiond_${2}.pid")
         # only try to disable software rfkill switches (FS#25514)
@@ -43,7 +43,7 @@ fi
 [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
 
 if [[ -f "$CONN_DIR/interfaces/$interface" ]]; then
-    netcfg -i "$interface"
+    netcfg -D "$interface"
 fi
 
 if [[ -n "$RFKILL" ]]; then # Enable radio if necessary

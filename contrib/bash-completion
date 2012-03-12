@@ -18,7 +18,7 @@ _netcfg ()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts="-l -c -u -r -R -d -i -a -v -h"
+    opts="-l -c -u -r -R -d -D -a -v -h"
     lopts="--help --version"
     cmds="list current check-iface up reconnect iface-recon down iface-down all-down all-suspend"
     prfls="`find /etc/network.d -maxdepth 1 -type f -not -name '*~' -not -name '*.conf' -not -name '.*' d -printf '%f\n'`"
@@ -40,7 +40,7 @@ _netcfg ()
     esac
 
     case "${prev}" in
-        -R|iface-recon|-i|iface-down)
+        -R|iface-recon|-D|iface-down)
             _connected_intfs
             return 0
             ;;
