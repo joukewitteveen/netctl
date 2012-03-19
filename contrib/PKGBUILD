@@ -8,7 +8,7 @@ url="http://archlinux.org"
 license=("BSD")
 backup=(etc/iftab etc/conf.d/netcfg)
 depends=("coreutils" "dhcpcd>=4.0" "iproute2")
-makedepends=('asciidoc')
+#makedepends=('asciidoc')  # The source tarball includes pre-built documentation.
 optdepends=('dialog: Required for menu based profile and wifi selectors'
             'bridge-utils: To set up bridge connections'
             'wpa_supplicant: required for wireless network support'
@@ -16,7 +16,7 @@ optdepends=('dialog: Required for menu based profile and wifi selectors'
             'ifplugd: Required for automatic wired connection with rc.d/net-auto-wired'
             'wireless_tools: Required for net-rename'
            )
-source=(ftp://ftp.archlinux.org/other/netcfg/netcfg-${pkgver}.tar.gz)
+source=(ftp://ftp.archlinux.org/other/netcfg/netcfg-${pkgver}.tar.xz)
 arch=(any)
 md5sums=('%md5sum%')
 

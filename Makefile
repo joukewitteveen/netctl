@@ -60,25 +60,26 @@ install-docs: docs
 docs:
 	$(MAKE) -C $@
 
-tarball: netcfg-$(VERSION).tar.gz
-netcfg-$(VERSION).tar.gz:
-	-rm -rf netcfg-$(VERSION)
-	mkdir -p netcfg-$(VERSION)
-	cp -r docs config rc.d src scripts src-wireless systemd contrib Makefile LICENSE README netcfg-$(VERSION)
-	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/" netcfg-$(VERSION)/scripts/netcfg
-	tar -zcvf netcfg-$(VERSION).tar.gz netcfg-$(VERSION)
-	rm -rf netcfg-$(VERSION)
+tarball: netcfg-$(VERSION).tar.xz
+netcfg-$(VERSION).tar.xz: | docs
+	cp scripts/netcfg{,.orig}
+	sed -i "s/NETCFG_VER=.*/NETCFG_VER=$(VERSION)/" scripts/netcfg
+	git stash save -q
+	git archive -o netcfg-$(VERSION).tar --prefix=netcfg-$(VERSION)/ stash
+	git stash pop -q
+	mv scripts/netcfg{.orig,}
+	tar --exclude-vcs --transform "s%^%netcfg-$(VERSION)/%" -uf netcfg-$(VERSION).tar docs/
+	xz netcfg-$(VERSION).tar
 
-pkgbuild: netcfg-$(VERSION).tar.gz
-	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum netcfg-$(VERSION).tar.gz | cut -d ' ' -f 1)/" contrib/PKGBUILD > PKGBUILD
+pkgbuild: PKGBUILD
+PKGBUILD: netcfg-$(VERSION).tar.xz
+	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum netcfg-$(VERSION).tar.xz | cut -d ' ' -f 1)/" contrib/PKGBUILD > PKGBUILD
 
-upload: netcfg-$(VERSION).tar.gz
-	md5sum netcfg-$(VERSION).tar.gz > MD5SUMS.$(VERSION)
-	scp netcfg-$(VERSION).tar.gz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
+upload: netcfg-$(VERSION).tar.xz
+	md5sum netcfg-$(VERSION).tar.xz > MD5SUMS.$(VERSION)
+	scp netcfg-$(VERSION).tar.xz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
 
 clean:
 	$(MAKE) -C docs clean
-	-@rm -vrf netcfg-$(VERSION) 2>/dev/null
-	-@rm -vrf pkg 2>/dev/null
-	-@rm -vf PKGBUILD *.gz MD5SUMS.* 2>/dev/null
+	-@rm -vf PKGBUILD *.xz MD5SUMS.* 2>/dev/null
 

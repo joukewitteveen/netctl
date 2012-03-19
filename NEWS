@@ -5,8 +5,11 @@ version 2.7
 - add support for PPPoE connections
 - add support for profile backgrounding in net-profiles (FS#23934)
 - add interactive wifi connection tool wifi-menu
-- add netcfg option to reconnect an interface
-- assorted fixes
+- add netcfg option to reconnect an interface (-R) (FS#28196)
+- rename the option to disconnect an interface (was: -i, now: -D)
+- stop suggesting profile-scripting through /etc/network.d/hooks as it was
+  unused and the {PRE,POST}_{UP,DOWN} variables work just fine (FS#27496)
+- assorted fixes (FS#24599, FS#26370, FS#26607, FS#28022)
 
 version 2.6.8
 - fix broken 802.11 in non-wireless setups (FS#25473)
