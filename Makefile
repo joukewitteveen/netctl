@@ -73,11 +73,11 @@ netcfg-$(VERSION).tar.xz: | docs
 
 pkgbuild: PKGBUILD
 PKGBUILD: netcfg-$(VERSION).tar.xz
-	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum netcfg-$(VERSION).tar.xz | cut -d ' ' -f 1)/" contrib/PKGBUILD > PKGBUILD
+	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum $< | cut -d ' ' -f 1)/" contrib/PKGBUILD > PKGBUILD
 
 upload: netcfg-$(VERSION).tar.xz
-	md5sum netcfg-$(VERSION).tar.xz > MD5SUMS.$(VERSION)
-	scp netcfg-$(VERSION).tar.xz MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
+	md5sum $< > MD5SUMS.$(VERSION)
+	scp $< MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
 
 clean:
 	$(MAKE) -C docs clean

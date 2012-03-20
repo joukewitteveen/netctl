@@ -9,7 +9,7 @@ netcfg-profiles - netcfg profiles documentation and syntax
 DESCRIPTION
 -----------
 The *netcfg*(8) profiles are plain text files that defines variables for
-netcfg behaviour. They must be compliant with *bash*(1) shell syntax and
+netcfg behavior. They must be compliant with *bash*(1) shell syntax and
 usually do not execute any code.
 
 They are named '/etc/network.d/$\{profile_name}', where
@@ -30,7 +30,7 @@ Profiles must define mandatory variables:
 
 Connections define how the network is set up for the profile and also
 determine additional configuration variable that control their
-behaviour. The available connection types are determined by files in
+behavior. The available connection types are determined by files in
 '/usr/lib/network/connections/'.
 
 
