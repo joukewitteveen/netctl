@@ -73,7 +73,7 @@ netcfg-$(VERSION).tar.xz: | docs
 
 pkgbuild: PKGBUILD
 PKGBUILD: netcfg-$(VERSION).tar.xz
-	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum $< | cut -d ' ' -f 1)/" contrib/PKGBUILD > PKGBUILD
+	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum $< | cut -d ' ' -f 1)/" contrib/PKGBUILD > $@
 
 upload: netcfg-$(VERSION).tar.xz
 	md5sum $< > MD5SUMS.$(VERSION)
