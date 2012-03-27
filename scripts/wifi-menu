@@ -1,7 +1,7 @@
 #! /bin/bash
 
 . /usr/lib/network/network
-. $SUBR_DIR/8021x
+. "$SUBR_DIR/8021x"
 . /etc/conf.d/netcfg
 
 # The right value depends on the connected profile.

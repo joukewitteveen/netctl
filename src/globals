@@ -12,8 +12,8 @@
 PROFILE_DIR="/etc/network.d"
 IFACE_DIR="$PROFILE_DIR/interfaces"
 SUBR_DIR="/usr/lib/network"
-HOOKS_DIR="${SUBR_DIR}/hooks"
-CONN_DIR="${SUBR_DIR}/connections"
+HOOKS_DIR="$SUBR_DIR/hooks"
+CONN_DIR="$SUBR_DIR/connections"
 STATE_DIR="/run/network"
 
 

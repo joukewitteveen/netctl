@@ -1,7 +1,7 @@
 #! /bin/bash
 . /usr/lib/network/network
-. $SUBR_DIR/8021x
-. $SUBR_DIR/rfkill
+. "$SUBR_DIR/8021x"
+. "$SUBR_DIR/rfkill"
 
 wireless_up() {
 

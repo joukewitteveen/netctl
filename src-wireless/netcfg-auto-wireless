@@ -2,8 +2,8 @@
 # Originally contributed by Neuro: http://bbs.archlinux.org/viewtopic.php?pid=278148#p278148
 
 . /usr/lib/network/network
-. $SUBR_DIR/rfkill
-. $SUBR_DIR/8021x
+. "$SUBR_DIR/rfkill"
+. "$SUBR_DIR/8021x"
 . /etc/conf.d/netcfg
 
 # wifi_auto
