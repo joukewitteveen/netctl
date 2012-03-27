@@ -10,10 +10,6 @@ wireless_up() {
 
     # Default settings
     SECURITY=${SECURITY:-none}
-    if [[ "$SECURITY" != "${SECURITY%-old}" ]]; then
-        report_warn "SECURITY=none-old, wep-old are deprecated, please use none, wep instead!"
-        SECURITY=${SECURITY%-old}
-    fi
     WPA_DRIVER=${WPA_DRIVER:-nl80211,wext}
 
     enable_rf $INTERFACE $RFKILL $RFKILL_NAME || return 1

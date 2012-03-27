@@ -191,7 +191,7 @@ make_wpa_config_file() {
 # Requires already loaded profile
 make_wpa_config() {
     case $SECURITY in
-    wep|wep-old|wpa|none|none-old)
+    none|wep|wpa)
         case "${ESSID_TYPE:-ascii}" in
             ascii)
                 echo "ssid=\"$ESSID\""
@@ -220,7 +220,10 @@ make_wpa_config() {
 
     # Key management
     case $SECURITY in
-    wep|wep-old)
+    none)
+        echo "key_mgmt=NONE"
+        ;;
+    wep)
         echo "key_mgmt=NONE"
         echo "wep_tx_keyidx=0"
         if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
@@ -228,9 +231,6 @@ make_wpa_config() {
         else
             echo "wep_key0=$KEY"
         fi
-        ;;
-    none|none-old)
-        echo "key_mgmt=NONE"
         ;;
     wpa)
         echo "proto=RSN WPA"
