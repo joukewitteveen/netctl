@@ -11,7 +11,7 @@ $(MANPAGES): %: %.txt footer.txt
 	a2x -d manpage -f manpage -a manversion=$(VERSION) $<
 
 $(WEBPAGES): %.html: %.txt
-	asciidoc -a version=$(VERSION) $<
+	asciidoc -a disable-javascript -a version=$(VERSION) $<
 
 clean:
 	-@rm -vf $(MANPAGES) $(WEBPAGES) 2>/dev/null
