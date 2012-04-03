@@ -15,6 +15,7 @@ report_iproute()
 
 ethernet_up() {
     load_profile "$1"
+    SYSCTL_INTERFACE="${INTERFACE/.//}"
 
     if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
         if ! echo "$INTERFACE" | fgrep -q ":"; then
@@ -24,7 +25,7 @@ ethernet_up() {
 
     # Disable IPv6 before the interface to prevent SLAAC
     if [[ "$IP6" == "no" ]]; then
-        sysctl -q -w "net.ipv6.conf.$INTERFACE.disable_ipv6=1"
+        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.disable_ipv6=1"
     fi
 
     report_debug ethernet_iproute_up ifup
@@ -138,7 +139,7 @@ ethernet_up() {
         [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
         ;;
     no)
-        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=0"
+        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=0"
         ;;
     "")  # undefined IP6 does not prevent RA's from being received -> nop
         ;;
@@ -152,11 +153,9 @@ ethernet_up() {
         if [[ -x /usr/sbin/dhclient ]]; then
             _DHCLIENT_PIDFILE="/run/dhclient6-${INTERFACE}.pid"
             if [[ "$IP6" = "dhcp-noaddr" ]]; then
-                sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=1"
                 DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
-            else
-                sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=0"
             fi
+            sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=1"
             rm -r ${_DHCLIENT_PIDFILE} &>/dev/null
             report_debug ethernet_up dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} "$INTERFACE"
             if ! dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} ${DHCLIENT6_OPTIONS} "$INTERFACE"; then
@@ -169,10 +168,10 @@ ethernet_up() {
         fi
         ;;
     stateless)
-        sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=1"
+        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=1"
         ;;
     static)
-        sysctl -q -w "net.ipv6.conf.$INTERFACE.accept_ra=0"
+        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=0"
         if [[ -n "$ADDR6" ]]; then
             for addr in "${ADDR6[@]}"; do
                 report_debug ethernet_iproute_up ip -6 addr add "$addr" dev "$INTERFACE"
