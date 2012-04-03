@@ -1,3 +1,7 @@
+version 2.7.2
+- fix bash completion
+- discontinue "-old" connections
+
 version 2.7
 - add support for tunnel interfaces
 - add support for interface bonding (FS#24802)
