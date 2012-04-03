@@ -77,7 +77,7 @@ PKGBUILD: netcfg-$(VERSION).tar.xz
 
 upload: netcfg-$(VERSION).tar.xz
 	md5sum $< > MD5SUMS.$(VERSION)
-	scp $< MD5SUMS.$(VERSION) archlinux.org:/srv/ftp/other/netcfg/
+	scp $< MD5SUMS.$(VERSION) gerolde.archlinux.org:/srv/ftp/other/netcfg/
 
 clean:
 	$(MAKE) -C docs clean
