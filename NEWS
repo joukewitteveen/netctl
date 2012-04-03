@@ -1,3 +1,7 @@
+version 2.7.3
+- fix dhcpcd to not remove/re-acquire a lease unnecessarily
+- fix sysctl parameters for interfaces with vlans (FS#26259)
+
 version 2.7.2
 - fix bash completion
 - discontinue "-old" connections
