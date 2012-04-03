@@ -11,10 +11,12 @@ action="$4"
 case $action in
     CONNECT)
         if [[ -z $profile ]]; then
-            dhcpcd "$interface"
+            # Load interface specific config
+            [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
+            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" -K $DHCP_OPTIONS "$interface"
             exit $?
         fi
-        if ! $CONN_DIR/ethernet up "$profile"; then
+        if ! DHCPCD_INTERNAL_OPTIONS="-K" $CONN_DIR/ethernet up "$profile"; then
             exit 1 # what to do if fail?
         fi
 

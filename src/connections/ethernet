@@ -83,8 +83,8 @@ ethernet_up() {
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
             [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
             # Start dhcpcd
-            report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE"
-            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
+            report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCPCD_INTERNAL_OPTIONS $DHCP_OPTIONS "$INTERFACE"
+            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCPCD_INTERNAL_OPTIONS $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
             if [[ "$PIPESTATUS" -ne 0 ]]; then
                 report_fail "DHCP IP lease attempt failed."
                 stop_80211x
