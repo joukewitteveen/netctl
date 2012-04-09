@@ -12,8 +12,6 @@ install: install-docs
 	install -d $(DESTDIR)/usr/lib/network/{connections,hooks}
 	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network/
 	install -m755 src/connections/* $(DESTDIR)/usr/lib/network/connections/
-	-ln -s wireless $(DESTDIR)/usr/lib/network/connections/wireless-dbus
-	-ln -s ethernet $(DESTDIR)/usr/lib/network/connections/ethernet-iproute
 	# Hooks
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# Scripts
@@ -40,13 +38,6 @@ install: install-docs
 	    systemd/net-auto-wireless.service \
 	    systemd/net-auto-wired.service \
 	    $(DESTDIR)/lib/systemd/system/
-
-install-wireless:
-	install -d $(DESTDIR)/usr/lib/network/connections $(DESTDIR)/usr/bin \
-				$(DESTDIR)/etc/rc.d
-	install -m755 src-wireless/wireless-dbus $(DESTDIR)/usr/lib/network/connections/
-	install -m755 src-wireless/netcfg-auto-wireless $(DESTDIR)/usr/bin/
-	install -m755 src-wireless/net-auto $(DESTDIR)/etc/rc.d/
 
 install-docs: docs
 	install -d $(DESTDIR)/usr/share/man/man5

@@ -2,10 +2,7 @@
 #
 # ifplugd.action script for netcfg
 
-. /etc/rc.conf
-. /etc/rc.d/functions
 . /usr/lib/network/network
-shopt -s extglob
 
 case "$2" in
   up)
@@ -17,11 +14,11 @@ case "$2" in
     declare -a preferred_profiles
     declare -a dhcp_profiles
     declare -a static_profiles
-    for profile in $(list_profiles); do (
-        load_profile "$profile"
+    for profile in $(list_profiles); do
+      (
         echo "loading $profile"
-        [[ "$INTERFACE" != "$1" ]] && continue
-        [[ "$CONNECTION" != @(ethernet|ethernet-iproute) ]] && continue
+        load_profile "$profile"
+        [[ "$INTERFACE" == "$1" && "$CONNECTION" == "ethernet" ]] || continue
         checkyesno "${AUTO_WIRED:-no}" && exit 1 # user preferred AUTO profile
         [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
         exit 3 # static profile
@@ -34,16 +31,14 @@ case "$2" in
     done
     if [[ ${#preferred_profiles[@]} > 1 ]]; then
       echo "AUTO_WIRED flag for $1 set in more than one profile (${preferred_profiles[*]})"
-    else
-      for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do (
-          netcfg "$profile" && exit 1
-          exit 0
-      ) || exit 0; done
     fi
+    for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
+      profile_up "$profile" && exit 0
+    done
   ;;
   down)
     if check_iface "$1"; then
-        netcfg -i "$1" && exit 0
+      interface_down "$1" && exit 0
     fi
   ;;
   *)
