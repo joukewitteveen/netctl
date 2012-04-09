@@ -21,9 +21,8 @@ ppp_down() {
 
     if [[ -e $PIDFILE ]]; then
         PID=$(head -1 $PIDFILE)
-        [[ -n "$PID" ]] && kill "$(head -1 $PIDFILE)"
+        [[ -n "$PID" ]] && kill "$PID"
     fi
-    kill "$(head -1 $PIDFILE)"
 }
 
 ppp_$1 "$2"
