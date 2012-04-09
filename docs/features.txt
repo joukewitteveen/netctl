@@ -36,17 +36,16 @@ For more options, see ''netcfg help''
 
 Start a specific list of profiles on boot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-net-profiles allows you to start some profiles on boot. Specify the
+net-profiles allows you to start some profiles at boot time. Specify the
 profiles you want netcfg to start (in this order) in the +NETWORKS+ line
-in '/etc/conf.d/netcfg'. Prefix a profile with a @ to start it in the
+in '/etc/conf.d/netcfg'. Prefix a profile with a `@' to start it in the
 background. For example:
 
 --------------------------------
 NETWORKS=(@adsl @mywireless lan)
 --------------------------------
 
-To run on boot, add `net-profiles' to your +DAEMONS+ line in
-'/etc/rc.conf'.
+Next, add `net-profiles' to your +DAEMONS+ line in '/etc/rc.conf'.
 
 
 Wireless automatic connection and roaming support
@@ -57,7 +56,7 @@ event, netcfg now has automatic connection and roaming support.
 To use this:
 
 .  Install core/wpa_actiond
-.  In '/etc/rc.conf' set +WIRELESS_INTERFACE+ to your wireless interface, eg:
+.  In '/etc/conf.d/netcfg' set +WIRELESS_INTERFACE+ to your wireless interface, eg:
 +
 ---------------------------
 WIRELESS_INTERFACE="wlan0" 

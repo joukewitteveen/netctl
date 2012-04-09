@@ -1,6 +1,6 @@
 ### Globals
 . /usr/lib/network/globals
-# will load hooks and they in turn will load /etc/rc.d/functions if they need to
+# will load hooks
 
 ## Loads a profile.
 # $1: profile name
@@ -273,7 +273,6 @@ interface_down()
     esac
 }
 
-
 # interface_reconnect interface
 #   reconnects the profile active on interface
 interface_reconnect()
@@ -289,7 +288,6 @@ interface_reconnect()
         ;;
     esac
 }
-
 
 ##
 # check_iface interface
@@ -356,7 +354,6 @@ set_iface() {
     fi
 }
 
-
 is_interface() {
     local INTERFACE="$1"
     if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
@@ -394,4 +391,3 @@ bring_interface()
 }
 
 # vim: ft=sh ts=4 et sw=4:
-

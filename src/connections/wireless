@@ -4,7 +4,6 @@
 . "$SUBR_DIR/rfkill"
 
 wireless_up() {
-
     PROFILE="$1"
     load_profile "$PROFILE"
 
