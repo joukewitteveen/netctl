@@ -1,0 +1,17 @@
+### Sample netcfg hook script for location based firewall rules.
+### To install, make this executable and put it in /usr/lib/network/hooks
+
+### USAGE
+## You need to have iptables installed to use this script.
+## Add a location to your network profile and add firewall to your POST_UP.
+## The iptables setup in /etc/iptables/$LOCATION.rules will now be loaded
+## automatically when a connection is established.
+##
+## Sample excerpt from the profile:
+##     LOCATION="library"
+##     POST_UP="firewall"
+
+function firewall {
+	/usr/sbin/iptables-restore < "/etc/iptables/$LOCATION.rules"
+}
+

@@ -45,7 +45,7 @@ install-docs: docs
 	install -m644 docs/*.8 $(DESTDIR)/usr/share/man/man8/
 	install -d $(DESTDIR)/usr/share/doc/netcfg/contrib
 	install -m644 docs/*.html $(DESTDIR)/usr/share/doc/netcfg/
-	install -m644 contrib/{logging.hook,pm-utils.handler} $(DESTDIR)/usr/share/doc/netcfg/contrib/
+	install -m644 contrib/{*.hook,pm-utils.handler} $(DESTDIR)/usr/share/doc/netcfg/contrib/
 
 docs:
 	$(MAKE) -C $@
