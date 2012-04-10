@@ -1,11 +1,10 @@
 # /usr/lib/networks/globals
 #
-# any +x files in /usr/lib/network/hooks
-# will be sourced when this file is.
-# hook files can override any of the utility functions defined here for custom behavior
-# (such as logging error messages to syslog)
-# this lets us keep netcfg simple but gives it the flexibility for users
-# to make modular use of it to do more complex things
+# All +x files in /usr/lib/network/hooks will be sourced when this file is.
+# Hook files can override any of the utility functions defined here for custom
+# behavior (such as logging error messages to syslog). This lets us keep netcfg
+# simple but gives it the flexibility for users to make modular use of it to do
+# more complex things
 
 
 ### Globals
@@ -19,7 +18,6 @@ STATE_DIR="/run/network"
 
 
 ### Logging/Error reporting
-#
 
 function report_err {
     echo "$*"
@@ -38,34 +36,32 @@ function report_debug {
 }
 
 function report_try {
-    # JP: this needs -n option
-    echo -n ":: $*"
+    # This needs -n and a trailing space.
+    echo -n ":: $* "
     REPORT_TRYING=1
 }
 
 function report_fail {
     if [[ -n "$*" ]]; then
-        if [[ -n "$REPORT_TRYING" ]]; then
-            # JP: this needs -n option
-            echo -n "- $*"
+        if (( REPORT_TRYING )); then
+            echo "- $* [fail]"
             REPORT_TRYING=
-            echo "[fail]"
         else
             echo "$*"
         fi
-    elif [[ -n "$REPORT_TRYING" ]]; then
-        REPORT_TRYING=
+    elif (( REPORT_TRYING )); then
         echo "[fail]"
+        REPORT_TRYING=
     fi
 }
 
 function report_success {
     if [[ -n "$*" ]]; then
-        # JP: this needs -n option
-        echo -n "- $*"
-        REPORT_TRYING=
+        # This needs -n and a trailing space.
+        echo -n "- $* "
     fi
     echo "[done]"
+    REPORT_TRYING=
 }
 
 ### For calling scripts only; don't use in library functions
@@ -79,7 +75,7 @@ function exit_fail { report_fail "$*"; exit 1; }
 # checkyesno var
 #    Test $1 variable, and warn if not set to YES or NO.
 #    Return 0 if it's "yes" (et al), nonzero otherwise.
-#    to make default yes, do "checkyesno ${VAR:-yes}"
+#    To default to yes, do: "checkyesno ${VAR:-yes}".
 #
 checkyesno()
 {
@@ -104,9 +100,8 @@ checkyesno()
 }
 
 
-
+### Load all +x files in $HOOKS_DIR
 function load_hooks() {
-    ### Load any +x files in $HOOKS_DIR and $USERHOOKS_DIR
     local hook
     for hook in $(find -L "$HOOKS_DIR/" -maxdepth 1 -type f -executable | sort -u); do
         source "$hook"
