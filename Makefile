@@ -33,11 +33,11 @@ install: install-docs
 	    rc.d/net-auto-wired \
 	    rc.d/net-auto-wireless \
 	    $(DESTDIR)/etc/rc.d/
-	install -d $(DESTDIR)/lib/systemd/system
+	install -d $(DESTDIR)/usr/lib/systemd/system
 	install -m644 \
 	    systemd/net-auto-wireless.service \
 	    systemd/net-auto-wired.service \
-	    $(DESTDIR)/lib/systemd/system/
+	    $(DESTDIR)/usr/lib/systemd/system/
 
 install-docs: docs
 	install -d $(DESTDIR)/usr/share/man/man5
