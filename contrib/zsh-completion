@@ -1,4 +1,4 @@
-#compdef netcfg netcfg2=netcfg
+#compdef netcfg
 local -a disp
 
 all_options() {

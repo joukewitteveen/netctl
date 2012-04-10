@@ -29,7 +29,7 @@ case "$1" in
                 exit 0
             fi
         elif [[ -n "$NET" ]]; then
-            if /usr/bin/netcfg2 check-iface "$NET"; then
+            if /usr/bin/netcfg check-iface "$NET"; then
                 echo "$NET" > "$STATE_DIR/net-profiles"        # JP: user may want to disconnect profile by calling net-profiles stop
                 add_daemon net-profiles
                 exit 0
@@ -44,14 +44,14 @@ case "$1" in
             # No NET= passed at boot, go to NETWORKS=()
             for network in "${NETWORKS[@]}"; do
                 if [[ "$network" = "${network#@}" ]]; then
-                    if /usr/bin/netcfg2 check-iface "$network"; then
+                    if /usr/bin/netcfg check-iface "$network"; then
                         echo "$network" >> "$STATE_DIR/net-profiles"
                         add_daemon net-profiles
                     fi
                 else
                     # It is up to the user to make sure no backgrounded profile
                     # uses an interface that is used by another active profile.
-                    if /usr/bin/netcfg2 "${network#@}"; then
+                    if /usr/bin/netcfg "${network#@}"; then
                         echo "${network#@}" >> "$STATE_DIR/net-profiles"
                         add_daemon net-profiles
                     fi >/dev/null &
@@ -71,7 +71,7 @@ case "$1" in
         # shutdown any profiles started by netcfg (or from NET_PROFILES in rc.conf)
         # JP: only attempt to disconnect the profiles _this daemon_ was told to control
         while read profile; do
-            /usr/bin/netcfg2 down "$profile"
+            /usr/bin/netcfg down "$profile"
         done < "$STATE_DIR/net-profiles"
         rm -f "$STATE_DIR/net-profiles"
         rm_daemon net-profiles

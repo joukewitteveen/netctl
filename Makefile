@@ -16,9 +16,8 @@ install: install-docs
 	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
 	# Scripts
 	install -d $(DESTDIR)/usr/bin
-	install -m755 scripts/netcfg $(DESTDIR)/usr/bin/netcfg2
-	-ln -s netcfg2 $(DESTDIR)/usr/bin/netcfg
 	install -m755 \
+	    scripts/netcfg \
 	    scripts/netcfg-menu \
 	    scripts/netcfg-wpa_actiond \
 	    scripts/netcfg-wpa_actiond-action \

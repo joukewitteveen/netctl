@@ -47,4 +47,3 @@ _netcfg ()
 }
 
 complete -F _netcfg netcfg
-complete -F _netcfg netcfg2
