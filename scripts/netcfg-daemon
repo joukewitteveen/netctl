@@ -37,16 +37,21 @@ case "$1" in
 	stop)
 		(( $(id -u) )) && exit_stderr "This script should be run as root."
 		[[ ! -e $STATE_FILE ]] && exit_err "netcfg-daemon was not started"
-		tac "$STATE_FILE" | while read profile; do
-			if [[ "$profile" = "${profile#@}" ]]; then
-				if [[ -e "$STATE_DIR/profiles/$profile" ]]; then
-					/usr/bin/netcfg down "$profile" || exit 1
+		# Stop the profiles in the reverse order they were started.
+		tac "$STATE_FILE" | (
+			while read profile; do
+				if [[ "$profile" = "${profile#@}" ]]; then
+					if [[ -e "$STATE_DIR/profiles/$profile" ]]; then
+						/usr/bin/netcfg down "$profile" || exit $?
+					fi
+				else
+					/usr/bin/netcfg down "${profile#@}" &
 				fi
-			else
-				/usr/bin/netcfg down "${profile#@}" &
-			fi
-		done
-		rm -f "$STATE_FILE"
+			done
+			rm "$STATE_FILE"
+			# Generate a return value and make sure we are good to restart.
+			wait
+		)
 		;;
 	restart)
 		"$0" stop
@@ -56,7 +61,7 @@ case "$1" in
 	status)
 		if [[ -e $STATE_FILE ]]; then
 			report_notice "profiles started by netcfg-daemon:"
-			cat "$STATE_FILE"
+			sed 's/^@//' "$STATE_FILE"
 		else
 			report_notice "netcfg-daemon was not started"
 		fi
