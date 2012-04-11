@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# This script implements support for the NETWORKS array in /etc/conf.d/netcfg.
+
+. /usr/lib/network/globals
+STATE_FILE="$STATE_DIR/netcfg-daemon"
+
+case "$1" in
+	start)
+		(( $(id -u) )) && exit_stderr "This script should be run as root."
+		[[ -e $STATE_FILE ]] && exit_err "netcfg-daemon is already started"
+		. /etc/conf.d/netcfg
+		[[ ${NETWORKS+x} != x ]] && exit_err "NETWORKS is not set in /etc/conf.d/netcfg"
+		if [[ ${#NETWORKS[@]} -eq 1 && $NETWORKS = menu ]]; then
+			if /usr/bin/netcfg-menu ${NETWORKS_MENU_TIMEOUT-5}; then
+				mv "$STATE_DIR/menu" "$STATE_FILE"
+			fi
+			exit 0
+		fi
+		for profile in "${NETWORKS[@]}"; do
+			if [[ "$profile" = "${profile#@}" ]]; then
+				if /usr/bin/netcfg check-iface "$profile"; then
+					echo "$profile" >> "$STATE_FILE"
+				fi
+			else
+				# It is up to the user to make sure no backgrounded profile
+				# uses an interface that is used by another active profile.
+				if /usr/bin/netcfg up "${profile#@}"; then
+					echo "$profile" >> "$STATE_FILE"
+				fi >/dev/null &
+				PROFILE_BKGD=1
+			fi
+		done
+		# Generate a return value.
+		[[ -f $STATE_FILE || -n $PROFILE_BKGD ]]
+		;;
+	stop)
+		(( $(id -u) )) && exit_stderr "This script should be run as root."
+		[[ ! -e $STATE_FILE ]] && exit_err "netcfg-daemon was not started"
+		tac "$STATE_FILE" | while read profile; do
+			if [[ "$profile" = "${profile#@}" ]]; then
+				if [[ -e "$STATE_DIR/profiles/$profile" ]]; then
+					/usr/bin/netcfg down "$profile" || exit 1
+				fi
+			else
+				/usr/bin/netcfg down "${profile#@}" &
+			fi
+		done
+		rm -f "$STATE_FILE"
+		;;
+	restart)
+		"$0" stop
+		sleep 1
+		"$0" start
+		;;
+	status)
+		if [[ -e $STATE_FILE ]]; then
+			report_notice "profiles started by netcfg-daemon:"
+			cat "$STATE_FILE"
+		else
+			report_notice "netcfg-daemon was not started"
+		fi
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|status}"
+esac
+

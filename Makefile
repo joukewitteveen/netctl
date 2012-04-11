@@ -18,6 +18,7 @@ install: install-docs
 	install -d $(DESTDIR)/usr/bin
 	install -m755 \
 	    scripts/netcfg \
+	    scripts/netcfg-daemon \
 	    scripts/netcfg-menu \
 	    scripts/netcfg-wpa_actiond \
 	    scripts/netcfg-wpa_actiond-action \
