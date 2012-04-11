@@ -35,8 +35,7 @@ install: install-docs
 	    $(DESTDIR)/etc/rc.d/
 	install -d $(DESTDIR)/usr/lib/systemd/system
 	install -m644 \
-	    systemd/net-auto-wireless.service \
-	    systemd/net-auto-wired.service \
+	    systemd/*.service \
 	    $(DESTDIR)/usr/lib/systemd/system/
 
 install-docs: docs

@@ -1,0 +1,13 @@
+[Unit]
+Description=Netcfg multi-profile daemon
+Before=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/conf.d/netcfg
+ExecStart=/usr/bin/netcfg-daemon start
+ExecStop=/usr/bin/netcfg-daemon stop
+
+[Install]
+WantedBy=multi-user.target
