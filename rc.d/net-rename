@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /etc/rc.conf
+. /etc/rc.d/functions
 . /usr/lib/network/globals
 
 case "$1" in

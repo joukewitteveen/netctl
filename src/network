@@ -64,7 +64,7 @@ interface_suspend()
         # the pipe to "while read" will create a subshell
         INTERFACE=$(. "$STATE_DIR/profiles/$prof"; echo "$INTERFACE")
         if [[ "$1" == all || "$1" == "$INTERFACE" ]]; then
-            report_notify "suspending interface $INTERFACE with profile $prof"
+            report_notice "suspending interface $INTERFACE with profile $prof"
             cp "$STATE_DIR/profiles/$prof" "$STATE_DIR/suspend/"
             if checkyesno "${2:-yes}"; then
                 profile_down "$prof"
@@ -88,7 +88,7 @@ all_resume()
         # the pipe to "while read" will create a subshell
         INTERFACE=$(. "$STATE_DIR/suspend/$prof"; echo "$INTERFACE")
         if [[ $# -eq 0 || ! " $* " =~ " $INTERFACE " ]]; then
-            report_notify "resuming interface $INTERFACE with profile $prof"
+            report_notice "resuming interface $INTERFACE with profile $prof"
             profile_up "$prof"
             rm -f "$STATE_DIR/suspend/$prof"   # if profile_up succeeds, it will have already removed this
         fi

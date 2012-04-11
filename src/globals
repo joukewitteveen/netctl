@@ -23,12 +23,8 @@ function report_err {
     echo "$*"
 }
 
-function report_warn {
+function report_notice {
     echo "$*"
-}
-
-function report_notify {
-    true
 }
 
 function report_debug {

@@ -29,7 +29,7 @@ daemon_suspend_all()
 
 case "$1" in
     hibernate|suspend_hybrid|suspend)
-        report_notify "suspending all interfaces..."
+        report_notice "suspending all interfaces..."
         daemon_suspend_all
         if checkyesno "${RESTOREPROFILES:-no}"; then        
             interface_suspend all
@@ -37,21 +37,21 @@ case "$1" in
         ;;
     thaw|resume)
         if [ -f "$STATE_DIR/interface/${WIRELESS_INTERFACE}" ]; then
-            report_notify "resuming all interfaces..."
+            report_notice "resuming all interfaces..."
             auto_resume ${WIRELESS_INTERFACE}
         else
-            report_notify "resuming all interfaces except wireless..."
+            report_notice "resuming all interfaces except wireless..."
             all_resume ${WIRELESS_INTERFACE}
         fi
         ;;
     radio_off)
-        report_notify "suspending wireless interface..."
+        report_notice "suspending wireless interface..."
         interface_suspend ${WIRELESS_INTERFACE} no
         set_iface disabled ${WIRELESS_INTERFACE}
         bring_interface forcedown ${WIRELESS_INTERFACE}
         ;;
     radio_on)
-        report_notify "resuming wireless interface..."
+        report_notice "resuming wireless interface..."
         auto_resume ${WIRELESS_INTERFACE}
         if [ -x /etc/pm/power.d/??wifi ]; then
             /usr/bin/on_ac_power    # this is in pm-utils

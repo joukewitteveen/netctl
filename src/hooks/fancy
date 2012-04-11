@@ -1,0 +1,84 @@
+# Fancy output is for terminal output only.
+[[ -t 1 ]] || return
+
+
+### Fancy Logging/Error reporting
+
+function report_err {
+    print_prefixed "${C_PREFIX}" "${C_HIGHLIGHT}$*"
+}
+
+function report_notice {
+    print_prefixed "${C_PREFIX}" "$*"
+}
+
+function report_try {
+    printf "${C_PREFIX}${PREFIX_BUSY}${C_NORMAL} %s " "$*"
+    report_status " BUSY " "${C_BUSY}"
+    REPORT_TRYING=1
+}
+
+function report_fail {
+    if [[ -n "$*" ]]; then
+        if [[ -n "$REPORT_TRYING" ]]; then
+            report_append "$*"
+            report_status "FAILED" "${C_FAILED}" $'\n'
+            REPORT_TRYING=
+        else
+            print_prefixed "${C_FAILED}" "${C_HIGHLIGHT}$*"
+        fi
+    elif [[ -n "$REPORT_TRYING" ]]; then
+        report_status "FAILED" "${C_FAILED}" $'\n'
+        REPORT_TRYING=
+    fi
+}
+
+function report_success {
+    if [[ -n "$*" ]]; then
+        if [[ -n "$REPORT_TRYING" ]]; then
+            report_append "$*"
+            report_status " DONE " "${C_DONE}" $'\n'
+            REPORT_TRYING=
+        else
+            print_prefixed "${C_DONE}" "$*"
+        fi
+    elif [[ -n "$REPORT_TRYING" ]]; then
+        report_status " DONE " "${C_DONE}" $'\n'
+        REPORT_TRYING=
+    fi
+}
+
+function report_append {
+    printf -- "${RESTORE_POSITION}${C_PREFIX}-${C_NORMAL} %s " "$*"
+}
+
+function report_status {
+    local status=$1 color=$2
+    shift 2
+    printf "${CURSOR_STATUS} [${color}%s${C_NORMAL}] %s" "$status" "$*"
+}
+
+function print_prefixed {
+    local c_prefix=$1
+    shift
+    printf "${c_prefix}${PREFIX_ATTENTION}${C_NORMAL} %s${C_NORMAL}\n" "$*"
+}
+
+
+SAVE_POSITION=$(tput sc)
+RESTORE_POSITION=$(tput rc)
+COLUMNS=$(tput cols)
+(( COLUMNS == 0 )) && COLUMNS=80
+CURSOR_STATUS=${SAVE_POSITION}$(tput hpa $(( COLUMNS - 10 )) )
+
+C_NORMAL=$(tput sgr0)
+C_HIGHLIGHT=${C_NORMAL}$(tput bold)
+C_PREFIX=${C_HIGHLIGHT}$(tput setaf 4) # blue
+C_BUSY=${C_NORMAL}$(tput setaf 6)      # cyan
+C_FAILED=${C_HIGHLIGHT}$(tput setaf 1) # red
+C_DONE=${C_HIGHLIGHT}$(tput setaf 2)   # green
+
+PREFIX_BUSY="::"
+PREFIX_ATTENTION=" >"
+
+# vim: ft=sh ts=4 et sw=4:

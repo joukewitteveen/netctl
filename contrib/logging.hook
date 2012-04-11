@@ -33,19 +33,13 @@ function report_err {
     printhl "$*"
 }
 
-function report_warn {
-    report_log warning "$*"
-    # printhl "$*"
-    checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
-}
 
-
-
-function report_notify {
+function report_notice {
     report_log notice "$*"
     # print "$*" >&2
     checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
 }
+
 
 function report_debug {
     if checkyesno "$NETCFG_DEBUG"; then
@@ -56,12 +50,12 @@ function report_debug {
 }
 
 
-
 function report_try {
     report_log notice "trying $*..."
     stat_busy "$*"
     REPORT_TRYING=1
 }
+
 
 function report_fail {
     if [[ -n "$*" ]]; then
@@ -78,6 +72,7 @@ function report_fail {
         stat_fail
     fi
 }
+
 
 function report_success {
     if [[ -n "$*" ]]; then
