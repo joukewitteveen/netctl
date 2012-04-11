@@ -3,7 +3,6 @@ Description=Provides automatic netcfg wireless connection
 Before=network.target
 
 [Service]
-EnvironmentFile=/etc/rc.conf
 EnvironmentFile=/etc/conf.d/netcfg
 ExecStart=/usr/bin/netcfg-wpa_actiond $WIRELESS_INTERFACE
 ExecStop=/usr/bin/netcfg-wpa_actiond stop $WIRELESS_INTERFACE

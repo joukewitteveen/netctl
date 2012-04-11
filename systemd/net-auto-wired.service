@@ -3,7 +3,6 @@ Description=Provides automatic netcfg wired connection
 Before=network.target
 
 [Service]
-EnvironmentFile=/etc/rc.conf
 EnvironmentFile=/etc/conf.d/netcfg
 EnvironmentFile=-/etc/ifplugd/ifplugd.conf
 ExecStart=-/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIn -u0 -d10

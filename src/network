@@ -113,9 +113,8 @@ profile_up()
         exit 1
     fi
 
-    # NETWORKS_EXCLUSIVE, rc.conf: Profiles are globally mutually exclusive
     # EXCLUSIVE, network.d/profile: Individual profile is mutually exclusive
-    if checkyesno "$NETWORKS_EXCLUSIVE" || checkyesno "$EXCLUSIVE"; then
+    if checkyesno "$EXCLUSIVE"; then
         all_down
     fi
 

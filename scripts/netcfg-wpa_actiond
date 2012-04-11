@@ -2,7 +2,6 @@
 . /usr/lib/network/network
 . "$SUBR_DIR/8021x"
 . "$SUBR_DIR/rfkill"
-. /etc/rc.conf
 . /etc/conf.d/netcfg
 
 AUTOWIFI="/usr/sbin/wpa_actiond -p /run/wpa_supplicant"

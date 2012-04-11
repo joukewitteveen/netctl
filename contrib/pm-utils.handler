@@ -4,7 +4,6 @@
 
 [[ -f /usr/lib/network/network ]] || exit $NA
 . /usr/lib/network/network
-. /etc/rc.conf
 . /etc/conf.d/netcfg
 
 WIRELESS_INTERFACE=${WIRELESS_INTERFACE:-wlan0}
