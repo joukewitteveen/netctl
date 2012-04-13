@@ -1,6 +1,6 @@
 # Enable these netcfg profiles at boot-up.
 #   - set to 'menu' to present a menu during boot-up (dialog package required)
-#   - prefix an entry with a ! to disable it
+#   - prefix an entry with a '@' to background its startup
 # Network profiles are found in /etc/network.d
 #
 #NETWORKS=(menu)

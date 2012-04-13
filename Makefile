@@ -1,4 +1,4 @@
-export VERSION = 2.7.3
+export VERSION = 2.8.0
 
 .PHONY: install install-wireless install-docs docs tarball pkgbuild upload clean
 

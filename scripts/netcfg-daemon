@@ -12,10 +12,9 @@ case "$1" in
 		. /etc/conf.d/netcfg
 		[[ ${NETWORKS+x} != x ]] && exit_err "NETWORKS is not set in /etc/conf.d/netcfg"
 		if [[ ${#NETWORKS[@]} -eq 1 && $NETWORKS = menu ]]; then
-			if /usr/bin/netcfg-menu ${NETWORKS_MENU_TIMEOUT-5}; then
+			/usr/bin/netcfg-menu ${NETWORKS_MENU_TIMEOUT-5} && \
 				mv "$STATE_DIR/menu" "$STATE_FILE"
-			fi
-			exit 0
+			exit $?
 		fi
 		for profile in "${NETWORKS[@]}"; do
 			if [[ "$profile" = "${profile#@}" ]]; then
