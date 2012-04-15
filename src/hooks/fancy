@@ -5,16 +5,16 @@
 ### Fancy Logging/Error reporting
 
 function report_err {
-    print_prefixed "${C_PREFIX}" "${C_HIGHLIGHT}$*"
+    print_prefixed "${FANCY_OTHER}" "${FANCY_HIGHLIGHT}$*"
 }
 
 function report_notice {
-    print_prefixed "${C_PREFIX}" "$*"
+    print_prefixed "${FANCY_OTHER}" "$*"
 }
 
 function report_try {
-    printf "${C_PREFIX}${PREFIX_BUSY}${C_NORMAL} %s " "$*"
-    report_status " BUSY " "${C_BUSY}"
+    printf "${FANCY_OTHER}${PREFIX_BUSY}${FANCY_NORMAL} %s " "$*"
+    report_busy
     REPORT_TRYING=1
 }
 
@@ -22,13 +22,13 @@ function report_fail {
     if [[ -n "$*" ]]; then
         if [[ -n "$REPORT_TRYING" ]]; then
             report_append "$*"
-            report_status "FAILED" "${C_FAILED}" $'\n'
+            report_failed
             REPORT_TRYING=
         else
-            print_prefixed "${C_FAILED}" "${C_HIGHLIGHT}$*"
+            print_prefixed "${FANCY_FAILED}" "${FANCY_HIGHLIGHT}$*"
         fi
     elif [[ -n "$REPORT_TRYING" ]]; then
-        report_status "FAILED" "${C_FAILED}" $'\n'
+        report_failed
         REPORT_TRYING=
     fi
 }
@@ -37,31 +37,37 @@ function report_success {
     if [[ -n "$*" ]]; then
         if [[ -n "$REPORT_TRYING" ]]; then
             report_append "$*"
-            report_status " DONE " "${C_DONE}" $'\n'
+            report_done
             REPORT_TRYING=
         else
-            print_prefixed "${C_DONE}" "$*"
+            print_prefixed "${FANCY_DONE}" "$*"
         fi
     elif [[ -n "$REPORT_TRYING" ]]; then
-        report_status " DONE " "${C_DONE}" $'\n'
+        report_done
         REPORT_TRYING=
     fi
 }
 
 function report_append {
-    printf -- "${RESTORE_POSITION}${C_PREFIX}-${C_NORMAL} %s " "$*"
+    printf -- "${RESTORE_POSITION}${FANCY_OTHER}-${FANCY_NORMAL} %s " "$*"
 }
 
-function report_status {
-    local status=$1 color=$2
-    shift 2
-    printf "${CURSOR_STATUS} [${color}%s${C_NORMAL}] %s" "$status" "$*"
+function report_busy {
+  printf "${CURSOR_STATUS} [${FANCY_BUSY} BUSY ${FANCY_NORMAL}] "
+}
+
+function report_failed {
+  printf "${CURSOR_STATUS} [${FANCY_FAILED}FAILED${FANCY_NORMAL}]\n"
+}
+
+function report_done {
+  printf "${CURSOR_STATUS} [${FANCY_DONE} DONE ${FANCY_NORMAL}]\n"
 }
 
 function print_prefixed {
     local c_prefix=$1
     shift
-    printf "${c_prefix}${PREFIX_ATTENTION}${C_NORMAL} %s${C_NORMAL}\n" "$*"
+    printf "${c_prefix}${PREFIX_ATTENTION}${FANCY_NORMAL} %s${FANCY_NORMAL}\n" "$*"
 }
 
 
@@ -71,12 +77,12 @@ COLUMNS=$(tput cols)
 (( COLUMNS == 0 )) && COLUMNS=80
 CURSOR_STATUS=${SAVE_POSITION}$(tput hpa $(( COLUMNS - 10 )) )
 
-C_NORMAL=$(tput sgr0)
-C_HIGHLIGHT=${C_NORMAL}$(tput bold)
-C_PREFIX=${C_HIGHLIGHT}$(tput setaf 4) # blue
-C_BUSY=${C_NORMAL}$(tput setaf 6)      # cyan
-C_FAILED=${C_HIGHLIGHT}$(tput setaf 1) # red
-C_DONE=${C_HIGHLIGHT}$(tput setaf 2)   # green
+FANCY_NORMAL=$(tput sgr0)
+FANCY_HIGHLIGHT=${FANCY_NORMAL}$(tput bold)
+FANCY_BUSY=${FANCY_NORMAL}$(tput setaf 6)      # cyan
+FANCY_FAILED=${FANCY_HIGHLIGHT}$(tput setaf 1) # red
+FANCY_DONE=${FANCY_HIGHLIGHT}$(tput setaf 2)   # green
+FANCY_OTHER=${FANCY_HIGHLIGHT}$(tput setaf 4)  # blue
 
 PREFIX_BUSY="::"
 PREFIX_ATTENTION=" >"
