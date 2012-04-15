@@ -14,7 +14,7 @@ case "$1" in
 
         # Ensure any device renaming has occurred as intended
         for daemon in "${DAEMONS[@]}"; do
-            if [[ "$daemon" = "net-rename" ]]; then
+            if [[ $daemon = net-rename ]]; then
                 if ck_daemon net-rename; then
                     /etc/rc.d/net-rename start
                 fi
@@ -22,23 +22,19 @@ case "$1" in
         done
 
         # $NET env var is passed from the kernel boot line
-        if [[ "$NET" = "menu" ]]; then
-            if /usr/bin/netcfg-menu; then
-                mv "$STATE_DIR"/{menu,netcfg-daemon}        # JP: user may want to disconnect profile by calling net-profiles stop
-                add_daemon net-profiles
-                exit 0
+        if [[ -n $NET ]]; then
+            # Record the connected profile for net-profiles stop
+            if [[ $NET = menu ]]; then
+                /usr/bin/netcfg-menu || exit 1
+                mv "$STATE_DIR"/{menu,netcfg-daemon}
+            else
+                /usr/bin/netcfg check-iface "$NET" || exit 1
+                echo "$NET" > "$STATE_DIR/netcfg-daemon"
             fi
-        elif [[ -n "$NET" ]]; then
-            if /usr/bin/netcfg check-iface "$NET"; then
-                echo "$NET" > "$STATE_DIR/netcfg-daemon"        # JP: user may want to disconnect profile by calling net-profiles stop
-                add_daemon net-profiles
-                exit 0
-            fi
-        elif /usr/bin/netcfg-daemon start; then
-            add_daemon net-profiles
-        else
+        elif ! /usr/bin/netcfg-daemon start; then
             exit_err "No profile started."
         fi
+        add_daemon net-profiles
         ;;
     stop)
         if ck_daemon net-profiles; then

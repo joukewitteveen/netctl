@@ -48,14 +48,13 @@ ret=$?
 case $ret in
     1) ;; # Cancel - do nothing
     255) # timeout - use default
-        profile_up "$DEFAULT"       # JP: use profile_up and catch $?
-        ret=$?
-        (( ret == 0 )) && echo "$DEFAULT" > "$STATE_DIR/menu"
-        ;;
+        PROFILE=$DEFAULT;;&
     0)  # User selection
-        profile_up "$(< "$ANSWER")"
+        PROFILE=$(< "$ANSWER");;&
+    255|0)
+        profile_up "$PROFILE"
         ret=$?
-        (( ret == 0 )) && mv "$ANSWER" "$STATE_DIR/menu"
+        (( ret == 0 )) && echo "$PROFILE" > "$STATE_DIR/menu"
         ;;
     *)  # Shouldnt happen
         exit_err "Abnormal ret code from dialog: $ret"

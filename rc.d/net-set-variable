@@ -1,0 +1,10 @@
+# Set the NET variable if specified on the kernel command line.
+
+net-set-variable() {
+	local re="\<NET=([^ ]+)\>"
+	if [[ -f /proc/cmdline && $(< /proc/cmdline) =~ $re ]]; then
+		export NET=${BASH_REMATCH[1]}
+	fi
+}
+
+add_hook multi_start net-set-variable

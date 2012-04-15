@@ -5,7 +5,7 @@ export VERSION = 2.8.0
 install: install-docs
 	# Configuration files
 	install -d $(DESTDIR)/etc/network.d/{examples,interfaces}
-	install -D -m644 config/netcfg $(DESTDIR)/etc/conf.d/netcfg
+	install -Dm644 config/netcfg $(DESTDIR)/etc/conf.d/netcfg
 	install -m644 config/iftab $(DESTDIR)/etc/iftab
 	install -m644 docs/examples/* $(DESTDIR)/etc/network.d/examples/
 	# Libs
@@ -26,7 +26,7 @@ install: install-docs
 	    $(DESTDIR)/usr/bin/
 	install -Dm755 scripts/ifplugd.action $(DESTDIR)/etc/ifplugd/netcfg.action
 	# Daemons
-	install -d $(DESTDIR)/etc/rc.d
+	install -Dm755 rc.d/net-set-variable $(DESTDIR)/etc/rc.d/functions.d/net-set-variable
 	install -m755 \
 	    rc.d/net-profiles \
 	    rc.d/net-rename \
@@ -39,9 +39,8 @@ install: install-docs
 	    $(DESTDIR)/usr/lib/systemd/system/
 
 install-docs: docs
-	install -d $(DESTDIR)/usr/share/man/man5
+	install -d $(DESTDIR)/usr/share/man/{man5,man8}
 	install -m644 docs/*.5 $(DESTDIR)/usr/share/man/man5/
-	install -d $(DESTDIR)/usr/share/man/man8
 	install -m644 docs/*.8 $(DESTDIR)/usr/share/man/man8/
 	install -d $(DESTDIR)/usr/share/doc/netcfg/contrib
 	install -m644 docs/*.html $(DESTDIR)/usr/share/doc/netcfg/

@@ -1,5 +1,5 @@
 [Unit]
-Description=Netcfg profile based networking service
+Description=Netcfg networking service for profile %i
 Before=network.target
 
 [Service]
