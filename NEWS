@@ -1,3 +1,9 @@
+version 2.8.1
+- add compatibility for configuration in /etc/rc.conf
+  give users time to move to the new scheme
+- fix support for the kernel command line
+- give initscripts users more familiar output
+
 version 2.8.0
 - end support for wireless-dbus and ethernet-iproute syntax
   use wireless and ethernet instead
