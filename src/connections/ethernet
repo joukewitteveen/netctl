@@ -181,8 +181,8 @@ ethernet_up() {
             done
         fi
         if [[ -n "$GATEWAY6" ]]; then
-            report_debug ethernet_iproute_up ip -6 route add default via "$GATEWAY6" dev "$INTERFACE"
-            if ! ip -6 route add default via "$GATEWAY6" dev "$INTERFACE"; then
+            report_debug ethernet_iproute_up ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"
+            if ! ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"; then
                 report_iproute "Adding gateway $GATEWAY6 failed"
             fi
         fi
