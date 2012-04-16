@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. /usr/lib/pm-utils/functions
+
+suspend_netcfg() {
+	netcfg all-suspend
+}
+
+resume_netcfg() {
+	netcfg all-resume
+}
+
+if [ -x /usr/bin/netcfg ]; then
+	case "$1" in
+		hibernate|suspend)
+			suspend_netcfg
+			;;
+		thaw|resume)
+			resume_netcfg
+			;;
+		*)
+			;;
+	esac
+fi
+
+exit $?

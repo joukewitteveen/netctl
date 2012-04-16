@@ -25,6 +25,7 @@ install: install-docs
 	    scripts/wifi-menu \
 	    $(DESTDIR)/usr/bin/
 	install -Dm755 scripts/ifplugd.action $(DESTDIR)/etc/ifplugd/netcfg.action
+	install -Dm755 scripts/pm-utils $(DESTDIR)/usr/lib/pm-utils/sleep.d/11netcfg
 	# Daemons
 	install -Dm755 rc.d/net-set-variable $(DESTDIR)/etc/rc.d/functions.d/net-set-variable
 	install -m755 \
