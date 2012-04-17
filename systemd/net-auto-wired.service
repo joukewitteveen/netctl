@@ -4,11 +4,10 @@ Before=network.target
 Wants=network.target
 
 [Service]
+Type=forking
 EnvironmentFile=/etc/conf.d/netcfg
-EnvironmentFile=-/etc/ifplugd/ifplugd.conf
-ExecStart=-/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIn -u0 -d10
-ExecStop=-/usr/sbin/ifplugd -k -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action
-Type=simple
+ExecStart=/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIw -d10
+ExecStop=/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -k
 
 [Install]
 WantedBy=multi-user.target

@@ -6,7 +6,6 @@ Wants=network.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-EnvironmentFile=/etc/conf.d/netcfg
 ExecStart=/usr/bin/netcfg-daemon start
 ExecStop=/usr/bin/netcfg-daemon stop
 
