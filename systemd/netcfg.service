@@ -1,6 +1,7 @@
 [Unit]
 Description=Netcfg multi-profile daemon
 Before=network.target
+Wants=network.target
 
 [Service]
 Type=oneshot

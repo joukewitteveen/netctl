@@ -1,6 +1,7 @@
 [Unit]
 Description=Provides automatic netcfg wired connection
 Before=network.target
+Wants=network.target
 
 [Service]
 EnvironmentFile=/etc/conf.d/netcfg
