@@ -1,4 +1,4 @@
-netcfg {version}
+netcfg home page
 ----------------
 
 About
