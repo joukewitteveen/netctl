@@ -44,7 +44,7 @@ case "$1" in
 						/usr/bin/netcfg down "$profile" || exit $?
 					fi
 				else
-					/usr/bin/netcfg down "${profile#@}" &
+					/usr/bin/netcfg down "${profile#@}" >/dev/null &
 				fi
 			done
 			rm "$STATE_FILE"

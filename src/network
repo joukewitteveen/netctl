@@ -37,7 +37,8 @@ load_profile()
 ## Take all registered profiles down.
 all_down()
 {
-    for prof in $(find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n'); do
+    find "$STATE_DIR/profiles/" -maxdepth 1 -type f -printf '%f\n' \
+    | while read prof; do
         profile_down "$prof"
     done
 }
