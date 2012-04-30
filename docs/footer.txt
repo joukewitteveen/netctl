@@ -3,7 +3,7 @@ More information can be found at *<https://wiki.archlinux.org/index.php/Netcfg>*
 
 BUGS
 ----
-For bugtracking, *<http://bugs.archlinux.org/>* is used.
+For bugtracking, *<https://bugs.archlinux.org/>* is used.
 
 
 AUTHORS

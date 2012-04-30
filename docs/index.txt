@@ -34,7 +34,7 @@ Optional dependencies
 Documentation
 ~~~~~~~~~~~~~
 
-*  http://wiki.archlinux.org/index.php/Netcfg[Arch Linux Wiki page]
+*  https://wiki.archlinux.org/index.php/Netcfg[Arch Linux Wiki page]
 *  link:features.html[Feature documentation]
 *  link:netcfg.8.html[netcfg man page]
 *  link:netcfg-profiles.5.html[netcfg-profiles man page]
@@ -44,10 +44,10 @@ Contact
 ~~~~~~~
 
 To report bugs or issues with netcfg, please use the
-http://bugs.archlinux.org[Arch Linux Bug Tracker]
+https://bugs.archlinux.org[Arch Linux Bug Tracker]
 
 To seek help using netcfg, please post on the
-http://bbs.archlinux.org[Arch Linux Forums]
+https://bbs.archlinux.org[Arch Linux Forums]
 
 
 Copyright
