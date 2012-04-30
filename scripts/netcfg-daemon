@@ -39,12 +39,12 @@ case "$1" in
 		# Stop the profiles in the reverse order they were started.
 		tac "$STATE_FILE" | (
 			while read profile; do
-				if [[ "$profile" = "${profile#@}" ]]; then
-					if [[ -e "$STATE_DIR/profiles/$profile" ]]; then
+				if [[ -e "$STATE_DIR/profiles/${profile#@}" ]]; then
+					if [[ "$profile" = "${profile#@}" ]]; then
 						/usr/bin/netcfg down "$profile" || exit $?
+					else
+						/usr/bin/netcfg down "${profile#@}" &
 					fi
-				else
-					/usr/bin/netcfg down "${profile#@}" >/dev/null &
 				fi
 			done
 			rm "$STATE_FILE"
