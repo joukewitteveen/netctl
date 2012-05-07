@@ -53,15 +53,15 @@ function report_append {
 }
 
 function report_busy {
-  printf "${CURSOR_STATUS} [${FANCY_BUSY} BUSY ${FANCY_NORMAL}] "
+    printf "${CURSOR_STATUS} [${FANCY_BUSY} BUSY ${FANCY_NORMAL}] "
 }
 
 function report_failed {
-  printf "${CURSOR_STATUS} [${FANCY_FAILED}FAILED${FANCY_NORMAL}]\n"
+    printf "${CURSOR_STATUS} [${FANCY_FAILED}FAILED${FANCY_NORMAL}]\n"
 }
 
 function report_done {
-  printf "${CURSOR_STATUS} [${FANCY_DONE} DONE ${FANCY_NORMAL}]\n"
+    printf "${CURSOR_STATUS} [${FANCY_DONE} DONE ${FANCY_NORMAL}]\n"
 }
 
 function print_prefixed {

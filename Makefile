@@ -57,7 +57,7 @@ netcfg-$(VERSION).tar.xz: | docs
 	git archive -o netcfg-$(VERSION).tar --prefix=netcfg-$(VERSION)/ stash
 	git stash pop -q
 	mv scripts/netcfg{.orig,}
-	tar --exclude-vcs --transform "s%^%netcfg-$(VERSION)/%" -uf netcfg-$(VERSION).tar docs/
+	tar --exclude-vcs --transform "s%^%netcfg-$(VERSION)/%" --owner=root --group=root --mtime=./netcfg-$(VERSION).tar -rf netcfg-$(VERSION).tar docs/*.[1-8]
 	xz netcfg-$(VERSION).tar
 
 pkgbuild: PKGBUILD
