@@ -4,6 +4,6 @@ INTERFACE='bond0'
 IP='static'
 ADDR="10.0.0.1"
 NETMASK="255.0.0.0"
-BOND_INTERFACES=("eth0" "eth2")
+SLAVE_INTERFACES=("eth0" "eth2")
 SKIPNOCARRIER="yes"
 
