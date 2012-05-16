@@ -28,7 +28,7 @@ ethernet_up() {
         sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.disable_ipv6=1"
     fi
 
-    report_debug ethernet_iproute_up ifup
+    report_debug ethernet_up ifup
     bring_interface up "$INTERFACE"
 
 
@@ -50,13 +50,13 @@ ethernet_up() {
             WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
         fi
 
-        report_debug ethernet_iproute_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
+        report_debug ethernet_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
         if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
             report_fail "wpa_supplicant did not start, possible configuration error"
             return 1
         fi
 
-        if ! wpa_check "$INTERFACE" 15 "ASSOCIATED"; then
+        if ! wpa_check "$INTERFACE" "$TIMEOUT" "ASSOCIATED"; then
             bring_interface down "$INTERFACE"
             report_fail "WPA Authentication/Association Failed"
             return 1
@@ -96,21 +96,21 @@ ethernet_up() {
     static)
         if [[ -n "$ADDR" ]]; then
             [[ -z $NETMASK ]] && NETMASK=24
-            report_debug ethernet_iproute_up ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"
+            report_debug ethernet_up ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"
             if ! ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"; then
                 report_iproute "Could not configure interface"
             fi
         fi
         if [[ -n "$ROUTES" ]]; then
             for route in "${ROUTES[@]}"; do
-                report_debug ethernet_iproute_up ip route add $route dev "$INTERFACE"
+                report_debug ethernet_up ip route add $route dev "$INTERFACE"
                 if ! ip route add $route dev "$INTERFACE" ; then
                     report_iproute "Adding route '$route' failed"
                 fi
             done
         fi
         if [[ -n "$GATEWAY" ]]; then
-            report_debug ethernet_iproute_up ip route add default via "$GATEWAY" dev "$INTERFACE"
+            report_debug ethernet_up ip route add default via "$GATEWAY" dev "$INTERFACE"
             if ! ip route add default via "$GATEWAY" dev "$INTERFACE"; then
                 report_iproute "Adding gateway $GATEWAY failed"
             fi
@@ -118,7 +118,7 @@ ethernet_up() {
         ;;
     ""|no)
         ;;
-      *)
+    *)
         report_iproute "IP must be either 'dhcp', 'static' or 'no'"
         ;;
     esac
@@ -126,7 +126,7 @@ ethernet_up() {
     if [[ -n "$IPCFG" ]]; then
         for line in "${IPCFG[@]}"; do
 
-            report_debug ethernet_iproute_up ip "$line"
+            report_debug ethernet_up ip "$line"
             if ! ip $line; then
                 report_iproute "Could not configure interface ($line)."
             fi
@@ -150,21 +150,22 @@ ethernet_up() {
 
     case "$IP6" in
     dhcp*)
-        if [[ -x /usr/sbin/dhclient ]]; then
-            _DHCLIENT_PIDFILE="/run/dhclient6-${INTERFACE}.pid"
-            if [[ "$IP6" = "dhcp-noaddr" ]]; then
-                DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
-            fi
-            sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=1"
-            rm -r ${_DHCLIENT_PIDFILE} &>/dev/null
-            report_debug ethernet_up dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} "$INTERFACE"
-            if ! dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} ${DHCLIENT6_OPTIONS} "$INTERFACE"; then
-                report_fail "DHCPv6 IP lease attempt failed."
-                stop_80211x
-                return 1
-            fi
-        else
+        if [[ ! -x /usr/sbin/dhclient ]]; then
             report_fail "You need to install dhclient to use DHCPv6."
+            stop_80211x
+            return 1
+        fi
+        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=1"
+        if [[ "$IP6" = "dhcp-noaddr" ]]; then
+            DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
+        fi
+        _DHCLIENT_PIDFILE="/run/dhclient6-${INTERFACE}.pid"
+        rm -r ${_DHCLIENT_PIDFILE} &>/dev/null
+        report_debug ethernet_up dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} "$INTERFACE"
+        if ! dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} ${DHCLIENT6_OPTIONS} "$INTERFACE"; then
+            report_fail "DHCPv6 IP lease attempt failed."
+            stop_80211x
+            return 1
         fi
         ;;
     stateless)
@@ -174,14 +175,14 @@ ethernet_up() {
         sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=0"
         if [[ -n "$ADDR6" ]]; then
             for addr in "${ADDR6[@]}"; do
-                report_debug ethernet_iproute_up ip -6 addr add "$addr" dev "$INTERFACE"
+                report_debug ethernet_up ip -6 addr add "$addr" dev "$INTERFACE"
                 if ! ip -6 addr add "$addr" dev "$INTERFACE"; then
                     report_iproute "Could not add address $addr to interface"
                 fi
             done
         fi
         if [[ -n "$GATEWAY6" ]]; then
-            report_debug ethernet_iproute_up ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"
+            report_debug ethernet_up ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"
             if ! ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"; then
                 report_iproute "Adding gateway $GATEWAY6 failed"
             fi
@@ -190,7 +191,7 @@ ethernet_up() {
         # Add static IPv6 routes
         if [[ -n "$ROUTES6" ]]; then
             for route in "${ROUTES6[@]}"; do
-            report_debug ethernet_iproute_up ip -6 route add "$route" dev "$INTERFACE"
+            report_debug ethernet_up ip -6 route add "$route" dev "$INTERFACE"
                 if ! ip -6 route add "$route" dev "$INTERFACE"; then
                     report_iproute "Adding route '$route' failed"
                 fi
@@ -201,7 +202,7 @@ ethernet_up() {
 
     # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
-        report_debug ethernet_iproute_up hostname "$HOSTNAME"
+        report_debug ethernet_up hostname "$HOSTNAME"
         if ! echo "$HOSTNAME" > /proc/sys/kernel/hostname; then
             report_iproute "Cannot set hostname to $HOSTNAME"
         fi
@@ -226,11 +227,9 @@ ethernet_down() {
     if [[ "$IP" == "dhcp" ]]; then
         if checkyesno "${DHCLIENT:-no}"; then
             if [[ -f "/run/dhclient-$INTERFACE.pid" ]]; then
-                report_debug ethernet_down dhclient -q -r "$INTERFACE"
+                report_debug ethernet_down dhclient -q -x "$INTERFACE"
                 dhclient -q -x "$INTERFACE" &>/dev/null
                 #dhclient -q -r "$INTERFACE" &>/dev/null
-                report_debug ethernet_down /bin/kill $(< /run/dhclient-$INTERFACE.pid)
-                /bin/kill $(< /run/dhclient-$INTERFACE.pid) &>/dev/null
             fi
         else
             if [[ -f "/run/dhcpcd-$INTERFACE.pid" ]]; then

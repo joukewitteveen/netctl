@@ -6,9 +6,9 @@ wpa_check()
     # CONDITION is required as wired connections are ready at ASSOCIATED not COMPLETED FS#20150
 
     report_debug wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status
-    while [[ $timeout -lt "$TIMEOUT" ]]; do
+    while (( timeout < TIMEOUT )); do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
-        if [[ $timeout -lt 2 ]]; then
+        if (( timeout < 2 )); then
             eval $(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
         else
             eval $(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | fgrep "wpa_state=")
