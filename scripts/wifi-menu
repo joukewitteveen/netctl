@@ -203,7 +203,7 @@ fi
 
 cd /  # We do not want to spawn anything that can block unmounting
 is_interface "$INTERFACE" || exit_fail "No such interface: $INTERFACE"
-if [[ -z "$(ip link show up dev "$INTERFACE" 2> /dev/null)" ]]; then
+if [[ -z "$(ip link show dev "$INTERFACE" up 2> /dev/null)" ]]; then
     [[ -f "$IFACE_DIR/$INTERFACE" ]] && . "$IFACE_DIR/$INTERFACE"
     bring_interface up "$INTERFACE" || exit_fail "Interface unavailable"
     SPAWNED_INTERFACE=1

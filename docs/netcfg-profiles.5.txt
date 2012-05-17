@@ -78,11 +78,11 @@ gain an IP address.
 IPv4 options
 ~~~~~~~~~~~~
 +ADDR+ (requires +IP+ of `static')::
-  A single IP address to configure a static IP. For example:
+  A single IP address to configure a static IP.
 +GATEWAY+ (requires +IP+ of `static')::
   Set specified gateway
 +NETMASK+ (requires +IP+ of `static')::
-  Set specified netmask. Defaults to 24
+  Set specified netmask. Defaults to 24.
 +ROUTES+::
   An array of custom routes (of the form _address range_ via _gateway_)
 
@@ -98,6 +98,9 @@ IPv6 options
   The gateway address for IPv6 routing.
 +ROUTES6+::
   An array of custom routes (of the form _address range_ via _gateway_)
++DAD_TIMEOUT+::
+  Time to wait for Duplicate Address Detection to succeed. Defaults to
+  3 seconds.
 
 DNS configuration
 ^^^^^^^^^^^^^^^^^

@@ -14,6 +14,8 @@ report_iproute()
 }
 
 ethernet_up() {
+    local dad_timeout="${DAD_TIMEOUT:-3}"
+
     load_profile "$1"
     SYSCTL_INTERFACE="${INTERFACE/.//}"
 
@@ -23,7 +25,7 @@ ethernet_up() {
         fi
     fi
 
-    # Disable IPv6 before the interface to prevent SLAAC
+    # Disable IPv6 before bringing the interface up to prevent SLAAC
     if [[ "$IP6" == "no" ]]; then
         sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.disable_ipv6=1"
     fi
@@ -101,14 +103,6 @@ ethernet_up() {
                 report_iproute "Could not configure interface"
             fi
         fi
-        if [[ -n "$ROUTES" ]]; then
-            for route in "${ROUTES[@]}"; do
-                report_debug ethernet_up ip route add $route dev "$INTERFACE"
-                if ! ip route add $route dev "$INTERFACE" ; then
-                    report_iproute "Adding route '$route' failed"
-                fi
-            done
-        fi
         if [[ -n "$GATEWAY" ]]; then
             report_debug ethernet_up ip route add default via "$GATEWAY" dev "$INTERFACE"
             if ! ip route add default via "$GATEWAY" dev "$INTERFACE"; then
@@ -123,12 +117,11 @@ ethernet_up() {
         ;;
     esac
 
-    if [[ -n "$IPCFG" ]]; then
-        for line in "${IPCFG[@]}"; do
-
-            report_debug ethernet_up ip "$line"
-            if ! ip $line; then
-                report_iproute "Could not configure interface ($line)."
+    if [[ -n "$IP" && -n "$ROUTES" ]]; then
+        for route in "${ROUTES[@]}"; do
+            report_debug ethernet_up ip route add $route dev "$INTERFACE"
+            if ! ip route add $route dev "$INTERFACE"; then
+                report_iproute "Adding route '$route' failed"
             fi
         done
     fi
@@ -175,9 +168,9 @@ ethernet_up() {
         sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=0"
         if [[ -n "$ADDR6" ]]; then
             for addr in "${ADDR6[@]}"; do
-                report_debug ethernet_up ip -6 addr add "$addr" dev "$INTERFACE"
-                if ! ip -6 addr add "$addr" dev "$INTERFACE"; then
-                    report_iproute "Could not add address $addr to interface"
+                report_debug ethernet_up ip -6 addr add $addr dev "$INTERFACE"
+                if ! ip -6 addr add $addr dev "$INTERFACE"; then
+                    report_iproute "Could not add address '$addr' to interface"
                 fi
             done
         fi
@@ -187,18 +180,38 @@ ethernet_up() {
                 report_iproute "Adding gateway $GATEWAY6 failed"
             fi
         fi
+        ;;
+    esac
+
+    if [[ -n "$IP6" ]]; then
+        # Wait for DAD to finish (FS#28887)
+        report_debug ethernet_up ip -6 addr show dev "$INTERFACE" tentative
+        while [[ -n "$(ip -6 addr show dev "$INTERFACE" tentative)" ]]; do
+            if (( dad_timeout-- <= 0 )); then
+                report_iproute "Duplicate Address Detection is taking too long"
+            fi
+            sleep 1
+        done
 
         # Add static IPv6 routes
         if [[ -n "$ROUTES6" ]]; then
             for route in "${ROUTES6[@]}"; do
-            report_debug ethernet_up ip -6 route add "$route" dev "$INTERFACE"
-                if ! ip -6 route add "$route" dev "$INTERFACE"; then
+            report_debug ethernet_up ip -6 route add $route dev "$INTERFACE"
+                if ! ip -6 route add $route dev "$INTERFACE"; then
                     report_iproute "Adding route '$route' failed"
                 fi
             done
         fi
-        ;;
-    esac
+    fi
+
+    if [[ -n "$IPCFG" ]]; then
+        for line in "${IPCFG[@]}"; do
+            report_debug ethernet_up ip "$line"
+            if ! ip $line; then
+                report_iproute "Could not configure interface ($line)."
+            fi
+        done
+    fi
 
     # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
@@ -277,4 +290,3 @@ stop_80211x() {
 ethernet_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4:
-
