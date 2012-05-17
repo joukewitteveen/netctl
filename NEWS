@@ -1,3 +1,10 @@
+version 2.8.3
+- Duplicate Address Detection is dealt with for IPv6 users (FS#28887)
+  NOTE: IPCFG is now processed after IPv6 address set-up
+- additional attributes in ADDR6 and ROUTES6 entries are now allowed
+- initscripts sh compatibility is restored (FS#29880)
+- a bonding documentation error is fixed (FS#29918)
+
 version 2.8.2
 - netcfg now has a website: www.archlinux.org/netcfg/
 - replace routes in IPv6 by default (FS#29480)
