@@ -17,6 +17,7 @@ pppoe_up() {
 
     echo "plugin rp-pppoe.so" >> "${cfg}"
     echo "nic-${INTERFACE}" >> "${cfg}"
+    echo "noauth" >> "${cfg}"
     if checkyesno ${DEFAULTROUTE:-1}; then
         echo "defaultroute" >> "${cfg}"
     else
