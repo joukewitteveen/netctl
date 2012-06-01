@@ -10,11 +10,12 @@ backup=(etc/iftab etc/conf.d/netcfg)
 depends=("coreutils" "dhcpcd" "iproute2")
 #makedepends=('asciidoc')  # The source tarball includes pre-built documentation.
 optdepends=('dialog: for the menu based profile and wifi selectors'
-            'bridge-utils: for bridge connections'
             'wpa_supplicant: for wireless networking support'
-            'wpa_actiond: for automatic wireless connections through rc.d/net-auto-wireless'
             'ifplugd: for automatic wired connections through rc.d/net-auto-wired'
+            'wpa_actiond: for automatic wireless connections through rc.d/net-auto-wireless'
             'wireless_tools: for interface renaming through net-rename'
+            'ifenslave: for bond connections'
+            'bridge-utils: for bridge connections'
            )
 source=(ftp://ftp.archlinux.org/other/netcfg/netcfg-${pkgver}.tar.xz)
 arch=(any)
