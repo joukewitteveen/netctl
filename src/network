@@ -345,8 +345,7 @@ set_profile() {
 #   optionally link it to a profile.
 #
 set_iface() {
-    local PROFILE="$3"
-    [[ -z "$PROFILE" ]] && PROFILE=external
+    local PROFILE="${3:-external}"
     if [[ "$1" == "up" ]]; then
         echo "PROFILE='$PROFILE'" > "$STATE_DIR/interfaces/$2"
     elif [[ "$1" == "down" ]]; then
@@ -364,19 +363,28 @@ is_interface() {
     return 0
 }
 
+interface_is_up() {
+    local flags="$(< "/sys/class/net/$1/flags")"
+    # IFF_UP is defined as 0x1 in linux/if.h
+    (( flags & 0x1 ))
+}
+
 ## Changes a network interface state.
 # $1: up, flush, or down.
 # $2: the interface name
 bring_interface()
 {
-    local INTERFACE="$2"
+    local INTERFACE="$2" timeout="${UP_TIMEOUT:-5}"
     case "$1" in
         up)
             if ! ( eval $IFACE_UP ); then
                 return 1
             fi
             ip link set dev "$INTERFACE" up &>/dev/null
-            sleep "${UP_SLEEP:-2}"
+            while ! interface_is_up "$INTERFACE"; do
+                (( timeout-- > 0 )) || return 1
+                sleep 1
+            done
         ;;
         flush|down)
             if ! ( eval $IFACE_DOWN ); then
