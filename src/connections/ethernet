@@ -143,7 +143,7 @@ ethernet_up() {
 
     case "$IP6" in
     dhcp*)
-        if [[ ! -x /usr/sbin/dhclient ]]; then
+        if ! type dhclient &>/dev/null; then
             report_fail "You need to install dhclient to use DHCPv6."
             stop_80211x
             return 1

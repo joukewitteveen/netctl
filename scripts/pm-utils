@@ -10,7 +10,7 @@ resume_netcfg() {
 	netcfg all-resume
 }
 
-if [ -x /usr/bin/netcfg ]; then
+if type netcfg > /dev/null; then
 	case "$1" in
 		hibernate|suspend)
 			suspend_netcfg

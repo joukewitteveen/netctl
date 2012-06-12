@@ -193,6 +193,9 @@ fi
 if [[ $(id -u) -ne 0 ]]; then
     exit_stderr "This script needs to be run with root privileges"
 fi
+if ! type dialog &> /dev/null; then
+    exit_stderr "Please install 'dialog' to use wifi-menu"
+fi
 
 INTERFACE=${1-$WIRELESS_INTERFACE}
 if [[ -z "$INTERFACE" ]]; then
@@ -245,7 +248,6 @@ case $RETURN in
         report_err "No networks found"
         ;;
     4)  # Unable to create profile
-        clear
         report_err "Could not create a profile for '$CHOICE'"
         ;;
     255)  # ESC or error
@@ -253,7 +255,6 @@ case $RETURN in
         report_err "Aborted"
         ;;
     *)  # Should not happen
-        clear
         report_err "Unexpected return code from dialog: $RETURN"
         RETURN=7
         ;;

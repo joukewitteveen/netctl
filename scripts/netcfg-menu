@@ -2,7 +2,7 @@
 
 . /usr/lib/network/network
 
-if [[ ! -x /usr/bin/dialog ]]; then
+if ! type dialog &> /dev/null; then
    echo "Please install 'dialog' to use netcfg-menu"
    exit 1
 fi
