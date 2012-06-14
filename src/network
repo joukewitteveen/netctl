@@ -364,7 +364,8 @@ is_interface() {
 }
 
 interface_is_up() {
-    local flags="$(< "/sys/class/net/$1/flags")"
+    local flags
+    read flags < "/sys/class/net/$1/flags"
     # IFF_UP is defined as 0x1 in linux/if.h
     (( flags & 0x1 ))
 }

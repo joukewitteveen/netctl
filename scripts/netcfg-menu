@@ -50,7 +50,7 @@ case $ret in
     255) # timeout - use default
         PROFILE=$DEFAULT;;&
     0)  # User selection
-        PROFILE=$(< "$ANSWER");;&
+        read PROFILE < "$ANSWER";;&
     255|0)
         profile_up "$PROFILE"
         ret=$?
