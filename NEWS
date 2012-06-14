@@ -1,3 +1,8 @@
+version 2.8.4
+- fixed wait for wifi scan results (FS#29946)
+- PPPoE default to noauth (FS#30016)
+- stop waiting longer than necessary when bringing an interface up
+
 version 2.8.3
 - Duplicate Address Detection is dealt with for IPv6 users (FS#28887)
   NOTE: IPCFG is now processed after IPv6 address set-up
