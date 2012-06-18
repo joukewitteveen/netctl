@@ -143,10 +143,10 @@ wpa_supplicant_scan_info() {
     fi
 
     wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
-    # Wait at least 2 seconds for scan results
-    sleep 2
+    # Wait at least 3 seconds for scan results
+    sleep 3
     # Sometimes, that is not enough (FS#29946)
-    for (( scan_wait = 2; scan_wait < 10; scan_wait++ )); do
+    for (( scan_wait = 3; scan_wait < 10; scan_wait++ )); do
         wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | grep -q "wpa_state=SCANNING" || break
         sleep 1
     done
