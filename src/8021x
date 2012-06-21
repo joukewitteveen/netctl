@@ -51,7 +51,7 @@ stop_wpa()
     sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
                     # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
     if [[ -f "/run/wpa_supplicant_$1.pid" ]]; then
-        kill "$(cat "/run/wpa_supplicant_$1.pid")" &>/dev/null &
+        kill "$(< "/run/wpa_supplicant_$1.pid")" &>/dev/null &
     fi
 }
 
@@ -173,7 +173,7 @@ wpa_supplicant_scan_info() {
         return 1
     fi
 
-    echo $essids
+    echo "$essids"
     return 0
 }
 
@@ -203,7 +203,7 @@ make_wpa_config() {
                 echo "ssid=\"$ESSID\""
                 ;;
             hex)
-            # Hex ESSID is written unquoted ans lowercase (FS#24333)
+            # Hex ESSID is written unquoted and in lowercase (FS#24333)
                 echo "ssid=${ESSID,,}"
                 ;;
             *)
@@ -255,4 +255,3 @@ make_wpa_config() {
 }
 
 # vim: ft=sh ts=4 et sw=4 tw=0:
-

@@ -73,8 +73,7 @@ function exit_fail { report_fail "$*"; exit 1; }
 #    Return 0 if it's "yes" (et al), nonzero otherwise.
 #    To default to yes, do: "checkyesno ${VAR:-yes}".
 #
-checkyesno()
-{
+function checkyesno() {
     local _value="$1"
     #debug "checkyesno: $1 is set to $_value."
     case "$_value" in
@@ -89,7 +88,7 @@ checkyesno()
         return 1
         ;;
     *)
-        #warn "\$${1} is not set properly - see ${rcvar_manpage}."
+        #warn "\$${1} is not set properly - see rc.conf(5)."
         return 1
         ;;
     esac
