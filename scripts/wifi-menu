@@ -30,7 +30,7 @@ END
 init_profiles()
 {
     local i=0 essid profile
-    for profile in $(list_profiles); do
+    while read profile; do
         essid=$(
             unset INTERFACE ESSID
             . "$PROFILE_DIR/$profile" &> /dev/null
@@ -54,7 +54,7 @@ init_profiles()
                 (( ++i ))
                 ;;
         esac
-    done
+    done < <(list_profiles)
 }
 
 # Builds ENTRIES as an argument list for dialog based on scan results in $1.
@@ -102,9 +102,9 @@ ssid_to_profile()
 # Creates a profile for ssid $1.
 create_profile()
 {
-    local flags key msg security
+    local box flags key msg security
     PROFILE="$INTERFACE-$1"
-    [[ -f "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
+    [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
     flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
     if [[ "$flags" =~ WPA|WEP ]]; then
         security=${BASH_REMATCH[0],,}
@@ -112,25 +112,23 @@ create_profile()
         security=none
     fi
     if [[ "$flags" =~ PSK|WEP ]]; then
+        [[ "$OBSCURE" ]] && box="--insecure --passwordbox" || box="--inputbox"
         msg="Enter $security security key for\n'$1'"
+        key=$(dialog $box "$msg" 10 40 --stdout) || return $?
+        [[ "${#KEY}" -ge 8 && "${#KEY}" -le 63 ]] || return 4
         if [[ "$OBSCURE" ]]; then
-            key=$(wpa_passphrase "$1" "$(dialog --insecure --passwordbox \
-                                                "$msg" 10 40 --stdout)" \
-                      | grep "^[[:space:]]*psk=")
-            RETURN=$?
+            key=$(wpa_passphrase "$1" "$key" | grep -m 1 "^[[:space:]]*psk=")
             key="KEY=${key#*psk=}"
         else
-            key="KEY='$(dialog --inputbox "$msg" 10 40 --stdout)'"
-            RETURN=$?
+            key="KEY=$(printf "%q" "$key")"
         fi
-        (( RETURN == 0 )) || return $RETURN
     fi
-    cat << EOF > "$PROFILE_DIR/$PROFILE" || return 4
+    cat << EOF > "$PROFILE_DIR/$PROFILE"
 CONNECTION='wireless'
 DESCRIPTION='Automatically generated profile by wifi-menu'
 INTERFACE='$INTERFACE'
 SECURITY='$security'
-ESSID='$1'
+ESSID=$(printf "%q" "$1")
 IP='dhcp'
 $key
 EOF
@@ -212,11 +210,11 @@ if ! interface_is_up "$INTERFACE"; then
     SPAWNED_INTERFACE=1
 fi
 
+init_profiles "$INTERFACE"
 report_try "Scanning for networks"
 CONNECTION=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status 2> /dev/null \
-                 | grep "^ssid=")
+                 | grep -m 1 "^ssid=")
 CONNECTION=${CONNECTION#ssid=}
-init_profiles "$INTERFACE"
 NETWORKS=$(wpa_supplicant_scan_info "$INTERFACE" 3,4,5)
 [[ $? -eq 0 ]] && init_entries "$NETWORKS"
 if [[ ${#ENTRIES[@]} -eq 0 ]]; then
@@ -247,8 +245,9 @@ case $RETURN in
     3)  # No networks found
         report_err "No networks found"
         ;;
-    4)  # Unable to create profile
-        report_err "Could not create a profile for '$CHOICE'"
+    4)  # Invalid passphrase length (WEP keys have tighter restrictions)
+        clear
+        report_err "Passphrase must be 8..63 characters"
         ;;
     255)  # ESC or error
         clear
