@@ -372,17 +372,14 @@ interface_is_up() {
 # $2: the interface name
 bring_interface()
 {
-    local INTERFACE="$2" timeout="${UP_TIMEOUT:-5}"
+    local INTERFACE="$2"
     case "$1" in
         up)
             if ! ( eval $IFACE_UP ); then
                 return 1
             fi
             ip link set dev "$INTERFACE" up &>/dev/null
-            while ! interface_is_up "$INTERFACE"; do
-                (( timeout-- > 0 )) || return 1
-                sleep 1
-            done
+            timeout_wait "${UP_TIMEOUT:-5}" 'interface_is_up "$INTERFACE"' || return 1
         ;;
         flush|down)
             if ! ( eval $IFACE_DOWN ); then

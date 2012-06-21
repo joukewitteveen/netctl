@@ -130,7 +130,7 @@ list_networks() {
 }
 
 wpa_supplicant_scan_info() {
-    local INTERFACE="$1" fields="$2" spawned_wpa=0 essids scan_wait
+    local INTERFACE="$1" fields="$2" spawned_wpa=0 essids
     # temp file used, as keeping ESSID's with spaces in their name in arrays
     # is hard, obscure and kinda nasty. This is simpler and clearer.
 
@@ -146,10 +146,7 @@ wpa_supplicant_scan_info() {
     # Wait at least 3 seconds for scan results
     sleep 3
     # Sometimes, that is not enough (FS#29946)
-    for (( scan_wait = 3; scan_wait < 10; scan_wait++ )); do
-        wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | grep -q "wpa_state=SCANNING" || break
-        sleep 1
-    done
+    timeout_wait 7 '! wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | grep -q "wpa_state=SCANNING"'
     wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results |
         grep -v "^Selected" |
         grep -v "^bssid" |

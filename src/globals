@@ -95,6 +95,20 @@ function checkyesno() {
 }
 
 
+## Waits until a statement succeeds or a timeout occurs
+# $1: timeout in seconds
+# $2...: condition command
+function timeout_wait() {
+    local timeout="$1"
+    shift
+    while ! eval "$*"; do
+        (( timeout-- > 0 )) || return 1
+        sleep 1
+    done
+    return 0
+}
+
+
 ### Load all +x files in $HOOKS_DIR
 function load_hooks() {
     local hook

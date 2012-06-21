@@ -14,8 +14,6 @@ report_iproute()
 }
 
 ethernet_up() {
-    local dad_timeout="${DAD_TIMEOUT:-3}"
-
     load_profile "$1"
     SYSCTL_INTERFACE="${INTERFACE/.//}"
 
@@ -34,10 +32,9 @@ ethernet_up() {
     bring_interface up "$INTERFACE"
 
 
-    if ! checkyesno "${SKIPNOCARRIER:-no}" && ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
+    if ! checkyesno "${SKIPNOCARRIER:-no}"; then
         # Some cards are plain slow to come up. Don't fail immediately.
-        sleep ${CARRIER_TIMEOUT:-2}
-        if ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"; then
+        if ! timeout_wait "${CARRIER_TIMEOUT:-5}" '! ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"'; then
             report_iproute "No connection"
         fi
     fi
@@ -186,12 +183,9 @@ ethernet_up() {
     if [[ -n "$IP6" ]]; then
         # Wait for DAD to finish (FS#28887)
         report_debug ethernet_up ip -6 addr show dev "$INTERFACE" tentative
-        while [[ -n "$(ip -6 addr show dev "$INTERFACE" tentative)" ]]; do
-            if (( dad_timeout-- <= 0 )); then
-                report_iproute "Duplicate Address Detection is taking too long"
-            fi
-            sleep 1
-        done
+        if ! timeout_wait "${DAD_TIMEOUT:-3}" '[[ -z "$(ip -6 addr show dev "$INTERFACE" tentative)" ]]'; then
+            report_iproute "Duplicate Address Detection is taking too long"
+        fi
 
         # Add static IPv6 routes
         if [[ -n "$ROUTES6" ]]; then
