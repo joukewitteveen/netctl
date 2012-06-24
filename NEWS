@@ -1,3 +1,10 @@
+version 2.8.5
+- Provide the ability to start the last used profile (FS#23015)
+- Support weird characters in wifi-menu (FS#30342) and elsewhere
+- Fix net-auto-wired.service (FS#30348)
+- Introduce polling timeout logic
+- Increase default carrier timeout (FS#30361)
+
 version 2.8.4
 - fixed wait for wifi scan results (FS#29946)
 - PPPoE default to noauth (FS#30016)
