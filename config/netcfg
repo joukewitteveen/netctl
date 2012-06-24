@@ -1,9 +1,9 @@
-# Enable these netcfg profiles at boot-up.
-#   - set to 'menu' to present a menu during boot-up (dialog package required)
+# Enable these netcfg profiles at boot time.
 #   - prefix an entry with a '@' to background its startup
+#   - set to 'last' to restore the profiles running at the last shutdown
+#   - set to 'menu' to present a menu (requires the dialog package)
 # Network profiles are found in /etc/network.d
-#
-#NETWORKS=(menu)
+NETWORKS=(last)
 
 ## Specify the name of your wired interface for net-auto-wired
 WIRED_INTERFACE="eth0"

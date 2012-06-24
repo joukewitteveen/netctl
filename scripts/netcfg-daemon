@@ -3,19 +3,37 @@
 # This script implements support for the NETWORKS array in /etc/conf.d/netcfg.
 
 . /usr/lib/network/globals
+. /etc/conf.d/netcfg
 STATE_FILE="$STATE_DIR/netcfg-daemon"
+LAST_STATE="/var/lib/netcfg/netcfg.state"
 
 case "$1" in
 	start)
 		(( $(id -u) )) && exit_stderr "This script should be run as root."
 		[[ -e $STATE_FILE ]] && exit_err "netcfg-daemon is already started"
-		. /etc/conf.d/netcfg
 		[[ ${NETWORKS+x} != x ]] && exit_err "NETWORKS is not set in /etc/conf.d/netcfg"
-		if [[ ${#NETWORKS[@]} -eq 1 && $NETWORKS = menu ]]; then
-			/usr/bin/netcfg-menu ${NETWORKS_MENU_TIMEOUT-5} && \
-				mv "$STATE_DIR/menu" "$STATE_FILE"
-			exit $?
+
+		if [[ ${#NETWORKS[@]} -eq 1 ]]; then
+			case $NETWORKS in
+				last)
+					[[ -e $LAST_STATE ]] || exit_err "No recorded netcfg state to restore"
+
+					# The order in LAST_STATE is meaningless so we can just as
+					# well start the profiles in the background.
+					while read profile; do
+						if /usr/bin/netcfg up "$profile"; then
+							echo "$profile" >> "$STATE_FILE"
+						fi &
+					done < "$LAST_STATE"
+					wait
+					exit $? ;;
+				menu)
+					/usr/bin/netcfg-menu ${NETWORKS_MENU_TIMEOUT-5} && \
+						mv "$STATE_DIR/menu" "$STATE_FILE"
+					exit $? ;;
+			esac
 		fi
+
 		for profile in "${NETWORKS[@]}"; do
 			if [[ "$profile" = "${profile#@}" ]]; then
 				if /usr/bin/netcfg check-iface "$profile"; then
@@ -35,6 +53,14 @@ case "$1" in
 		;;
 	stop)
 		(( $(id -u) )) && exit_stderr "This script should be run as root."
+
+		if [[ ${#NETWORKS[@]} -eq 1 && $NETWORKS = last ]]; then
+			mkdir -p "$(dirname "$LAST_STATE")"
+			/usr/bin/netcfg current > "$LAST_STATE"
+			/usr/bin/netcfg all-down
+			exit $?
+		fi
+
 		[[ ! -e $STATE_FILE ]] && exit_err "netcfg-daemon was not started"
 		# Stop the profiles in the reverse order they were started.
 		tac "$STATE_FILE" | (

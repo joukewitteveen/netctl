@@ -37,13 +37,16 @@ For more options, see ''netcfg help''
 Start a specific list of profiles on boot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 net-profiles allows you to start some profiles at boot time. Specify the
-profiles you want netcfg to start (in this order) in the +NETWORKS+ line
-in '/etc/conf.d/netcfg'. Prefix a profile with a `@' to start it in the
-background. For example:
+profiles you want netcfg to start (in the order you want them to be
+started) in the +NETWORKS+ line in '/etc/conf.d/netcfg'.
+Prefix a profile with a `@' to start it in the background. For example:
 
 --------------------------------
 NETWORKS=(@adsl @mywireless lan)
 --------------------------------
+
+Alternatively, you can have netcfg restart the profiles you had running
+at the previous shutdown by specifying +NETWORKS=(last)+.
 
 Next, add `net-profiles' to your +DAEMONS+ line in '/etc/rc.conf'.
 
