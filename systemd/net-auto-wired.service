@@ -1,13 +1,10 @@
 [Unit]
 Description=Provides automatic netcfg wired connection
-Before=network.target
-Wants=network.target
 
 [Service]
-Type=forking
 EnvironmentFile=/etc/conf.d/netcfg
-ExecStart=/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIw -d10
-ExecStop=/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -k
+ExecStart=/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIns
+ExecStop=/usr/bin/netcfg iface-down $WIRED_INTERFACE
 
 [Install]
 WantedBy=multi-user.target
