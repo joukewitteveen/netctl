@@ -328,7 +328,6 @@ set_profile() {
     if [[ "$1" == "up" ]]; then
         INTERFACE=$(. "$PROFILE_DIR/$2"; echo "$INTERFACE")
         cp "$PROFILE_DIR/$2" "$STATE_DIR/profiles/"
-        echo "$2" > "$STATE_DIR/last_profile"
         set_iface up "$INTERFACE" "$2"
     elif [[ "$1" == "down" && -f "$STATE_DIR/profiles/$2" ]]; then    # JP: skip if profile not already up
         INTERFACE=$(. "$STATE_DIR/profiles/$2"; echo "$INTERFACE")

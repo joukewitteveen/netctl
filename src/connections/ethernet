@@ -34,7 +34,7 @@ ethernet_up() {
 
     if ! checkyesno "${SKIPNOCARRIER:-no}"; then
         # Some cards are plain slow to come up. Don't fail immediately.
-        if ! timeout_wait "${CARRIER_TIMEOUT:-5}" '! ip link show dev "$INTERFACE" | fgrep -q "NO-CARRIER"'; then
+        if ! timeout_wait "${CARRIER_TIMEOUT:-5}" '(( $(< "/sys/class/net/$INTERFACE/carrier") ))'; then
             report_iproute "No connection"
         fi
     fi

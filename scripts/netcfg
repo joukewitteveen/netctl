@@ -82,7 +82,6 @@ case "$1" in
         rm "$STATE_DIR/interfaces"/* 2> /dev/null
         rm "$STATE_DIR/profiles"/* 2> /dev/null
         rm "$STATE_DIR/suspend"/* 2> /dev/null
-        rm "$STATE_DIR/last_profile" 2> /dev/null
         killall wpa_supplicant 2> /dev/null
         killall dhcpcd 2> /dev/null
         ;;
