@@ -5,12 +5,12 @@
 # Network profiles are found in /etc/network.d
 NETWORKS=(last)
 
-## Specify the name of your wired interface for net-auto-wired
+# Specify the name of your wired interface for net-auto-wired
 WIRED_INTERFACE="eth0"
 
-## Specify the name of your wireless interface for net-auto-wireless
+# Specify the name of your wireless interface for net-auto-wireless
 WIRELESS_INTERFACE="wlan0"
 
-## List of profiles that can be started by net-auto-wireless
-## defaults to the list of all wireless profiles
-#AUTO_PROFILES="profile1 profile2"
+# Array of profiles that may be started by net-auto-wireless.
+# When not specified, all wireless profiles are considered.
+#AUTO_PROFILES=("profile1" "profile2")
