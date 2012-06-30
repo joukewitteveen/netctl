@@ -115,7 +115,7 @@ create_profile()
         [[ "$OBSCURE" ]] && box="--insecure --passwordbox" || box="--inputbox"
         msg="Enter $security security key for\n'$1'"
         key=$(dialog $box "$msg" 10 40 --stdout) || return $?
-        [[ "${#KEY}" -ge 8 && "${#KEY}" -le 63 ]] || return 4
+        [[ "${#key}" -ge 8 && "${#key}" -le 63 ]] || return 4
         if [[ "$OBSCURE" ]]; then
             key=$(wpa_passphrase "$1" "$key" | grep -m 1 "^[[:space:]]*psk=")
             key="KEY=${key#*psk=}"
