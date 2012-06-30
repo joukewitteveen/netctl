@@ -296,7 +296,7 @@ interface_reconnect()
 #
 check_iface() {
     if [[ -f "$STATE_DIR/interfaces/$1" ]]; then
-        echo "$(< "$STATE_DIR/interfaces/$1")"
+        cat "$STATE_DIR/interfaces/$1"
         return 0
     else
         return 1
@@ -309,6 +309,7 @@ list_profiles() {
     # JP: follow aliases with -L, also skip profiles that start with '.' or end with '~' or '.conf' (so profile.conf can be the wpa.conf file for profile)
     find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '*~' -not -name '*.conf' -not -name '.*' -printf "%f\n"
 }
+
 # check_profile profile
 #   Return 0 if profile registered as being up
 #   Return 1 if profile not registered
