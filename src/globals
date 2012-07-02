@@ -100,10 +100,11 @@ function checkyesno() {
 # $2...: condition command
 function timeout_wait() {
     local timeout="$1"
+    (( timeout *= 10 ))
     shift
     while ! eval "$*"; do
         (( timeout-- > 0 )) || return 1
-        sleep 1
+        sleep 0.1
     done
     return 0
 }
