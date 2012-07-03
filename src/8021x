@@ -38,21 +38,19 @@ start_wpa()
     fi
 
     wpa_supplicant -B -P "/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" "$WPA_CONF" $WPA_OPTS
-    sleep 1
 
-    if [[ ! -f "/run/wpa_supplicant_${INTERFACE}.pid" ]]; then
-        return 1
-    fi
+    # wait up to one second for the pid file to appear
+    timeout_wait 1 '[[ -f "/run/wpa_supplicant_${INTERFACE}.pid" ]]';
+    return $?
 }
 
 stop_wpa()
 {
     wpa_cli -p "$WPA_CTRL_PATH" -i "$1" terminate &> /dev/null
-    sleep 1         # JP: need this else the file tends to disappear after [[ -f ... ]] but before cat...
-                    # see <http://bbs.archlinux.org/viewtopic.php?pid=515667#p515667>
-    if [[ -f "/run/wpa_supplicant_$1.pid" ]]; then
+
+    # wait up to one second for the pid file to be removed
+    timeout_wait 1 '[[ ! -f "/run/wpa_supplicant_$1.pid" ]]' || \
         kill "$(< "/run/wpa_supplicant_$1.pid")" &>/dev/null &
-    fi
 }
 
 wpa_reconfigure() {
