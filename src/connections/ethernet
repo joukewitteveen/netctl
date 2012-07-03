@@ -45,8 +45,8 @@ ethernet_up() {
         [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wired"
         # Set wpa_supplicant control path (FS#25473)
         WPA_CTRL_PATH=/run/wpa_supplicant
-        if grep "^ *ctrl_interface=" "$WPA_CONF" &>/dev/null; then
-            WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | tail -n 1 | cut -d= -f 2- | sed -r 's/DIR=(.*) +GROUP=.*/\1/')
+        if grep -q "^ *ctrl_interface=" "$WPA_CONF"; then
+            WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | cut -d= -f 2- | sed -r 's/^DIR=(.*) GROUP=.*/\1/')
         fi
 
         report_debug ethernet_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"

@@ -105,7 +105,7 @@ wpa_supplicant_scan_and_find() {
     for ((try=0; try < $RETRIES; try++)); do
         local found
         sleep 2
-        found=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | grep -F -x -m 1 "${ITEM}")
+        found=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | fgrep -x -m 1 "${ITEM}")
         (( $? == 0 )) && scan_ok=1
 
         # ITEM has been found, echo it
@@ -144,7 +144,7 @@ wpa_supplicant_scan_info() {
     # Wait at least 3 seconds for scan results
     sleep 3
     # Sometimes, that is not enough (FS#29946)
-    timeout_wait 7 '! wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | grep -q "wpa_state=SCANNING"'
+    timeout_wait 7 '! wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | fgrep -q "wpa_state=SCANNING"'
     wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results |
         grep -v "^Selected" |
         grep -v "^bssid" |
