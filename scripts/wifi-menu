@@ -103,7 +103,7 @@ ssid_to_profile()
 create_profile()
 {
     local box flags key msg security
-    PROFILE="$INTERFACE-$1"
+    PROFILE="$INTERFACE-${1//\//_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
     flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
     if [[ "$flags" =~ WPA|WEP ]]; then
@@ -210,18 +210,16 @@ if ! interface_is_up "$INTERFACE"; then
     SPAWNED_INTERFACE=1
 fi
 
-init_profiles "$INTERFACE"
 report_try "Scanning for networks"
 CONNECTION=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status 2> /dev/null \
                  | grep -m 1 "^ssid=")
 CONNECTION=${CONNECTION#ssid=}
 NETWORKS=$(wpa_supplicant_scan_info "$INTERFACE" 3,4,5)
-[[ $? -eq 0 ]] && init_entries "$NETWORKS"
-if [[ ${#ENTRIES[@]} -eq 0 ]]; then
-    report_fail
-    RETURN=3
-else
+if [[ $? -eq 0 ]]; then
+    trap 'rm -f "$NETWORKS"' EXIT
     report_success
+    init_profiles "$INTERFACE"
+    init_entries "$NETWORKS"
     MSG="Select the network you wish to use
 Flags description:
  * - handmade profile present
@@ -235,7 +233,11 @@ Flags description:
         connect_to_ssid "$CHOICE"
         RETURN=$?
     fi
+else
+    report_fail
+    RETURN=3
 fi
+
 case $RETURN in
     0|2)  # Connected | Connecting failed
         ;;
@@ -258,6 +260,5 @@ case $RETURN in
         RETURN=7
         ;;
 esac
-[[ -f "$NETWORKS" ]] && rm -f "$NETWORKS"
 (( RETURN && SPAWNED_INTERFACE )) && bring_interface down "$INTERFACE"
 exit $RETURN
