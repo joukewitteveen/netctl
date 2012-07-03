@@ -238,28 +238,6 @@ profile_down()
     ); return $?
 }
 
-## Check if variable is a member of an array
-# $1: the variable to find
-# $2...: the array elements
-inarray()
-{
-    local item search="$1"
-    shift
-    for item in "$@"; do
-        if [[ "$item" == "$search" ]]; then
-            return 0
-        fi
-    done
-    return 1
-}
-
-## Check if a given quirk is enabled
-# $1: the quirk name
-quirk() {
-    inarray "$1" "${QUIRKS[@]}"
-    return $?
-}
-
 # interface_down interface
 #   take interface down
 #

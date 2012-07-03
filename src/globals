@@ -94,6 +94,19 @@ function checkyesno() {
     esac
 }
 
+## Check if variable is a member of an array
+# $1: the variable to find
+# $2...: the array elements
+function inarray() {
+    local item search="$1"
+    shift
+    for item in "$@"; do
+        if [[ "$item" == "$search" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
 
 ## Waits until a statement succeeds or a timeout occurs
 # $1: timeout in seconds
