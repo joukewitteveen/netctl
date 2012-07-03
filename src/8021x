@@ -55,7 +55,7 @@ stop_wpa()
 
 wpa_reconfigure() {
     local INTERFACE=$1
-    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" reconfigure
+    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" reconfigure &> /dev/null
     return $?
 }
 

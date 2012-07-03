@@ -8,6 +8,7 @@ wireless_up() {
     load_profile "$PROFILE"
 
     # Default settings
+    WPA_CTRL_PATH=/run/wpa_supplicant
     SECURITY=${SECURITY:-none}
     WPA_DRIVER=${WPA_DRIVER:-nl80211,wext}
 
@@ -21,7 +22,6 @@ wireless_up() {
     stop_wpa "$INTERFACE"
 
     # Start wpa_supplicant
-    WPA_CTRL_PATH=/run/wpa_supplicant
     if [[ "$SECURITY" = "wpa-config" ]]; then
         WPA_CONF="${WPA_CONF:-/etc/wpa_supplicant.conf}"
         # Use defined control path (FS#24949)
