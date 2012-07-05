@@ -1,3 +1,9 @@
+version 2.8.6
+- Fixed key limitation test in wifi-menu
+- Improved responsiveness for wireless networking
+- Revised logic for wpa_supplicant configurations with non-standard control paths
+- Code cleanup
+
 version 2.8.5
 - Provide the ability to start the last used profile (FS#23015)
 - Support weird characters in wifi-menu (FS#30342) and elsewhere
@@ -73,7 +79,7 @@ version 2.6.7
 version 2.6.6
 - fix wrong rc scripts names in suspend hook (FS#20330)
 - fix wireless failure when using wpa-config and a custom
-  ctrl_interface path (FS#24949)
+  ctrl_interface path (FS#24929)
 - bash-completion: add -r to option list (FS#25188)
 
 version 2.6.5
