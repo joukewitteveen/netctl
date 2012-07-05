@@ -18,7 +18,6 @@ case $1 in
         interface=$2
         [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
         netcfg -D "$interface"
-        kill $(< "/run/wpa_actiond_${2}.pid")
         # only try to disable software rfkill switches (FS#25514)
         if [[ "$RFKILL" == "soft" ]]; then
             set_rf_state "$interface" disabled $RFKILL_NAME || exit $?
