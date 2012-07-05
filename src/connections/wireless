@@ -8,7 +8,6 @@ wireless_up() {
     load_profile "$PROFILE"
 
     # Default settings
-    WPA_CTRL_PATH=/run/wpa_supplicant
     SECURITY=${SECURITY:-none}
     WPA_DRIVER=${WPA_DRIVER:-nl80211,wext}
 
@@ -18,16 +17,11 @@ wireless_up() {
     is_interface "$INTERFACE" || { report_fail "interface $INTERFACE does not exist"; return 1; }
 
     # Kill any lingering wpa_supplicants.
-    report_debug wireless_up stop_wpa "$INTERFACE"
-    stop_wpa "$INTERFACE"
+    stop_wpa "$INTERFACE" &> /dev/null
 
     # Start wpa_supplicant
     if [[ "$SECURITY" = "wpa-config" ]]; then
         WPA_CONF="${WPA_CONF:-/etc/wpa_supplicant.conf}"
-        # Use defined control path (FS#24949)
-        if grep -q "^ *ctrl_interface=" "$WPA_CONF"; then
-            WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | cut -d= -f 2- | sed -r 's/^DIR=(.*) GROUP=.*/\1/')
-        fi
     else
         WPA_CONF=$(make_wpa_config_file $INTERFACE)
     fi
@@ -98,6 +92,10 @@ wireless_down() {
 
     "$CONN_DIR/ethernet" down "$PROFILE"
 
+    # The config file can contain a non-standard control socket path
+    if [[ "$SECURITY" = "wpa-config" ]]; then
+        WPA_CONF="${WPA_CONF:-/etc/wpa_supplicant.conf}"
+    fi
     report_debug wireless_down stop_wpa "$INTERFACE"
     stop_wpa "$INTERFACE"
     rm -rf "$STATE_DIR/wpa.$INTERFACE"

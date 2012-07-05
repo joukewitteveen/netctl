@@ -18,7 +18,6 @@ case $1 in
         interface=$2
         [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
         netcfg -D "$interface"
-        stop_wpa "$interface"
         kill $(< "/run/wpa_actiond_${2}.pid")
         # only try to disable software rfkill switches (FS#25514)
         if [[ "$RFKILL" == "soft" ]]; then
@@ -81,7 +80,7 @@ done
 WPA_OPTS="-W $WPA_OPTS"
 
 # Kill any existing wpa_supplicant on this interface
-stop_wpa "$interface"
+stop_wpa "$interface" &> /dev/null
 
 if start_wpa $interface $WPA_CONF $WPA_DRIVER $WPA_OPTS; then
     if $AUTOWIFI -i ${interface} -P ${PIDFILE} -a ${ACTION_SCRIPT} ${EXTRA_AUTOWIFI_OPTIONS}; then

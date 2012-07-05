@@ -4,9 +4,6 @@
 . "$SUBR_DIR/8021x"
 . /etc/conf.d/netcfg
 
-# The right value depends on the connected profile.
-WPA_CTRL_PATH=/run/wpa_supplicant
-
 usage()
 {
     cat << END
@@ -211,8 +208,7 @@ if ! interface_is_up "$INTERFACE"; then
 fi
 
 report_try "Scanning for networks"
-CONNECTION=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status 2> /dev/null \
-                 | grep -m 1 "^ssid=")
+CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 "^ssid=")
 CONNECTION=${CONNECTION#ssid=}
 NETWORKS=$(wpa_supplicant_scan_info "$INTERFACE" 3,4,5)
 if [[ $? -eq 0 ]]; then

@@ -43,11 +43,6 @@ ethernet_up() {
         . "$SUBR_DIR/8021x"
         [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wired"
-        # Set wpa_supplicant control path (FS#25473)
-        WPA_CTRL_PATH=/run/wpa_supplicant
-        if grep -q "^ *ctrl_interface=" "$WPA_CONF"; then
-            WPA_CTRL_PATH=$(grep -m 1 "^ *ctrl_interface=" "$WPA_CONF" | cut -d= -f 2- | sed -r 's/^DIR=(.*) GROUP=.*/\1/')
-        fi
 
         report_debug ethernet_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
         if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
@@ -276,6 +271,7 @@ ethernet_status() {
 stop_80211x() {
     if checkyesno "${AUTH8021X:-no}"; then
         . "$SUBR_DIR/8021x"
+        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
         report_debug ethernet_down stop_wpa "$INTERFACE"
         stop_wpa "$INTERFACE"
     fi

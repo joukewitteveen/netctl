@@ -1,3 +1,23 @@
+# Usage: wpa_call $interface $call ...
+# Wrapper around wpa_cli to deal with supplicant configurations that set a
+# non-standard control path.
+wpa_call()
+{
+    local args=("-i" "$1")
+    shift
+
+    if [[ -n "$WPA_CTRL_DIR" ]]; then
+        args+=("-p" "$WPA_CTRL_DIR")
+    elif [[ -n "$WPA_CONF" ]] && grep -q "^[[:space:]]*ctrl_interface=" "$WPA_CONF"; then
+        WPA_CTRL_DIR=$(grep -m 1 "^[[:space:]]*ctrl_interface=" "$WPA_CONF" | cut -d= -f 2-)
+        WPA_CTRL_DIR=${WPA_CTRL_DIR#DIR=}
+        WPA_CTRL_DIR=${WPA_CTRL_DIR%% GROUP=.*}
+        args+=("-p" "$WPA_CTRL_DIR")
+    fi
+    report_debug wpa_cli "${args[@]}" "$@"
+    wpa_cli "${args[@]}" "$@"
+}
+
 # Uses wpa_supplicant to check for association to a network
 # wpa_check interface [timeout]
 wpa_check()
@@ -5,13 +25,12 @@ wpa_check()
     local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}" CONDITION="${3:-COMPLETED}"
     # CONDITION is required as wired connections are ready at ASSOCIATED not COMPLETED FS#20150
 
-    report_debug wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status
     while (( timeout < TIMEOUT )); do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if (( timeout < 2 )); then
-            eval $(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
+            eval $(wpa_call "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
         else
-            eval $(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | fgrep "wpa_state=")
+            eval $(wpa_call "$INTERFACE" status | fgrep "wpa_state=")
         fi
         [[ "$wpa_state" = "$CONDITION" ]]
         ) && return 0
@@ -29,12 +48,13 @@ start_wpa()
 {
     local INTERFACE="$1" WPA_CONF="$2" WPA_DRIVER="$3"
     shift 3
-    local WPA_OPTS="$*"
+    local WPA_OPTS="$@"
 
     if [[ -n "$WPA_CONF" ]]; then
         WPA_CONF="-c$WPA_CONF"
     else
-        WPA_CONF="-C$WPA_CTRL_PATH"
+        WPA_CTRL_DIR="/run/wpa_supplicant"
+        WPA_CONF="-C$WPA_CTRL_DIR"
     fi
 
     wpa_supplicant -B -P "/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" "$WPA_CONF" $WPA_OPTS
@@ -46,16 +66,17 @@ start_wpa()
 
 stop_wpa()
 {
-    wpa_cli -p "$WPA_CTRL_PATH" -i "$1" terminate &> /dev/null
+    # we need this as long as wpa_cli has a different default than netcfg
+    [[ -z "$WPA_CTRL_DIR" && -z "$WPA_CONF" ]] && WPA_CTRL_DIR="/run/wpa_supplicant"
+    wpa_call "$1" terminate > /dev/null
 
     # wait up to one second for the pid file to be removed
     timeout_wait 1 '[[ ! -f "/run/wpa_supplicant_$1.pid" ]]' || \
-        kill "$(< "/run/wpa_supplicant_$1.pid")" &>/dev/null &
+        kill "$(< "/run/wpa_supplicant_$1.pid")" &> /dev/null &
 }
 
 wpa_reconfigure() {
-    local INTERFACE=$1
-    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" reconfigure &> /dev/null
+    wpa_call "$1" reconfigure > /dev/null
     return $?
 }
 
@@ -63,7 +84,7 @@ wpa_check_current_essid() {
     # usage: wpa_check_current_essid $interface $essid
     # check that wpa_supplicant is connected to the right essid
     local INTERFACE=$1 ESSID=$2 status
-    status=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | grep "^ssid=")
+    status=$(wpa_call "$INTERFACE" status | grep "^ssid=")
     if (( $? == 0 )) && [[ "$status" == "ssid=$ESSID" ]]; then
         return 0
     else
@@ -100,12 +121,11 @@ wpa_supplicant_scan_and_find() {
     # item = string to lookup
     local INTERFACE="$1" FIELD="$2" ITEM="$3" RETRIES=5 try scan_ok
     scan_ok=0
-    report_debug wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan
-    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
+    wpa_call "$INTERFACE" scan > /dev/null
     for ((try=0; try < $RETRIES; try++)); do
         local found
         sleep 2
-        found=$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | fgrep -x -m 1 "${ITEM}")
+        found=$(wpa_call "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | fgrep -x -m 1 "${ITEM}")
         (( $? == 0 )) && scan_ok=1
 
         # ITEM has been found, echo it
@@ -113,7 +133,7 @@ wpa_supplicant_scan_and_find() {
             echo "$found"
             return 0
         fi
-        wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
+        wpa_call "$INTERFACE" scan > /dev/null
     done
     if (( $scan_ok != 1 )); then
         report_debug wpa_supplicant_scan_and_find "unable to retrieve scan results"
@@ -135,17 +155,17 @@ wpa_supplicant_scan_info() {
     [[ -z "$INTERFACE" ]] && return 1
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
-    if [[ "$(wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" ping 2> /dev/null)" != "PONG" ]]; then
+    if [[ "$(wpa_call "$INTERFACE" ping 2> /dev/null)" != "PONG" ]]; then
         start_wpa "$INTERFACE" "" "${WPA_DRIVER:-nl80211,wext}" || return 1
         spawned_wpa=1
     fi
 
-    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan &> /dev/null
+    wpa_call "$INTERFACE" scan > /dev/null
     # Wait at least 3 seconds for scan results
     sleep 3
     # Sometimes, that is not enough (FS#29946)
-    timeout_wait 7 '! wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" status | fgrep -q "wpa_state=SCANNING"'
-    wpa_cli -p "$WPA_CTRL_PATH" -i "$INTERFACE" scan_results |
+    timeout_wait 7 '! wpa_call "$INTERFACE" status | fgrep -q "wpa_state=SCANNING"'
+    wpa_call "$INTERFACE" scan_results |
         grep -v "^Selected" |
         grep -v "^bssid" |
         sort -rn -k3 |
@@ -174,19 +194,18 @@ wpa_supplicant_scan_info() {
 
 # Requires already loaded profile
 make_wpa_config_file() {
-    local interface=$1
-    local WPA_CONF="$STATE_DIR/wpa.${interface}" # substitute spaces out
+    local WPA_CONFD="$STATE_DIR/wpa.$1"
 
     # make empty tmp dir with correct permissions, rename it
     check_make_state_dir
     mkdir -p /run/wpa_supplicant
-    rm -rf "$WPA_CONF"
-    mv -f "$(mktemp -d --tmpdir=$STATE_DIR)" "$WPA_CONF" || return 1
-    echo "ctrl_interface=/run/wpa_supplicant" >> "$WPA_CONF/wpa.conf"    # we know $WPA_CONF now has no spaces, but it may have other nasty chars, so still needs to be quoted
-    echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONF/wpa.conf"
-    [[ $WPA_COUNTRY ]] && echo "country=$WPA_COUNTRY" >> "$WPA_CONF/wpa.conf"
-    [[ -n "$ADHOC" ]] && echo "ap_scan=2" >> "$WPA_CONF/wpa.conf"
-    echo "$WPA_CONF/wpa.conf"
+    rm -rf "$WPA_CONFD"
+    mv -f "$(mktemp -d --tmpdir=$STATE_DIR)" "$WPA_CONFD" || return 1
+    echo "ctrl_interface=/run/wpa_supplicant" >> "$WPA_CONFD/wpa.conf"
+    echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONFD/wpa.conf"
+    [[ $WPA_COUNTRY ]] && echo "country=$WPA_COUNTRY" >> "$WPA_CONFD/wpa.conf"
+    [[ -n "$ADHOC" ]] && echo "ap_scan=2" >> "$WPA_CONFD/wpa.conf"
+    echo "$WPA_CONFD/wpa.conf"
 }
 
 # Requires already loaded profile
