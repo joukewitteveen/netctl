@@ -27,14 +27,6 @@ vlan_down() {
     return 0
 }
 
-vlan_status() {
-    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 vlan_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4:

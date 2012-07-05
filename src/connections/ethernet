@@ -260,13 +260,6 @@ ethernet_down() {
     return 0
 }
 
-# Returns status of profile - is it still functional?
-ethernet_status() {
-    if ! ip link show dev "$INTERFACE" | fgrep -q "state UP"; then
-        return 1
-    fi
-}
-
 # Stop wpa_supplicant if neccessary
 stop_80211x() {
     if checkyesno "${AUTH8021X:-no}"; then

@@ -109,17 +109,6 @@ wireless_down() {
     fi
 }
 
-# Returns status of profile - is it still functional?
-wireless_status() {
-    load_profile "$1"
-    if ! wpa_check_current_essid "$INTERFACE" "$ESSID"; then
-        return 1
-    elif ! ip link show dev "$INTERFACE" | fgrep -q "state UP"; then
-        return 1
-    fi
-
-}
-
 wireless_$1 "$2" "$3"
 exit $?
 

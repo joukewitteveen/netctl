@@ -31,10 +31,6 @@ tunnel_down() {
     return 0
 }
 
-tunnel_status() {
-    true
-}
-
 tunnel_$1 "$2"
 exit $?
 

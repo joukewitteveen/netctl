@@ -35,14 +35,6 @@ bond_down() {
     return 0
 }
 
-bond_status() {
-    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 bond_$1 "$2"
 exit $?
 

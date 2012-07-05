@@ -44,11 +44,6 @@ bridge_down() {
     return 0
 }
 
-# Returns status of profile - is it still functional?
-bridge_status() {
-    true
-}
-
 bridge_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4:

@@ -25,14 +25,6 @@ tuntap_down() {
     return 0
 }
 
-tuntap_status() {
-    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 tuntap_$1 "$2"
 exit $?
 # vim: set ts=4 et sw=4 tw=0:
