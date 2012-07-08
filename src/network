@@ -331,7 +331,7 @@ set_iface() {
 is_interface() {
     local INTERFACE="$1"
     if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
-        if ! echo "$INTERFACE" | fgrep -q ":"; then
+        if ! echo "$INTERFACE" | grep -F -q ":"; then
             return 1
         fi
     fi

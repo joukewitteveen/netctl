@@ -102,7 +102,7 @@ create_profile()
     local box flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
-    flags=$(fgrep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
+    flags=$(grep -F -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
     if [[ "$flags" =~ WPA|WEP ]]; then
         security=${BASH_REMATCH[0],,}
     else

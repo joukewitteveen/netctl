@@ -18,7 +18,7 @@ ethernet_up() {
     SYSCTL_INTERFACE="${INTERFACE/.//}"
 
     if [[ ! -e "/sys/class/net/$INTERFACE" ]]; then
-        if ! echo "$INTERFACE" | fgrep -q ":"; then
+        if ! echo "$INTERFACE" | grep -F -q ":"; then
             report_iproute "Interface $INTERFACE does not exist"
         fi
     fi

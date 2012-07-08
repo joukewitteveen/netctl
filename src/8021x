@@ -28,9 +28,9 @@ wpa_check()
     while (( timeout < TIMEOUT )); do
         ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
         if (( timeout < 2 )); then
-            eval $(wpa_call "$INTERFACE" status 2> /dev/null | fgrep "wpa_state=")
+            eval $(wpa_call "$INTERFACE" status 2> /dev/null | grep -F "wpa_state=")
         else
-            eval $(wpa_call "$INTERFACE" status | fgrep "wpa_state=")
+            eval $(wpa_call "$INTERFACE" status | grep -F "wpa_state=")
         fi
         [[ "$wpa_state" = "$CONDITION" ]]
         ) && return 0
@@ -125,7 +125,7 @@ wpa_supplicant_scan_and_find() {
     for ((try=0; try < $RETRIES; try++)); do
         local found
         sleep 2
-        found=$(wpa_call "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | fgrep -x -m 1 "${ITEM}")
+        found=$(wpa_call "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | grep -F -x -m 1 "${ITEM}")
         (( $? == 0 )) && scan_ok=1
 
         # ITEM has been found, echo it
@@ -164,7 +164,7 @@ wpa_supplicant_scan_info() {
     # Wait at least 3 seconds for scan results
     sleep 3
     # Sometimes, that is not enough (FS#29946)
-    timeout_wait 7 '! wpa_call "$INTERFACE" status | fgrep -q "wpa_state=SCANNING"'
+    timeout_wait 7 '! wpa_call "$INTERFACE" status | grep -F -q "wpa_state=SCANNING"'
     wpa_call "$INTERFACE" scan_results |
         grep -v "^Selected" |
         grep -v "^bssid" |
