@@ -9,9 +9,12 @@ wpa_call()
     if [[ -n "$WPA_CTRL_DIR" ]]; then
         args+=("-p" "$WPA_CTRL_DIR")
     elif [[ -n "$WPA_CONF" ]] && grep -q "^[[:space:]]*ctrl_interface=" "$WPA_CONF"; then
-        WPA_CTRL_DIR=$(grep -m 1 "^[[:space:]]*ctrl_interface=" "$WPA_CONF" | cut -d= -f 2-)
-        WPA_CTRL_DIR=${WPA_CTRL_DIR#DIR=}
-        WPA_CTRL_DIR=${WPA_CTRL_DIR%% GROUP=.*}
+        WPA_CTRL_DIR=$(grep -m 1 "^[[:space:]]*ctrl_interface=" "$WPA_CONF")
+        WPA_CTRL_DIR=${WPA_CTRL_DIR#*ctrl_interface=}
+        if [[ "$WPA_CTRL_DIR" == DIR=* ]]; then
+            WPA_CTRL_DIR=${WPA_CTRL_DIR:4}
+            WPA_CTRL_DIR=${WPA_CTRL_DIR%% GROUP=*}
+        fi
         args+=("-p" "$WPA_CTRL_DIR")
     fi
     report_debug wpa_cli "${args[@]}" "$@"
