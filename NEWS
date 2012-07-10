@@ -1,3 +1,6 @@
+version 2.8.7
+- Fixed parsing of GROUP= part of ctrl_interface for custom wifi configurations
+
 version 2.8.6
 - Fixed key limitation test in wifi-menu
 - Improved responsiveness for wireless networking
