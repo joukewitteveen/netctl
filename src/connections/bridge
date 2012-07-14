@@ -24,7 +24,6 @@ bridge_up() {
     [[ "$FWD_DELAY" ]] && $BRCTL setfd "$INTERFACE" "$FWD_DELAY"
     [[ "$MAX_AGE" ]] && $BRCTL setmaxage "$INTERFACE" "$MAX_AGE"
 
-    bring_interface up "$INTERFACE"
     "$CONN_DIR/ethernet" up "$1"
     return 0
 }
@@ -39,7 +38,6 @@ bridge_down() {
     done
 
     "$CONN_DIR/ethernet" down "$1"
-    bring_interface down "$INTERFACE"
     $BRCTL delbr "$INTERFACE"
     return 0
 }

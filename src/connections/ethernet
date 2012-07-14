@@ -26,7 +26,7 @@ ethernet_up() {
         sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.disable_ipv6=1"
     fi
 
-    report_debug ethernet_up ifup
+    report_debug ethernet_up bring_interface up "$INTERFACE"
     bring_interface up "$INTERFACE"
 
 
@@ -249,10 +249,11 @@ ethernet_down() {
 
     stop_80211x
 
-    report_debug ethernet_down if_down
     if [[ "$CONNECTION" == "wireless" ]]; then
+        report_debug ethernet_down bring_interface flush "$INTERFACE"
         bring_interface flush "$INTERFACE"
     else
+        report_debug ethernet_down bring_interface down "$INTERFACE"
         bring_interface down "$INTERFACE"
     fi
     return 0

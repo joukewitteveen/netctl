@@ -11,7 +11,6 @@ bond_up() {
     else
         ip link add dev $INTERFACE type bond
     fi
-    bring_interface up "$INTERFACE"
     "$CONN_DIR/ethernet" up "$1"
 
     for slave in "${SLAVE_INTERFACES[@]}"; do
@@ -30,8 +29,7 @@ bond_down() {
     done
 
     "$CONN_DIR/ethernet" down "$1"
-    bring_interface down "$INTERFACE"
-    ip link delete "$INTERFACE" &> /dev/null
+    ip link delete "$INTERFACE"
     return 0
 }
 
