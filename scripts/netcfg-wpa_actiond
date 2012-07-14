@@ -16,8 +16,11 @@ case $1 in
     stop)
         [[ -z $2 ]] && echo "Please specify an interface to stop" && exit 1
         interface=$2
+        PIDFILE="/run/wpa_actiond_${interface}.pid"
         [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
         netcfg -D "$interface"
+        timeout_wait 1 '[[ ! -f "$PIDFILE" ]]' || \
+            kill "$(< "$PIDFILE")"
         # only try to disable software rfkill switches (FS#25514)
         if [[ "$RFKILL" == "soft" ]]; then
             set_rf_state "$interface" disabled $RFKILL_NAME || exit $?

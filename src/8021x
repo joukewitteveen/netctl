@@ -51,7 +51,7 @@ start_wpa()
 {
     local INTERFACE="$1" WPA_CONF="$2" WPA_DRIVER="$3"
     shift 3
-    local WPA_OPTS="$@"
+    local WPA_OPTS="$@" PIDFILE="/run/wpa_supplicant_${INTERFACE}.pid"
 
     if [[ -n "$WPA_CONF" ]]; then
         WPA_CONF="-c$WPA_CONF"
@@ -60,22 +60,24 @@ start_wpa()
         WPA_CONF="-C$WPA_CTRL_DIR"
     fi
 
-    wpa_supplicant -B -P "/run/wpa_supplicant_${INTERFACE}.pid" -i "$INTERFACE" -D "$WPA_DRIVER" "$WPA_CONF" $WPA_OPTS
+    wpa_supplicant -B -P "$PIDFILE" -i "$INTERFACE" -D "$WPA_DRIVER" "$WPA_CONF" $WPA_OPTS
 
     # wait up to one second for the pid file to appear
-    timeout_wait 1 '[[ -f "/run/wpa_supplicant_${INTERFACE}.pid" ]]';
+    timeout_wait 1 '[[ -f "$PIDFILE" ]]';
     return $?
 }
 
 stop_wpa()
 {
+    local INTERFACE="$1"
     # we need this as long as wpa_cli has a different default than netcfg
     [[ -z "$WPA_CTRL_DIR" && -z "$WPA_CONF" ]] && WPA_CTRL_DIR="/run/wpa_supplicant"
-    wpa_call "$1" terminate > /dev/null
+
+    wpa_call "$INTERFACE" terminate > /dev/null
 
     # wait up to one second for the pid file to be removed
-    timeout_wait 1 '[[ ! -f "/run/wpa_supplicant_$1.pid" ]]' || \
-        kill "$(< "/run/wpa_supplicant_$1.pid")" &> /dev/null &
+    timeout_wait 1 '[[ ! -f "/run/wpa_supplicant_${INTERFACE}.pid" ]]' || \
+        kill "$(< "/run/wpa_supplicant_${INTERFACE}.pid")" &> /dev/null &
 }
 
 wpa_reconfigure() {
