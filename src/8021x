@@ -269,7 +269,12 @@ make_wpa_config() {
 
     # Hidden SSID
     if checkyesno ${HIDDEN:-no}; then
-      echo "scan_ssid=1"
+        echo "scan_ssid=1"
+    fi
+
+    # Priority group for the network
+    if [[ -n "$PRIORITY" ]]; then
+        echo "priority=$PRIORITY"
     fi
 }
 

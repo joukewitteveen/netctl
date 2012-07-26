@@ -204,6 +204,9 @@ Options
 +SCAN+ (optional)::
   `yes'/`no'. Scan for a wireless network rather than blindly attempting to
   connect. Hidden SSID networks do not appear in a scan.
++PRIORITY+ (optional)::
+  Priority group for the network. The matched network with the highest
+  priority will be selected. Defaults to 0.
 
 WPA options
 ^^^^^^^^^^^
