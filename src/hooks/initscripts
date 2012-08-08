@@ -1,21 +1,8 @@
 # Use initscripts output formatting.
 # This hook must be loaded after 'fancy'.
 
-# At some point, this can be removed. Configuration through rc.conf is
-# than still possible for initscripts users as a side effect.
-if [[ -f /etc/rc.conf ]]; then
-    . /etc/rc.conf
-    if ! checkyesno $WARNED &&
-       [[ ${NETWORKS+x} = x || ${WIRED_INTERFACE+x} = x ||
-          ${WIRELESS_INTERFACE+x} = x || ${AUTO_PROFILES+x} = x ]]; then
-        report_err "Using /etc/rc.conf for netcfg settings is deprecated.
-   Use /etc/conf.d/netcfg instead."
-        export WARNED=yes
-    fi
-fi
-
 [[ ${FANCY_NORMAL+x} = x && -f /etc/rc.d/functions ]] || return
-#. /etc/rc.conf
+. /etc/rc.conf
 . /etc/rc.d/functions
 
 
