@@ -124,11 +124,10 @@ wpa_supplicant_scan_and_find() {
     #usage: wpa_supplicant_scan_and_find $INTERFACE $FIELD $ITEM
     # field = 1 for bssid, 5 for essid
     # item = string to lookup
-    local INTERFACE="$1" FIELD="$2" ITEM="$3" RETRIES=5 try scan_ok
-    scan_ok=0
-    wpa_call "$INTERFACE" scan > /dev/null
+    local INTERFACE="$1" FIELD="$2" ITEM="$3" RETRIES=5 scan_ok=0 try
     for ((try=0; try < $RETRIES; try++)); do
         local found
+        wpa_call "$INTERFACE" scan > /dev/null
         sleep 2
         found=$(wpa_call "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | grep -F -x -m 1 "${ITEM}")
         (( $? == 0 )) && scan_ok=1
@@ -138,7 +137,6 @@ wpa_supplicant_scan_and_find() {
             echo "$found"
             return 0
         fi
-        wpa_call "$INTERFACE" scan > /dev/null
     done
     if (( $scan_ok != 1 )); then
         report_debug wpa_supplicant_scan_and_find "unable to retrieve scan results"
@@ -146,13 +144,7 @@ wpa_supplicant_scan_and_find() {
     return 1
 }
 
-# Return a filename containing a list of network APs and ESSIDs found (sorted by decreasing signal strength)
-# list_networks interface
-list_networks() {
-    wpa_supplicant_scan_info "$1" 1,5
-}
-
-wpa_supplicant_scan_info() {
+wpa_supplicant_scan() {
     local INTERFACE="$1" fields="$2" spawned_wpa=0 essids
     # temp file used, as keeping ESSID's with spaces in their name in arrays
     # is hard, obscure and kinda nasty. This is simpler and clearer.
@@ -171,8 +163,7 @@ wpa_supplicant_scan_info() {
     # Sometimes, that is not enough (FS#29946)
     timeout_wait 7 '! wpa_call "$INTERFACE" status | grep -F -q "wpa_state=SCANNING"'
     wpa_call "$INTERFACE" scan_results |
-        grep -v "^Selected" |
-        grep -v "^bssid" |
+        tail -n+2 |
         sort -rn -k3 |
         sort -u -k5 |
         sort -rn -k3 |

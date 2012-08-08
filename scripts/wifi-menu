@@ -210,7 +210,7 @@ fi
 report_try "Scanning for networks"
 CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 "^ssid=")
 CONNECTION=${CONNECTION#ssid=}
-NETWORKS=$(wpa_supplicant_scan_info "$INTERFACE" 3,4,5)
+NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
 if [[ $? -eq 0 ]]; then
     trap 'rm -f "$NETWORKS"' EXIT
     report_success
