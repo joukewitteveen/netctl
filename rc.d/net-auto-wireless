@@ -6,14 +6,12 @@
 . /etc/conf.d/netcfg
 
 if [[ ! -x /usr/sbin/wpa_actiond ]]; then
-   echo "Please install 'wpa_actiond' to use net-auto-wireless"
-   exit 1
+    exit_stderr "Please install 'wpa_actiond' to use net-auto-wireless"
 fi
 
 if [[ -z "${WIRELESS_INTERFACE}" ]]; then
-    echo "No interface name set. Add to /etc/conf.d/netcfg a line"
-    echo "  WIRELESS_INTERFACE=\"your_interface\""
-    exit 1
+    exit_stderr "No interface name set. Add to /etc/conf.d/netcfg a line"$'\n' \
+                " WIRELESS_INTERFACE='your_interface'"
 fi
 
 case "$1" in

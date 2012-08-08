@@ -6,14 +6,12 @@
 . /etc/conf.d/netcfg
 
 if [[ ! -x /usr/sbin/ifplugd ]]; then
-   echo "Please install 'ifplugd' to use net-auto-wired"
-   exit 1
+  exit_stderr "Please install 'ifplugd' to use net-auto-wired"
 fi
 
 if [[ -z "${WIRED_INTERFACE}" ]]; then
-  echo "No interface name set. Add to /etc/conf.d/netcfg a line"
-  echo "  WIRED_INTERFACE=\"your_interface\""
-  exit 1
+  exit_stderr "No interface name set. Add to /etc/conf.d/netcfg a line"$'\n' \
+              " WIRED_INTERFACE='your_interface'"
 fi
 
 CFG=/etc/ifplugd/ifplugd.conf
