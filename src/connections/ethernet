@@ -29,13 +29,13 @@ ethernet_up() {
     report_debug ethernet_up bring_interface up "$INTERFACE"
     bring_interface up "$INTERFACE"
 
-
     if ! checkyesno "${SKIPNOCARRIER:-no}"; then
         # Some cards are plain slow to come up. Don't fail immediately.
         if ! timeout_wait "${CARRIER_TIMEOUT:-5}" '(( $(< "/sys/class/net/$INTERFACE/carrier") ))'; then
             report_iproute "No connection"
         fi
     fi
+
 
     if checkyesno "${AUTH8021X:-no}"; then
         . "$SUBR_DIR/8021x"
@@ -139,7 +139,7 @@ ethernet_up() {
             return 1
         fi
         sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=1"
-        if [[ "$IP6" = "dhcp-noaddr" ]]; then
+        if [[ "$IP6" == "dhcp-noaddr" ]]; then
             DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
         fi
         _DHCLIENT_PIDFILE="/run/dhclient6-${INTERFACE}.pid"
@@ -164,12 +164,6 @@ ethernet_up() {
                 fi
             done
         fi
-        if [[ -n "$GATEWAY6" ]]; then
-            report_debug ethernet_up ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"
-            if ! ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"; then
-                report_iproute "Adding gateway $GATEWAY6 failed"
-            fi
-        fi
         ;;
     esac
 
@@ -188,6 +182,14 @@ ethernet_up() {
                     report_iproute "Adding route '$route' failed"
                 fi
             done
+        fi
+
+        # Set a custom gateway after waiting for DAD to finish
+        if [[ "$IP6" == "static" && -n "$GATEWAY6" ]]; then
+            report_debug ethernet_up ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"
+            if ! ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"; then
+                report_iproute "Adding gateway $GATEWAY6 failed"
+            fi
         fi
     fi
 
