@@ -102,7 +102,7 @@ create_profile()
     local box flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
-    flags=$(grep -F -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
+    flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
     if [[ "$flags" =~ WPA|WEP ]]; then
         security=${BASH_REMATCH[0],,}
     else
@@ -115,9 +115,9 @@ create_profile()
         [[ "${#key}" -ge 8 && "${#key}" -le 63 ]] || return 4
         if [[ "$OBSCURE" ]]; then
             key=$(wpa_passphrase "$1" "$key" | grep -m 1 "^[[:space:]]*psk=")
-            key="KEY=${key#*psk=}"
+            key=${key#*psk=}
         else
-            key="KEY=$(printf "%q" "$key")"
+            key=$(printf "%q" "$key")
         fi
     fi
     cat << EOF > "$PROFILE_DIR/$PROFILE"
@@ -127,7 +127,7 @@ INTERFACE='$INTERFACE'
 SECURITY='$security'
 ESSID=$(printf "%q" "$1")
 IP='dhcp'
-$key
+${key+KEY=$key}
 EOF
     printf "%s" "$PROFILE"
     return 0
