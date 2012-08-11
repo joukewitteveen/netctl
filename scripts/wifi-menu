@@ -112,12 +112,15 @@ create_profile()
         [[ "$OBSCURE" ]] && box="--insecure --passwordbox" || box="--inputbox"
         msg="Enter $security security key for\n'$1'"
         key=$(dialog $box "$msg" 10 40 --stdout) || return $?
-        [[ "${#key}" -ge 8 && "${#key}" -le 63 ]] || return 4
-        if [[ "$OBSCURE" ]]; then
-            key=$(wpa_passphrase "$1" "$key" | grep -m 1 "^[[:space:]]*psk=")
-            key=${key#*psk=}
-        else
-            key=$(printf "%q" "$key")
+        if [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
+            if [[ "$OBSCURE" ]]; then
+                key=$(wpa_passphrase "$1" "$key" | grep -m 1 "^[[:space:]]*psk=")
+                key=${key#*psk=}
+            else
+                key=$(printf "%q" "$key")
+            fi
+        elif ! [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
+            return 4
         fi
     fi
     cat << EOF > "$PROFILE_DIR/$PROFILE"
