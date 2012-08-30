@@ -3,7 +3,7 @@ Description=Provides automatic netcfg wired connection
 
 [Service]
 EnvironmentFile=/etc/conf.d/netcfg
-ExecStart=/usr/sbin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIns
+ExecStart=/usr/bin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIns
 ExecStop=/usr/bin/netcfg iface-down $WIRED_INTERFACE
 
 [Install]

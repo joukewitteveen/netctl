@@ -5,7 +5,7 @@
 . /usr/lib/network/globals
 . /etc/conf.d/netcfg
 
-if [[ ! -x /usr/sbin/ifplugd ]]; then
+if [[ ! -x /usr/bin/ifplugd ]]; then
   exit_stderr "Please install 'ifplugd' to use net-auto-wired"
 fi
 
@@ -30,7 +30,7 @@ case "$1" in
     stat_busy "Starting netcfg auto-wired mode for interface ${WIRED_INTERFACE}"
     A="`eval echo \$\{ARGS_${WIRED_INTERFACE}\}`"
     [[ "$A" ]] || A="$ARGS"
-    [[ "$PID" ]] || /usr/sbin/ifplugd -i $WIRED_INTERFACE -r $ACTION $A
+    [[ "$PID" ]] || /usr/bin/ifplugd -i $WIRED_INTERFACE -r $ACTION $A
     # ifplugd may return non-zero, but still succeed if -w is passed, as default in upstream config.
     sleep 1
     if [[ -f $PIDFILE ]]; then
@@ -43,7 +43,7 @@ case "$1" in
   stop)
     if ! ck_daemon net-auto-wired; then
       stat_busy "Stopping netcfg auto-wired mode for interface ${WIRED_INTERFACE}"
-      if [[ "$PID" ]] && /usr/sbin/ifplugd -k -i $WIRED_INTERFACE -r $ACTION; then
+      if [[ "$PID" ]] && /usr/bin/ifplugd -k -i $WIRED_INTERFACE -r $ACTION; then
         rm_daemon net-auto-wired
         stat_done
       else
