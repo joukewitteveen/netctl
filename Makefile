@@ -1,4 +1,4 @@
-export VERSION = 2.8.9
+export VERSION = 2.8.10
 
 .PHONY: install install-wireless install-docs docs tarball pkgbuild upload clean
 
@@ -13,7 +13,7 @@ install: install-docs
 	install -m644 src/{network,rfkill,8021x,globals} $(DESTDIR)/usr/lib/network/
 	install -m755 src/connections/* $(DESTDIR)/usr/lib/network/connections/
 	# Hooks
-	install -m755 src/hooks/* ${DESTDIR}/usr/lib/network/hooks/
+	install -m755 src/hooks/* $(DESTDIR)/usr/lib/network/hooks/
 	# Scripts
 	install -d $(DESTDIR)/usr/bin
 	install -m755 \
