@@ -12,23 +12,25 @@ version()
 usage()
 {
     version
-    echo "Usage:"
-    echo "      Start specified profile:    netcfg profile "
-    echo "      Other functions:            netcfg argument profile"
-    echo "Arguments:"
-    echo "    current        Report currently running profiles"
-    echo "-a, all-down       Take all active profiles down"
-    echo "-c, check-iface    Do not start profile if interface is already up"
-    echo "-d, down           Take specified profile down"
-    echo "-D, iface-down     Take down profile active on specified interface"
-    echo "-h, help           This help message"
-    echo "-l, list           List all available profiles"
-    echo "-r, reconnect      Disconnect and reconnect specified profile"
-    echo "-R, iface-recon    Reconnect profile active on specified interface"
-    echo "-u, up             Start specified profile"
-    echo "-v, version        Output version information and exit"
-    echo "    all-resume     Resume previously suspended profiles and reconnect them"
-    echo "    all-suspend    Store a list of current running profiles and suspend them"
+    cat << END
+Usage:
+      Start specified profile:    netcfg profile
+      Other functions:            netcfg argument profile
+Arguments:
+    current        Report currently running profiles
+-a, all-down       Take all active profiles down
+-c, check-iface    Do not start profile if interface is already up
+-d, down           Take specified profile down
+-D, iface-down     Take down profile active on specified interface
+-h, help           This help message
+-l, list           List all available profiles
+-r, reconnect      Disconnect and reconnect specified profile
+-R, iface-recon    Reconnect profile active on specified interface
+-u, up             Start specified profile
+-v, version        Output version information and exit
+    all-resume     Resume previously suspended profiles and reconnect them
+    all-suspend    Store a list of current running profiles and suspend them
+END
 }
 
 # TODO: Re-add ROOT check and rewrite with getopts from BashFAQ
