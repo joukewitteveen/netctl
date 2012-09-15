@@ -43,6 +43,7 @@ pppoe_up() {
     [[ -n ${PPPOE_AC} ]] && echo "rp_pppoe_ac $(_quotestring "${PPPOE_AC}")" >> "${cfg}"
     [[ -n ${PPPOE_SESSION} ]] && echo "rp_pppoe_sess $(_quotestring "${PPPOE_SESSION}")" >> "${cfg}"
     [[ -n ${PPPOE_MAC} ]] && echo "pppoe-mac $(_quotestring "${PPPOE_MAC}")" >> "${cfg}"
+    [[ ${PPPOE_IP6} == yes ]] && echo "+ipv6" >> "${cfg}"
 
     /sbin/ip link set dev "${INTERFACE}" up
     /usr/sbin/pppd file "${cfg}"

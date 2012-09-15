@@ -29,3 +29,5 @@ CONNECTION_MODE='persist'
 #PPPOE_SESSION=''
 # Only connect to specified MAC address
 #PPPOE_MAC=''
+# Enable IPv6 support
+#PPPOE_IP6='yes'
