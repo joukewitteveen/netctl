@@ -9,9 +9,9 @@ pppoe_up() {
     local cfg
     load_profile "$1"
 
-    mkdir -p "$STATE_DIR"/pppoe.eth0."$1"/
-    chmod 700 "$STATE_DIR"/pppoe.eth0."$1"/
-    cfg="$STATE_DIR"/pppoe.eth0."$1"/options
+    mkdir -p "$STATE_DIR/pppoe.${INTERFACE}.$1/"
+    chmod 700 "$STATE_DIR/pppoe.${INTERFACE}.$1/"
+    cfg="$STATE_DIR/pppoe.${INTERFACE}.$1/options"
     : > "${cfg}"
     chmod 600 "${cfg}"
 
@@ -44,12 +44,12 @@ pppoe_up() {
     [[ -n ${PPPOE_SESSION} ]] && echo "rp_pppoe_sess $(_quotestring "${PPPOE_SESSION}")" >> "${cfg}"
     [[ -n ${PPPOE_MAC} ]] && echo "pppoe-mac $(_quotestring "${PPPOE_MAC}")" >> "${cfg}"
 
-    /sbin/ip link set dev ${INTERFACE} up
+    /sbin/ip link set dev "${INTERFACE}" up
     /usr/sbin/pppd file "${cfg}"
 
     if [[ $? -ne 0 ]]; then
         rm "${cfg}"
-        rmdir "$STATE_DIR"/pppoe.eth0."$1"/
+        rmdir "$STATE_DIR/pppoe.${INTERFACE}.$1/"
         report_fail "Couldn't make pppd connection."
         return 1
     fi
@@ -58,7 +58,7 @@ pppoe_up() {
 pppoe_down() {
     load_profile "$1"
     local cfg
-    cfg="$STATE_DIR"/pppoe.eth0."$1"/options
+    cfg="$STATE_DIR/pppoe.${INTERFACE}.$1/options"
     PIDFILE="/var/run/ppp-$1.pid"
 
     if [[ -e $PIDFILE ]]; then
@@ -67,7 +67,7 @@ pppoe_down() {
     fi
 
     rm "${cfg}"
-    rmdir "$STATE_DIR"/pppoe.eth0."$1"/
+    rmdir "$STATE_DIR/pppoe.${INTERFACE}.$1/"
 }
 
 pppoe_$1 "$2"
