@@ -8,9 +8,11 @@ if ! type dialog &> /dev/null; then
 fi
 
 check_make_state_dir
-
 # JP: we'll use $STATE_DIR/menu to record what profile is being connected in this way
 rm -f "$STATE_DIR/menu"
+
+# Set timeout
+TIMEOUT=${1-0}
 
 # Scan all profiles
 i=0
@@ -30,13 +32,6 @@ fi
 # if no default yet, use the first entry
 [[ -z "$DEFAULT" ]] && DEFAULT="${profiles[0]}"
 
-# Set timeout
-if [[ -z "$1" ]]; then
-    TIMEOUT="0"
-else
-    TIMEOUT="$1"
-fi
-
 # Display Dialog
 PROFILE=$(dialog --timeout "$TIMEOUT" --default-item "$DEFAULT" --stdout \
                  --menu 'Select the network profile you wish to use' \
@@ -50,8 +45,8 @@ case $ret in
         ret=$?
         (( ret == 0 )) && echo "$PROFILE" > "$STATE_DIR/menu"
         ;;
-    *)  # Shouldnt happen
-        exit_err "Abnormal ret code from dialog: $ret"
+    *)  # Should not happen
+        exit_err "Abnormal return code from dialog: $ret"
         ;;
 esac
 

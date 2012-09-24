@@ -19,7 +19,7 @@ case "$1" in
 					[[ -e $LAST_STATE ]] || exit_err "No recorded netcfg state to restore"
 
 					# The order in LAST_STATE is meaningless so we can just as
-					# well start the profiles in the background.
+					# well start the profiles in parallel.
 					while read profile; do
 						if /usr/bin/netcfg up "$profile"; then
 							echo "$profile" >> "$STATE_FILE"
