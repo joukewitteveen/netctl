@@ -8,6 +8,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/netcfg-daemon start
 ExecStop=/usr/bin/netcfg-daemon stop
+KillMode=none
 
 [Install]
 WantedBy=multi-user.target
