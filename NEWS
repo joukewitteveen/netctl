@@ -1,3 +1,7 @@
+version 2.8.11
+- add IPv6 support for PPPoE connections
+- use a workound for a unit stopping bug in systemd
+
 version 2.8.10
 - allow hex passphrases in wifi-menu
 - ifplugd path change for net-auto-wired (FS#31340)
