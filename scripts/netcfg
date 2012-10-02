@@ -87,6 +87,7 @@ case "$1" in
         rm "$STATE_DIR/netcfg-daemon" 2> /dev/null
         killall wpa_supplicant 2> /dev/null
         killall dhcpcd 2> /dev/null
+        killall dhclient 2> /dev/null
         ;;
     -*|--*)
         usage
