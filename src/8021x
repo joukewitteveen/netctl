@@ -73,6 +73,9 @@ stop_wpa()
     # we need this as long as wpa_cli has a different default than netcfg
     [[ -z "$WPA_CTRL_DIR" && -z "$WPA_CONF" ]] && WPA_CTRL_DIR="/run/wpa_supplicant"
 
+    # done if wpa_supplicant is already terminated for this interface
+    [[ -e "$WPA_CTRL_DIR/$INTERFACE" ]] || return
+
     wpa_call "$INTERFACE" terminate > /dev/null
 
     # wait up to one second for the pid file to be removed
