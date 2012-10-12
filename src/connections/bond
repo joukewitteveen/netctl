@@ -11,13 +11,14 @@ bond_up() {
     else
         ip link add dev $INTERFACE type bond
     fi
-    "$CONN_DIR/ethernet" up "$1"
+    bring_interface up "$INTERFACE"
 
     for slave in "${SLAVE_INTERFACES[@]}"; do
         bring_interface up "$slave"
         $IFENSLAVE $INTERFACE $slave
     done
 
+    "$CONN_DIR/ethernet" up "$1"
     return 0
 }
 

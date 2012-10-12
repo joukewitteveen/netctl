@@ -353,16 +353,10 @@ bring_interface()
     local INTERFACE="$2"
     case "$1" in
         up)
-            if ! ( eval $IFACE_UP ); then
-                return 1
-            fi
             ip link set dev "$INTERFACE" up &>/dev/null
             timeout_wait "${UP_TIMEOUT:-5}" 'interface_is_up "$INTERFACE"' || return 1
         ;;
         flush|down)
-            if ! ( eval $IFACE_DOWN ); then
-                return 1
-            fi
             ip addr flush dev "$INTERFACE" &>/dev/null
         ;;&
         down)
