@@ -23,8 +23,8 @@ openvpn_up() {
     if [[ -n "$DNS" ]]; then
         [[ -e /etc/resolv.conf ]] && cp /etc/resolv.conf /tmp/openvpn-$1-resolv.conf
         : >/etc/resolv.conf
-        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
-        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN" >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH" >>/etc/resolv.conf
         for dns in "${DNS[@]}"; do
             echo "nameserver $dns" >>/etc/resolv.conf
         done

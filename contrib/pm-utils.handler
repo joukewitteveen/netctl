@@ -30,7 +30,7 @@ case "$1" in
     hibernate|suspend_hybrid|suspend)
         report_notice "suspending all interfaces..."
         daemon_suspend_all
-        if checkyesno "${RESTOREPROFILES:-no}"; then        
+        if checkyesno "${RESTOREPROFILES:-no}"; then
             interface_suspend all
         fi
         ;;

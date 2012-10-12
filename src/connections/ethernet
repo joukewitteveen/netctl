@@ -205,7 +205,7 @@ ethernet_up() {
     # Set hostname
     if [[ -n "$HOSTNAME" ]]; then
         report_debug ethernet_up hostname "$HOSTNAME"
-        if ! echo "$HOSTNAME" > /proc/sys/kernel/hostname; then
+        if ! echo "$HOSTNAME" >/proc/sys/kernel/hostname; then
             report_iproute "Cannot set hostname to $HOSTNAME"
         fi
     fi
@@ -213,8 +213,8 @@ ethernet_up() {
     # Generate a new resolv.conf
     if [[ -n "$DNS" ]]; then
         : >/etc/resolv.conf
-        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN"   >>/etc/resolv.conf
-        [[ -n "$SEARCH" ]] && echo "search $SEARCH"   >>/etc/resolv.conf
+        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN" >>/etc/resolv.conf
+        [[ -n "$SEARCH" ]] && echo "search $SEARCH" >>/etc/resolv.conf
         for dns in "${DNS[@]}"; do
             echo "nameserver $dns" >>/etc/resolv.conf
         done

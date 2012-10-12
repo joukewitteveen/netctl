@@ -49,7 +49,7 @@ if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
     enable_rf "$interface" "$RFKILL" "$RFKILL_NAME" || exit $?
 fi
 
-WPA_CONF="$(make_wpa_config_file $interface)"
+WPA_CONF="$(make_wpa_config_file "$interface")"
 
 if [[ -n "${AUTO_PROFILES}" ]]; then
     # At some point, this can be removed.
@@ -72,7 +72,7 @@ fi | while read profile; do
     [[ -z "$SECURITY" ]] && SECURITY="none"
     [[ $SECURITY == "wpa-config" ]] && exit 1
 
-    printf "%s\n" "network={" "$(make_wpa_config)" "id_str=\"$profile\"" "}" >> $WPA_CONF
+    printf "%s\n" "network={" "$(make_wpa_config)" "id_str=\"$profile\"" "}" >> "$WPA_CONF"
     )
 done
 
@@ -83,8 +83,8 @@ WPA_OPTS="-W $WPA_OPTS"
 # Kill any existing wpa_supplicant on this interface
 stop_wpa "$interface" &> /dev/null
 
-if start_wpa $interface $WPA_CONF $WPA_DRIVER $WPA_OPTS; then
-    if $AUTOWIFI -i ${interface} -P ${PIDFILE} -a ${ACTION_SCRIPT} ${EXTRA_AUTOWIFI_OPTIONS}; then
+if start_wpa "$interface" "$WPA_CONF" "$WPA_DRIVER" $WPA_OPTS; then
+    if $AUTOWIFI -i "$interface" -P "$PIDFILE" -a "$ACTION_SCRIPT" $EXTRA_AUTOWIFI_OPTIONS; then
         exit 0
     fi
 fi
