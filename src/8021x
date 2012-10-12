@@ -129,7 +129,7 @@ wpa_supplicant_scan_and_find() {
         local found
         wpa_call "$INTERFACE" scan > /dev/null
         sleep 2
-        found=$(wpa_call "$INTERFACE" scan_results | tail -n+2 | cut -f ${FIELD} | grep -F -x -m 1 "${ITEM}")
+        found=$(wpa_call "$INTERFACE" scan_results | tail -n+2 | cut -f "$FIELD" | grep -F -x -m 1 -- "$ITEM")
         (( $? == 0 )) && scan_ok=1
 
         # ITEM has been found, echo it
