@@ -48,7 +48,8 @@ NETWORKS=(@adsl @mywireless lan)
 Alternatively, you can have netcfg restart the profiles you had running
 at the previous shutdown by specifying +NETWORKS=(last)+.
 
-Next, add `net-profiles' to your +DAEMONS+ line in '/etc/rc.conf'.
+Next, enable the `netcfg' systemd service or, on legacy systems, add
+`net-profiles' to +DAEMONS+ in '/etc/rc.conf'.
 
 
 Wireless automatic connection and roaming support
@@ -64,9 +65,9 @@ To use this:
 ---------------------------
 WIRELESS_INTERFACE="wlan0" 
 ---------------------------
-.  Run `/etc/rc.d/net-auto-wireless start`
+.  Run `systemctl start net-auto-wireless`
 
-To run on boot, add `net-auto-wireles' to your +DAEMONS+ line.
+To run on boot, enable the `net-auto-wireless' systemd service.
 
 
 Per interface configuration
@@ -87,19 +88,20 @@ Execute commands before/after interface up/down
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If your interface requires special actions prior/after the
 establishment/closure of a connection, you may use the +PRE_UP+, POST_UP,
-+PRE_DOWN+, +POST_DOWN+ properties. For example, if you want to start
-daemon abc before connecting:
++PRE_DOWN+, +POST_DOWN+ properties. For example, if you want to run a
+script before connecting:
 
-----------------------------
-PRE_UP="/etc/rc.d/abc start"
-----------------------------
+------------------------
+PRE_UP="/path/to/script"
+------------------------
 
-Or if you want to mount your network shares after a successful
-connection, you could use:
+Or if you want to manage resolv.conf through resolvconf, you could
+remove any DNS related options and use the following, which will be run
+after a successful connection:
 
----------------------------------------------------------
-POST_UP="sleep 5; mount /mnt/shares/desktop 2>/dev/null;"
----------------------------------------------------------
+----------------------------------------------------------------
+POST_UP='echo "nameserver 8.8.8.8" | resolvconf -a "$INTERFACE"'
+----------------------------------------------------------------
 
 If the commands specified in these properties return anything other than
 0 (success), netcfg aborts the current operation. If you command might
@@ -122,7 +124,7 @@ You may select a profile to connect to from a menu. This requires the
 'dialog' package installed. To display a menu, simply run `netcfg-menu`.
 If you wish to have a menu on boot, set +NETWORKS=(menu)+ in your
 '/etc/conf.d/netcfg' and ensure that `net-profiles' is in the +DAEMONS+
-array.
+array. A boot-time menu is not supported on systemd installations.
 
 
 Menu based wireless network selection

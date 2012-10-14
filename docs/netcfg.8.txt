@@ -21,9 +21,10 @@ as wireless, ethernet, ppp. It is also capable of starting/stopping many
 to one connections, that is, multiple connections within the same
 profile, optionally with bonding.
 
-It may be run at boot, by enabling the '/etc/rc.d/net-profiles' daemon
-in '/etc/rc.conf' +DAEMONS+ line. After boot time, it may be used to
-start profiles, simply by passing only the profile name.
+It may be run at boot, by enabling the 'netcfg' systemd service, or, on
+legacy systems, by adding 'net-profiles' to +DAEMONS+ in '/etc/rc.conf'.
+After boot time, it may be used to start profiles, simply by passing only
+the profile name.
 
 When run without options, `netcfg profile` is equivalent to `netcfg -u
 profile`.
