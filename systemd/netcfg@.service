@@ -8,6 +8,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/netcfg check-iface %i
 ExecStop=-/usr/bin/netcfg down %i
+KillMode=none
 
 [Install]
 WantedBy=multi-user.target
