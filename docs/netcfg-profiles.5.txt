@@ -107,6 +107,8 @@ DNS configuration
 +DNS+::
   Array of DNS nameservers. Simply specify the IP's of each of the DNS
   nameservers.
++DNS_OPTIONS+::
+  Array of ``option'' lines for '/etc/resolv.conf'
 +SEARCH+::
   ``search'' line for '/etc/resolv.conf'
 +DOMAIN+::
