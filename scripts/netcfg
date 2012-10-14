@@ -67,7 +67,7 @@ case "$1" in
         profile_up "$2";;
     -d|down)
         profile_down "$2";;
-    -D|iface-down|-i)  # -i is there for backward compatibility (pre 2.7)
+    -D|iface-down)
         interface_down "$2";;
     -a|all-down)
         all_down;;

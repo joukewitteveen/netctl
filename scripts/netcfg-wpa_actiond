@@ -52,12 +52,6 @@ fi
 WPA_CONF="$(make_wpa_config_file "$interface")"
 
 if [[ -n "${AUTO_PROFILES}" ]]; then
-    # At some point, this can be removed.
-    if [[ ${#AUTO_PROFILES[@]} -eq 1 ]]; then
-        report_err "Please convert AUTO_PROFILES to an array in /etc/conf.d/netcfg."
-        AUTO_PROFILES=($AUTO_PROFILES)
-    fi
-
     for prof in "${AUTO_PROFILES[@]}"; do echo "$prof"; done
 else
     list_profiles
