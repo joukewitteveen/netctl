@@ -1,5 +1,5 @@
 CONNECTION='tunnel'
-DESCRIPTION='A example ipv6 tunnel with Hurricane Electric'
+DESCRIPTION='An example ipv6 tunnel with Hurricane Electric'
 
 INTERFACE='he-ipv6'
 MODE='sit'
