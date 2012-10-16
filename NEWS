@@ -1,3 +1,10 @@
+version 3.0
+- drop a version number digit
+- add support for 'options' in /etc/resolv.conf
+- update rfkill implementation
+- fix bond connections (FS#31770)
+- assorted fixes
+
 version 2.8.11
 - add IPv6 support for PPPoE connections
 - use a workound for a unit stopping bug in systemd
