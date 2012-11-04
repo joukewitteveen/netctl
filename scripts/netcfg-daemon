@@ -16,7 +16,12 @@ case "$1" in
 		if [[ ${#NETWORKS[@]} -eq 1 ]]; then
 			case $NETWORKS in
 				last)
-					[[ -e $LAST_STATE ]] || exit_err "No recorded netcfg state to restore"
+					if [[ ! -e $LAST_STATE ]]; then
+						report_err "No recorded netcfg state to restore"
+						# This counts as successful startup since the daemon
+						# should be stopped on shutdown.
+						exit 0
+					fi
 
 					# The order in LAST_STATE is meaningless so we can just as
 					# well start the profiles in parallel.
