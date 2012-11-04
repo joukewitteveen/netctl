@@ -1,5 +1,5 @@
 [Unit]
-Description=Provides automatic netcfg wired connection
+Description=Automatic wired network connection via netcfg
 
 [Service]
 EnvironmentFile=/etc/conf.d/netcfg

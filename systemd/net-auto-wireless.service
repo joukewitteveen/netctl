@@ -1,5 +1,5 @@
 [Unit]
-Description=Provides automatic netcfg wireless connection
+Description=Automatic wireless network connection via netcfg
 Before=network.target
 Wants=network.target
 
