@@ -1,6 +1,6 @@
-export VERSION = 3.0
+export VERSION = 3.1
 
-.PHONY: install install-wireless install-docs docs tarball pkgbuild upload clean
+.PHONY: install install-docs docs tarball pkgbuild upload clean
 
 install: install-docs
 	# Configuration files

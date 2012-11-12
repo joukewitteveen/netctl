@@ -1,3 +1,8 @@
+version 3.1
+- reword systemd service descriptions
+- fix support for 'last' when using systemd
+- fix support for 'options' in /etc/resolv.conf
+
 version 3.0
 - drop a version number digit
 - add support for 'options' in /etc/resolv.conf
