@@ -219,7 +219,7 @@ ethernet_up() {
             echo "nameserver $dns" >>/etc/resolv.conf
         done
         for dnsoption in "${DNS_OPTIONS[@]}"; do
-            echo "option $dnsoption" >>/etc/resolv.conf
+            echo "options $dnsoption" >>/etc/resolv.conf
         done
     fi
 
