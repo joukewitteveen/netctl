@@ -1,12 +1,12 @@
-INTERFACE="eth0.11"
-VLAN_PHYS_DEV="eth0"
-VLAN_ID="11"
-CONNECTION="vlan"
-IP="static"
-ADDR="192.168.0.100"
-NETMASK="255.255.255.0"
-GATEWAY="192.168.0.1"
+Interface=eth0.11
+Connection=vlan
+# The variable name is plural, but needs precisely one interface
+BindsToInterfaces=eth0
+VLANID=11
+IP=static
+Address="192.168.0.100/24"
+Gateway="192.168.0.1"
 DNS=("192.168.0.2")
-HOSTNAME="myhost"
-DOMAIN="mydomain.com"
-SEARCH="mydomain.com"
+Hostname="myhost"
+DNSDomain="mydomain.com"
+DNSSearch="mydomain.com"

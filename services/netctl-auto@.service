@@ -1,12 +1,12 @@
 [Unit]
-Description=Automatic wireless network connection via netcfg
+Description=Automatic wireless network connection using netctl profiles
+Documentation=man:netctl.special(7)
 Before=network.target
 Wants=network.target
 
 [Service]
-EnvironmentFile=/etc/conf.d/netcfg
-ExecStart=/usr/bin/netcfg-wpa_actiond $WIRELESS_INTERFACE
-ExecStop=/usr/bin/netcfg-wpa_actiond stop $WIRELESS_INTERFACE
+ExecStart=/usr/bin/netctl-auto start %i
+ExecStop=/usr/bin/netctl-auto stop %i
 RemainAfterExit=yes
 Type=forking
 

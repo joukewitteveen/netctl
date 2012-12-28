@@ -1,61 +1,60 @@
-set_rf_state() {
-    local INTERFACE="$1" state="$2" RFKILL_NAME="$3"
+## /usr/lib/network/globals needs to be sourced before this file
 
-    if [[ "$RFKILL" == "hard" ]]; then
-        report_fail "Cannot set state on hardware rfkill switch"
-        return 1
-    fi
-    local path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
-    case "$state" in
-        enabled)
-            echo 0 > "$path/soft"
-        ;;
-        disabled)
-            echo 1 > "$path/soft"
-        ;;
-    esac
-}
 
+## Determine the system interface of an rfkill device
+# $1: interface name
+# $2: rfkill name
 get_rf_path() {
-    local INTERFACE="$1" RFKILL_NAME="$2" path
+    local interface=$1 rfkill_name=${2:-auto} path
 
-    if [[ -n "$RFKILL_NAME" ]]; then
+    if [[ $rfkill_name == "auto" ]]; then
+        path=$(find -L "/sys/class/net/$interface/" -maxdepth 2 -type d -name "rfkill*" 2> /dev/null | head -n 1)
+        if [[ $path ]]; then
+            echo "$path"
+            return 0
+        fi
+        report_error "No rfkill switch available on interface '$interface'"
+    else
         for path in /sys/class/rfkill/*; do
-            if [[ "$(< "$path/name")" == "$RFKILL_NAME" ]]; then
+            if [[ $(< "$path/name") == "$rfkill_name" ]]; then
                 echo "$path"
                 return 0
             fi
         done
-        report_fail "no rfkill switch with name $RFKILL_NAME"
-    else
-        path=$(find -L "/sys/class/net/$INTERFACE/" -maxdepth 2 -type d -name "rfkill*" 2> /dev/null | head -n 1)
-        if [[ -n "$path" ]]; then
-            echo "$path"
-            return 0
-        fi
-        report_fail "no rfkill switch available on interface $INTERFACE"
+        report_error "No rfkill switch with name '$rfkill_name'"
     fi
     return 1
 }
 
+## Unblock transmission through a wireless device
+# $1: interface name
+# $2: rfkill name
 enable_rf() {
-    local INTERFACE="$1" RFKILL="$2" RFKILL_NAME="$3" path hard soft
+    local interface=$1 rfkill=$2 path hard soft
 
-    # Enable rfkill if necessary, or fail if it is hardware
-    if [[ -n "$RFKILL" ]]; then
-        path=$(get_rf_path "$INTERFACE" "$RFKILL_NAME") || return 1
-        read hard < "$path/hard"
-        read soft < "$path/soft"
+    path=$(get_rf_path "$interface" "$rfkill") || return 1
+    read hard < "$path/hard"
+    read soft < "$path/soft"
 
-        if (( hard )); then
-            report_fail "radio is disabled on $INTERFACE"
-            return 1
-        elif (( soft )); then
-            set_rf_state "$INTERFACE" enabled "$RFKILL_NAME" || return 1
-            timeout_wait 1 "(( ! \$(< \"$path/soft\") ))"
-        fi
+    if (( hard )); then
+        report_error "Transmission is hard-blocked on interface '$interface'"
+        return 1
+    elif (( soft )); then
+        do_debug echo 0 > "$path/soft"
+        timeout_wait 1 '(( ! $(< "$path/soft") ))'
     fi
 }
 
-# vim: ft=sh ts=4 et sw=4:
+## Block transmission through a wireless device
+# $1: interface name
+# $2: rfkill name
+disable_rf() {
+    local interface=$1 rfkill=$2 path
 
+    path=$(get_rf_path "$interface" "$rfkill") || return 1
+    do_debug echo 1 > "$path/soft"
+    timeout_wait 1 '(( $(< "$path/soft") ))'
+}
+
+
+# vim: ft=sh ts=4 et sw=4:

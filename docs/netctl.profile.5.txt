@@ -1,321 +1,362 @@
-NETCFG-PROFILES(5)
-==================
+NETCTL.PROFILE(5)
+=================
 
 NAME
 ----
-netcfg-profiles - netcfg profiles documentation and syntax
+netctl.profile - Profile options
+
+
+SYNOPSIS
+--------
+netctl.profile
 
 
 DESCRIPTION
 -----------
-The *netcfg*(8) profiles are plain text files that defines variables for
-netcfg behavior. They must be compliant with *bash*(1) shell syntax and
-usually do not execute any code.
+Profiles for netctl live under '/etc/network.d/' and are plain text
+files. The files consist of variable definitions following the bash
+shell syntax and are not expected to execute any code. It is good to
+omit as much quoting as possible. For a few WPA-related variables,
+special quoting rules (see below) apply.
 
-They are named '/etc/network.d/$\{profile_name}', where
-+$\{profile_name\}+ must not contain a newline character and should not
-start with the `@'-sign.
-
-
-OVERVIEW
---------
-Profiles must define mandatory variables:
-
-+INTERFACE+::
-  The name of the associated network interface.
-+DESCRIPTION+::
-  A description of the profile.
-+CONNECTION+::
-  The connection type used by the profile.
-
-Connections define how the network is set up for the profile and also
-determine additional configuration variable that control their
-behavior. The available connection types are determined by files in
-'/usr/lib/network/connections/'.
+The name of the profile is the name of the file. Profile names must not
+contain newlines and should not end in '.service' or '.conf'. Whenever a
+profile is read, all executable scripts in '/etc/network.d/hooks/' and
+any executable script in '/etc/network.d/interfaces/' with the name of
+the interface for the profile are sourced. For each connection type,
+there are example profile files in '/etc/network.d/examples/'.
 
 
-Available connections
----------------------
-ethernet::
-  Standard network configuration, suitable for wired connections.
-wireless::
-  Wireless connection, with *wpa_supplicant*(1) as configuration
-  back-end.
-bond::
-  Bonded network interfaces using *ifenslave*.
-bridge::
-  Network bridge setup using *brctl*(8).
-tuntap::
-  TUN/TAP interfaces.
-tunnel::
-  Tunnel interfaces.
-vlan::
-  VLAN setup.
-openvpn::
-  OpenVPN setup.
-ppp::
-  PPP connections setup.
-pppoe::
-  PPPoE connections setup.
-
-The configuration variable for these connection types is described in
-the following sections.
-
-
-Ethernet options reference
+AVAILABLE CONNECTION TYPES
 --------------------------
-
-Description
-~~~~~~~~~~~
-This connection method uses the iproute suite of tools and dhcpcd to
-gain an IP address.
-
-+IP+ (required for IPv4)::
-  Either `static' or `dhcp'. Set to `no' to have netcfg bring the interface
-  up but assign no addresses. Static requires at least one of +ADDR+ or
-  +IPCFG+.
-
-IPv4 options
-~~~~~~~~~~~~
-+ADDR+ (requires +IP+ of `static')::
-  A single IP address to configure a static IP.
-+GATEWAY+ (requires +IP+ of `static')::
-  Set specified gateway
-+NETMASK+ (requires +IP+ of `static')::
-  Set specified netmask. Defaults to 24.
-+ROUTES+::
-  An array of custom routes (of the form _address range_ via _gateway_)
-
-IPv6 options
-~~~~~~~~~~~~
-+IP6+ (required for IPv6)::
-  Either `dhcp', `dhcp-noaddr', `stateless', `static'. Set to `no' to
-  disable IPv6.
-+ADDR6+ (required when +IP6+ is `static')::
-  An array of IPv6 addresses: prefix length may be specified via
-  `1234:bcd::11/64' syntax.
-+GATEWAY6+ (requires +IP6+ of `static')::
-  The gateway address for IPv6 routing.
-+ROUTES6+::
-  An array of custom routes (of the form _address range_ via _gateway_)
-+DAD_TIMEOUT+::
-  Time to wait for Duplicate Address Detection to succeed. Defaults to
-  3 seconds.
-
-DNS configuration
-^^^^^^^^^^^^^^^^^
-+DNS+::
-  Array of DNS nameservers. Simply specify the IP's of each of the DNS
-  nameservers.
-+DNS_OPTIONS+::
-  Array of ``option'' lines for '/etc/resolv.conf'
-+SEARCH+::
-  ``search'' line for '/etc/resolv.conf'
-+DOMAIN+::
-  ``domain'' line for '/etc/resolv.conf'
-+HOSTNAME+::
-  Set the system hostname. Ensure any hostname is correctly referenced
-  in '/etc/hosts'
-
-DHCP configuration
-^^^^^^^^^^^^^^^^^^
-+DHCP_OPTIONS+ (ipv4)::
-  String. Any extra arguments to pass to the dhcp client, presently
-  dhcpcd.
-+DHCP_TIMEOUT+::
-  Integer. Maximum time to try for a DHCP IP. Default is 10 seconds.
-+DHCLIENT+::
-  yes/no. Use dhclient instead of dhcpcd. Defaults to no
-+DHCLIENT_OPTIONS+ (ipv4)::
-  String. Extra options to pass to dhclient for IPv4.
-+DHCLIENT6_OPTIONS+ (ipv6)::
-  String. Extra options to pass to dhclient for IPv6.
-
-802.11x Authentication
-^^^^^^^^^^^^^^^^^^^^^^
-+AUTH8021X+::
-  Use 802.11x authentication. Enable with `yes'.
-+WPA_CONF+ (required for an +AUTH8021X+ of `yes' only)::
-  Path to wpa_supplicant configuration. Defaults to
-  '/etc/wpa_supplicant.conf'
-+WPA_OPTS+ (optional for an +AUTH8021X+ of `yes')::
-  Extra arguments for wpa_supplicant not specified otherwise. Any option
-  here must specify wpa_supplicant driver. Defaults to _-Dwired_.
-
-Miscellaneous options
-^^^^^^^^^^^^^^^^^^^^^
-+IPCFG+::
-  Array of arguments to pass to `ip`. The power of this options is that
-  it allows both simple and complicated routing configurations, within
-  the framework of netcfg.
-+SKIPNOCARRIER+::
-  `yes'/`no'. Don't abort interface setup if no carrier is found.
++ethernet+::
+    For wired connections.
++wireless+::
+    For wireless connections. This connection type requires
+    *wpa_supplicant* to be available.
++bond+::
+    Network bonding. This connection type requires *ifenslave* to be
+    available.
++bridge+::
+    Network bridging. This connection type requires *brctl* to be
+    available.
++pppoe+::
+    For PPPoE connections.
++tunnel+::
+    For tunnel interfaces.
++tuntap+::
+    For TUN/TAP interfaces.
++vlan+::
+    For VLANs on ethernet-like connections.
 
 
-Examples
-~~~~~~~~
+GENERAL OPTIONS
+---------------
+'Description='::
+    A description of the profile.
 
-Using ADDR and GATEWAY to set static IP and gateway
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
----------------------
-IP="static"
-ADDR="192.168.1.23"
-GATEWAY="192.168.1.1"
----------------------
+'Connection=' [mandatory for all profiles]::
+    The connection type used by the profile.
 
-Using IPCFG to set a static IP and gateway with custom DNS
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
--------------------------------------------------------------------------------------
-IP="static"
-IPCFG=("addr add dev eth0 192.168.1.23/24 brd +" "route add default via 192.168.1.1")
-DNS=("208.67.222.222" "208.67.220.220")
--------------------------------------------------------------------------------------
+'Interface=' [mandatory for all profiles]::
+    The name of the associated network interface. The interface name
+    should not be quoted.
 
+'BindsToInterfaces=()'::
+    An array of physical network interfaces that this profile needs
+    before it can be started. For `enabled' profiles, *systemd* will
+    wait for the presence of the specified interfaces before starting a
+    profile. If this variable is not specified, it defaults to the value
+    of 'Interface'.
 
-Wireless options reference
---------------------------
+'After=()'::
+    An array of profile names that should be started before this profile
+    is started. This is only an ordering dependency and is not intended
+    to be a list of profiles that this profile requires. The meaning is
+    the same as 'After' in *systemd.unit*(5).
 
-Description
-~~~~~~~~~~~
-This connection method uses wpa_supplicant to configure a wireless
-network connection. This connection uses the 'ethernet' connection after
-successful association and thus supports all of its options.
+'ExecUpPost='::
+    A command that is executed after a connection is established. If the
+    specified command returns anything other than 0 (success), *netctl*
+    will abort and stop the profile. If the command should be allowed to
+    fail, add ``|| true`' to the end of it.
 
-Options
-~~~~~~~
-+SECURITY+ (required for security of `wep', `wpa', `wpa-configsection' or `wpa-config')::
-  One of `wpa', `wep', `none', `wpa-configsection' or `wpa-config'.
-  Defaults to `none'.
-+KEY+ (required for +SECURITY+ of `wpa' or `wep' only)::
-  Wireless encryption key.
-+ESSID+ (this or +AP+ is required)::
-  Name of network to connect to, or hexadecimal digits (see
-  `ESSID_TYPE')
-+ESSID_TYPE+ (optional, defaults to `ascii')::
-  Set to `ascii' or `hex', if set to `hex', +ESSID+ will be interpreted as
-  an hexadecimal +SSID+ and written unquoted to the wpa_supplicant
-  configuration file.
-+AP+ (this or +ESSID+ is required)::
-  AP (BSSID) of the network to connect to.
-+HIDDEN+ (optional)::
-  Define this to connect to hidden ESSIDs.
-+ADHOC+ (optional)::
-  Define this to use ad-hoc mode for wireless.
-+TIMEOUT+ (optional)::
-  Time to wait for association. Defaults to 15 seconds.
-+SCAN+ (optional)::
-  `yes'/`no'. Scan for a wireless network rather than blindly attempting to
-  connect. Hidden SSID networks do not appear in a scan.
-+PRIORITY+ (optional)::
-  Priority group for the network. The matched network with the highest
-  priority will be selected. Defaults to 0.
-
-WPA options
-^^^^^^^^^^^
-+WPA_CONF+ (for +SECURITY+ of `wpa-config' only)::
-  Path to wpa_supplicant configuration. Defaults to
-  '/etc/wpa_supplicant.conf'
-+WPA_OPTS+::
-  Extra arguments for wpa_supplicant not specified otherwise.
-+WPA_GROUP+::
-  Group that has authority to configure wpa_supplicant via it's control
-  interface. Used in any configuration that is generated by netcfg.
-+WPA_COUNTRY+ (optional, nl80211 based drivers)::
-  The country where the device will be used. This allows wpa_supplicant
-  to enforce any local regulatory limitations and will allow all
-  appropriate channels/frequencies for your device.
-+WPA_DRIVER+ (optional)::
-  A comma-separated list of wpa_supplicant driver interfaces to try.
-  Defaults to `nl80211,wext'.
-
-rfkill (Radio Kill Switch) options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-+RFKILL+::
-  hard/soft A switch with physical on/off state that cannot be
-  controlled via software is considered a *hard* switch. Any switch that
-  can be controlled via software is considered *soft*.
-+RFKILL_NAME+::
-  Some switches sysfs entries are not linked with the interface. To
-  match them up, configure the name from '/sys/class/rfkill/rfkillX/name'
-  here so that netcfg can identify which to control.
+'ExecDownPre='::
+    A command that is executed after a connection is brought down.
+    Similar precautions should be taken as with 'ExecUpPost'.
 
 
-Options for `bridge' connections
---------------------------------
-The options of `ethernet' connections apply to set up standard IP
-connectivity.
+IP OPTIONS
+----------
+These options apply to all connections that set up an IP-enabled
+network. In particular, these connection types are +ethernet+,
++wireless+, +bond+, +bridge+, +tunnel+, +tuntap+, and +vlan+.
 
-+BRIDGE_INTERFACES+::
-  List of network interfaces taking part in the bridge.
-+FWD_DELAY+::
-  Forward delay of the bridge, see *brctl*(8)
-+MAX_AGE+::
-  maxage parameter, see *brctl*(8)
+'IP=' [mandatory for IPv4]::
+    One of `static', `dhcp', or `no', depending on the desired way of
+    obtaining an address.
+
+'IP6=' [mandatory for IPv6]::
+    One of `static', `stateless', `dhcp-noaddr', `dhcp', `no' or left
+    out (empty) altogether. The difference between not specifying and
+    setting to `no' is in the handling of __router advertisement__
+    packages, which is blocked by `no'.
+
+'Address=()' [requires 'IP=static']::
+    An array of IP addresses, optionally suffixed with ``/<netmask>`',
+    where netmask is an integer between 0 and 255. The default netmask
+    is 24. Leaving out brackets for arrays consisting of a single
+    element is accepted in the Bash syntax.
+
+'Gateway=' [requires 'IP=static']::
+    An IP routing gateway address.
+
+'Routes='::
+    An array of custom routes of the form +
+    `**<address range>** via **<gateway>**'.
+
+'Address6=()' [requires 'IP6=static']::
+    An array of IPv6 addresses. Prefix length may be specified via
+    `1234:bcd::11/64' syntax.
+
+'Gateway6=' [requires 'IP6=static']::
+    An IPv6 routing gateway address.
+
+'Routes6='::
+    An array of custom routes of the form +
+    `**<address range>** via **<gateway>**'.
+
+'DHCPClient=' [requires a DHCP setting]::
+    The name of the preferred DHCP client. Supported options are
+    `dhcpcd' and `dhclient'. Defaults to `dhcpcd'.
+
+'IPCustom=()'::
+    An array of argument lines to pass to `ip`. This can be used to
+    achieve complicated configurations within the framework of *netctl*.
+
+'Hostname='::
+    A system hostname.
+
+'DNS=()'::
+    An array of DNS nameservers. Simply specify the IP addresses of each
+    of the DNS nameservers.
+
+'DNSDomain='::
+    A ``domain`' line for '/etc/resolv.conf'.
+
+'DNSSearch='::
+    A ``search`' line for '/etc/resolv.conf'.
+
+'DNSOptions=()'::
+    An array of ``options`' lines for '/etc/resolv.conf'.
+
+'TimeoutDHCP='::
+    Maximum time, in seconds, to wait for DHCP to be successful.
+    Defaults to ``10`'.
+
+'TimeoutDAD='::
+    Maximum time, in seconds, to wait for IPv6's Duplicate Address
+    Detection to succeed. Defaults to ``3`'.
 
 
-Options for `tuntap' connections
---------------------------------
-The options of `ethernet' connections apply to set up standard IP
-connectivity.
+OPTIONS FOR `ethernet' CONNECTIONS
+----------------------------------
+Next to the *ip options*, the following are understood for connections
+of the `ethernet' type:
 
-+MODE+::
-  Set to `tun' or `tap'.
-+USER+::
-  The owning user of the tun/tap interface.
-+GROUP+::
-  The owning group of the tun/tap interface.
+'SkipNoCarrier='::
+    Whether or not the absence of a carrier (plugged-in cable) is
+    acceptable. Defaults to ``no`'.
+
+'Auth8021X='::
+    Set to ``yes`' to use 802.11x authentication.
+
+'WPAConfigFile='::
+    Path to a *wpa_supplicant* configuration file. Defaults to
+    '/etc/wpa_supplicant.conf'.
+
+'WPADriver='::
+    The *wpa_supplicant* driver to use for 802.11x authentication.
+    Defaults to ``wired`'.
+
+'TimeoutCarrier='::
+    Maximum time, in seconds, to wait for a carrier. Defaults to ``5`'.
+
+'TimeoutWPA='::
+    Maximum time, in seconds, to wait for 802.11x authentication to
+    succeed. Defaults to ``15`'.
 
 
-Options for `ppp' connections
------------------------------
-+PEER+::
-  The *pppd*(8) peer to use.
-+PPP_TIMEOUT+::
-  *pppd*(8) timeout.
+OPTIONS FOR `wireless' CONNECTIONS
+----------------------------------
+Next to the *ip options*, the following are understood for connections
+of the `wireless' type:
+
+'Security='::
+    One of `none', `wep', `wpa', `wpa-configsection', or `wpa-config'.
+    Defaults to ``none`'.
+
+'ESSID=' [mandatory]::
+    The name of the network to connect to.
+    Special quoting rules (see below) apply.
+
+'AP='::
+    The BSSID (MAC address) of the access point to connect to.
+
+'Key='::
+    The secret key to a WEP, or WPA encrypted network.
+    Special quoting rules (see below) apply.
+
+'Hidden='::
+    Whether or not the specified network is a hidden network. Defaults
+    to ``no`'.
+
+'Scan='::
+    Whether or not to scan for the presence of a network before
+    attempting to connect. Hidden networks do not appear in a scan.
+    Defaults to ``no`'.
+
+'AdHoc='::
+    Whether or not to use ad-hoc mode. Defaults to ``no`'.
+
+'Country='::
+    The country for which frequency regulations will be enforced.
+
+'Priority='::
+    Priority group for the network. In case of automatic profile
+    selection, the matched network with the highest priority will be
+    selected. Defaults to ``0`'.
+
+'WPAGroup='::
+    Group that has the authority to configure *wpa_supplicant* via its
+    control interface. Defaults to ``wheel`'.
+
+'WPAConfigSection=()' [mandatory for 'Security=wpa-configsection']::
+    Array of lines that form a network block for *wpa_supplicant*.
+
+'WPAConfigFile='::
+    Path to a *wpa_supplicant* configuration file. Defaults to
+    '/etc/wpa_supplicant.conf'. Used for 'Security=wpa-config'.
+
+'WPADriver='::
+    The *wpa_supplicant* driver to use. Defaults to ``nl80211,wext`'.
+
+'TimeoutWPA='::
+    Maximum time, in seconds, to wait for steps in the association and
+    authentication to succeed. Defaults to ``15`'.
+
+'RFKill='::
+    The name of an *rfkill* device. When specified, the device is used
+    to block/unblock the interface when appropriate. Names can be found
+    in '/sys/class/rfkill/rfkillX/name'. It is also possible to set this
+    variable to ``auto`'. In that case an *rfkill* device that is
+    associated with the network interface is used.
 
 
-Options for `vlan' connections
+OPTIONS FOR `bond' CONNECTIONS
 ------------------------------
-+INTERFACE+::
-  The name of the virtual interface.
-+VLAN_PHYS_DEV+::
-  The name of the associated physical interface.
-+VLAN_ID+::
-  See *ip*(8).
+The interfaces of 'BindsToInterfaces' are bound together in the
+interface named by 'Interface'. All *ip options* are understood for
+connections of the `bond' type.
 
 
-Options for `tunnel' connections
+OPTIONS FOR `bridge' CONNECTIONS
 --------------------------------
-Standard `ethernet' options apply for IP configuration.
+The interfaces of 'BindsToInterfaces' take part in the bridge named by
+'Interface'. Next to the *ip options*, the following are understood for
+connections of the `bridge' type:
 
-+INTERFACE+::
-  The name of the tunnel interface.
-+MODE+::
-  The tunnel type (e.g. `sit'). See *ip*(8) for available modes.
-+LOCAL+::
-  The address of the local end of the tunnel.
-+REMOTE+::
-  The address of the remote end of the tunnel.
+'FwdDelay='::
+    Forward delay of the bridge. See *brctl*(8) for details.
+
+'MaxAge='::
+    Maximum age parameter. See *brctl*(8) for details.
 
 
-Options for `bond' connections
+OPTIONS FOR `tunnel' CONNECTIONS
+----------------------------------
+The name of the tunnel interface is specified in 'Interface'. Next to
+the *ip options*, the following are understood for connections of the
+`tunnel' type:
+
+'Mode='::
+    The tunnel type (e.g. `sit'). See *ip*(8) for available modes.
+
+'Local='::
+    The address of the local end of the tunnel.
+'Remote='::
+    The address of the remote end of the tunnel.
+
+
+OPTIONS FOR `tuntap' CONNECTIONS
+----------------------------------
+The name of the tuntap interface is specified in 'Interface'. Next to
+the *ip options*, the following are understood for connections of the
+`tuntap' type:
+
+'Mode='::
+    Either ``tun`', or ``tap`'.
+
+'User='::
+    The owning user of the tun/tap interface.
+
+'Group='::
+    The owning group of the tun/tap interface.
+
+
+OPTIONS FOR `vlan' CONNECTIONS
 ------------------------------
-Standard `ethernet' options apply for IP configuration.
+The name of the vlan interface is specified in 'Interface'. The
+underlying physical interface is specified in 'BindsToInterfaces'.
+Hence, for vlan profiles, 'BindsToInterfaces' contains the name of a
+single network interface.
 
-+SLAVE_INTERFACES+ (Bash array)::
-  An array of names of interfaces to be bound together.
+All options for connections of the `ethernet' type are understood for
+connections of the `vlan' type. Additionally, connections of the `vlan'
+type can set a vlan identifier using 'VLANID='. See *ip*(8) for details.
 
 
-Options for `openvpn' connections
----------------------------------
-+OVPN_CONFIG+::
-  Path to the *openvpn*(8) config file.
-+OVPN_PID_FILE+::
-  Path to the *openvpn*(8) PID file.
-+OVPN_FLAGS+::
-  Options to pass to *openvpn*(8) invocation.
+SPECIAL QUOTING RULES
+---------------------
+Configuration files for *wpa_supplicant* use non-standard quoting.
+Therefore, non-standard quoting rules exist for some variables for
+connections of the `wireless' type. In particular, these variables are
+'ESSID', and 'Key'.
+
+A variable is considered *quoted* by *wpa_supplicant* if it is enclosed
+in double quotes ("). A variable is considered *non-quoted* by
+*wpa_supplicant* if it does not start with a double quote. Hexadecimal
+values are specified *non-quoted* in configuration files of
+*wpa_supplicant*. In *netctl*, variables are written to *wpa_supplicant*
+configuration files *quoted* by default. When special quoting rules
+apply, it is possible to specify an unquoted (hexadecimal) value using a
+special syntax.
+
+The special quoting rules of *netctl* are as follows. A string that
+starts with a literal double quote is considered *non-quoted*. Any other
+string is considered *quoted*. It is possible to specify quoted strings
+that start with a double quote by quoting manually. An extreme example
+is the specification of a *quoted* double quote: '`X='""""'`'. On the
+other end of the spectrum there is the *non-quoted* backslash:
+'`X=\"\\`'.
+
+Further examples of *quoted* strings (all equivalent):
+-------------
+X=string
+X="string"
+X='""string"'
+-------------
+
+Further examples of *non-quoted* strings (all equivalent):
+------------
+X=\"string
+X="\"string"
+X='"string'
+------------
+
+A mnemonic is to think of the prefix ``\"`' as saying `non'-`quote'.
 
 
 SEE ALSO
 --------
-include::footer.txt[]
+*netctl*(1)

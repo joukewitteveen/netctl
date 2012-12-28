@@ -1,14 +1,14 @@
-CONNECTION='wireless'
-DESCRIPTION='A simple WPA encrypted wireless connection'
-INTERFACE='wlan0'
-SECURITY='wpa'
+Description='A simple WPA encrypted wireless connection'
+Interface=wlan0
+Connection=wireless
+Security=wpa
 
 ESSID='MyNetwork'
-## Uncomment if the supplied ESSID is hexadecimal
-#ESSID_TYPE='hex'
-KEY='WirelessKey'
+# Prepend hexadecimal keys with \"
+# If your key starts with ", write it as '"""<key>"'
+Key='WirelessKey'
 
 IP='dhcp' 
 
 # Uncomment this if your ssid is hidden
-#HIDDEN=yes
+#Hidden=yes

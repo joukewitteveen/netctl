@@ -1,9 +1,9 @@
-INTERFACE="br0"
-CONNECTION="bridge"
-DESCRIPTION="Example Bridge connection"
-BRIDGE_INTERFACES="eth0 eth1 tap0"
-IP="dhcp"
+Description="Example Bridge connection"
+Interface=br0
+Connection=bridge
+BindsToInterfaces=(eth0 eth1 tap0)
+IP=dhcp
 ## sets forward delay time
-#FWD_DELAY=0
+#FWDDelay=0
 ## sets max age of hello message
-#MAX_AGE=10
+#MaxAge=10

@@ -1,5 +1,6 @@
-INTERFACE="eth0.55"
-VLAN_PHYS_DEV="eth0"
-VLAN_ID="55"
-CONNECTION="vlan"
-IP="dhcp"
+Interface=eth0.55
+Connection=vlan
+# The variable name is plural, but needs precisely one interface
+BindsToInterfaces=eth0
+VLANID=55
+IP=dhcp

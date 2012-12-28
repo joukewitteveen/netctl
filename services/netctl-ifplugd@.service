@@ -1,10 +1,9 @@
 [Unit]
-Description=Automatic wired network connection via netcfg
+Description=Automatic wired network connection using netctl profiles
+Documentation=man:netctl.special(7)
 
 [Service]
-EnvironmentFile=/etc/conf.d/netcfg
-ExecStart=/usr/bin/ifplugd -i $WIRED_INTERFACE -r /etc/ifplugd/netcfg.action -fIns
-ExecStop=/usr/bin/netcfg iface-down $WIRED_INTERFACE
+ExecStart=/usr/bin/ifplugd -i %i -r /etc/ifplugd/netctl.action -fIns
 
 [Install]
 WantedBy=multi-user.target

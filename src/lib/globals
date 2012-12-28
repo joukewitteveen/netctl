@@ -1,136 +1,121 @@
-# /usr/lib/networks/globals
-#
-# All +x files in /usr/lib/network/hooks will be sourced when this file is.
-# Hook files can override any of the utility functions defined here for custom
-# behavior (such as logging error messages to syslog). This lets us keep netcfg
-# simple but gives it the flexibility for users to make modular use of it to do
-# more complex things
-
-
-### Globals
 PROFILE_DIR="/etc/network.d"
-IFACE_DIR="$PROFILE_DIR/interfaces"
 SUBR_DIR="/usr/lib/network"
-HOOKS_DIR="$SUBR_DIR/hooks"
 CONN_DIR="$SUBR_DIR/connections"
 STATE_DIR="/run/network"
-
+STATE_FILE="${NETCTL_STATE_FILE:-/var/lib/netctl/netctl.state}"
 
 
 ### Logging/Error reporting
 
-function report_err {
+report_notice() {
     echo "$*"
 }
 
-function report_notice {
+report_error() {
     echo "$*"
 }
 
-function report_debug {
-    checkyesno "$NETCFG_DEBUG" && echo "DEBUG: $*" >&2
+report_debug() {
+    is_yes "${NETCTL_DEBUG:-no}" && echo "DEBUG: $*" >&2
 }
 
-function report_try {
-    # This needs -n and a trailing space.
-    echo -n ":: $* "
-    REPORT_TRYING=1
+exit_error() {
+    report_error "$@" >&2
+    exit 1
 }
 
-function report_fail {
-    if [[ -n "$*" ]]; then
-        if (( REPORT_TRYING )); then
-            echo "- $* [fail]"
-            REPORT_TRYING=
-        else
-            echo "$*"
-        fi
-    elif (( REPORT_TRYING )); then
-        echo "[fail]"
-        REPORT_TRYING=
-    fi
+
+### Variable management
+
+## Check if a variable occurs in an array
+# $1: the variable to find
+# $2...: the array elements
+in_array() {
+    local hay needle=$1
+    shift
+    for hay; do
+        [[ $hay == "$needle" ]] && return 0
+    done
+    return 1
 }
 
-function report_success {
-    if [[ -n "$*" ]]; then
-        # This needs -n and a trailing space.
-        echo -n "- $* "
-    fi
-    echo "[done]"
-    REPORT_TRYING=
-}
-
-### For calling scripts only; don't use in library functions
-function exit_stderr { echo "$*" >&2; exit 1; }
-function exit_err { report_err "$*"; exit 1; }
-function exit_fail { report_fail "$*"; exit 1; }
-
-
-### From FreeBSD's /etc/rc.subr
-##
-# checkyesno var
-#    Test $1 variable, and warn if not set to YES or NO.
-#    Return 0 if it's "yes" (et al), nonzero otherwise.
-#    To default to yes, do: "checkyesno ${VAR:-yes}".
-#
-function checkyesno() {
-    local _value="$1"
-    #debug "checkyesno: $1 is set to $_value."
-    case "$_value" in
-
-        #    "yes", "true", "on", or "1"
-    [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+## Check if a variable denotes a positive truth value
+# $1: the variable to check, use is_yes ${VAR:-yes} to set a default
+is_yes() {
+    case ${1,,} in
+      yes|true|on|1)
         return 0
         ;;
-
-        #    "no", "false", "off", or "0"
-    [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+      no|false|off|0)
         return 1
         ;;
-    *)
-        #warn "\$${1} is not set properly - see rc.conf(5)."
+      *)
+        report_error "Not a valid truth value: '$1'"
         return 1
         ;;
     esac
 }
 
-## Check if variable is a member of an array
-# $1: the variable to find
-# $2...: the array elements
-function inarray() {
-    local item search="$1"
-    shift
-    for item in "$@"; do
-        if [[ "$item" == "$search" ]]; then
-            return 0
-        fi
-    done
-    return 1
+
+### Control flow
+
+## Show what we evaluate when debugging, but always evaluate
+do_debug() {
+  report_debug "${FUNCNAME[1]}:" "$@"
+  "$@"
+}
+
+## Exit if we are not effectively root
+# $1: program name (optional)
+ensure_root() {
+    (( EUID == 0 )) || exit_error "${1-$0} needs root privileges"
 }
 
 ## Waits until a statement succeeds or a timeout occurs
 # $1: timeout in seconds
 # $2...: condition command
-function timeout_wait() {
-    local timeout="$1"
-    (( timeout *= 10 ))
+timeout_wait() {
+    local timeout=$1
+    (( timeout *= 5 ))
     shift
     while ! eval "$*"; do
         (( timeout-- > 0 )) || return 1
-        sleep 0.1
+        sleep 0.2
     done
     return 0
 }
 
 
-### Load all +x files in $HOOKS_DIR
-function load_hooks() {
-    local hook
-    for hook in $(find -L "$HOOKS_DIR/" -maxdepth 1 -type f -executable | sort -u); do
-        source "$hook"
-    done
+### Profile management
+
+## List all acceptable profiles names (assume they don't contain newlines)
+list_profiles() {
+    # JP: follow aliases with -L, also skip profiles that end with '.conf' (so
+    #     profile.conf can be the wpa.conf file for profile)
+    find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
 }
 
-load_hooks
+## Sources all hooks, a profile and any interface hook
+# $1: profile name
+load_profile() {
+    local hook
+    if [[ ! -r "$PROFILE_DIR/$1" ]]; then
+        exit_error "Profile '$1' does not exist or is not readable"
+    fi
+    while read -r hook; do
+        source "$hook"
+    done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
+    source "$PROFILE_DIR/$1"
+    if [[ -z $Interface ]]; then
+        exit_error "Profile '$1' does not specify an interface"
+    fi
+    if [[ ! -r "$CONN_DIR/${Connection:-/dev/null/nonexistent}" ]]; then
+        exit_error "Profile '$1' does not specify a valid connection"
+    fi
+    if [[ -x "$PROFILE_DIR/interfaces/$Interface" ]]; then
+        source "$PROFILE_DIR/interfaces/$Interface"
+    fi
+}
+
 
 # vim: ft=sh ts=4 et sw=4:

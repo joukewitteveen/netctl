@@ -1,13 +1,12 @@
 [Unit]
-Description=Netcfg multi-profile daemon
+Description=(Re)store the netctl profile state
 Before=network.target
-Wants=network.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/netcfg-daemon start
-ExecStop=/usr/bin/netcfg-daemon stop
+ExecStart=-/usr/bin/netctl restore
+ExecStop=/usr/bin/netctl store
 KillMode=none
 
 [Install]

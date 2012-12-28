@@ -1,24 +1,21 @@
 #! /bin/bash
 
-. /usr/lib/network/network
+. /usr/lib/network/globals
 . "$SUBR_DIR/8021x"
-. /etc/conf.d/netcfg
+
 
 usage()
 {
     cat << END
-Usage: wifi-menu [-o | --obscure] [-h | --help] [interface]
+Usage: wifi-menu [-h | --help] [-o | --obscure] [interface]
 
 Interactively connect to a wireless network.
 
 Arguments:
+  -h, --help     Show this help.
   -o, --obscure  Show asterisks for the characters of the password
                  and store the password as a hexadecimal string.
-  -h, --help     Show this help.
-  interface      The wireless interface to use.
-                 (default: WIRELESS_INTERFACE from /etc/conf.d/netcfg)
-
-For choosing from all available profiles, use netcfg-menu.
+  interface      The wireless interface to use (default: wlan0).
 END
 }
 
@@ -30,10 +27,10 @@ init_profiles()
     while read profile; do
         essid=$(
             unset INTERFACE ESSID
-            . "$PROFILE_DIR/$profile" &> /dev/null
-            if [[ "$INTERFACE" = "$1" && -n "$ESSID" ]]; then
+            source "$PROFILE_DIR/$profile" > /dev/null
+            if [[ "$Interface" = "$1" && -n "$ESSID" ]]; then
                 printf "%s" "$ESSID"
-                if [[ "$DESCRIPTION" =~ "Automatically generated" ]]; then
+                if [[ "$Description" =~ "Automatically generated" ]]; then
                     return 2
                 else
                     return 1
@@ -61,8 +58,8 @@ init_entries()
     while IFS=$'\t' read signal flags ssid; do
         ENTRIES[i++]="--"  # $ssid might look like an option to dialog.
         ENTRIES[i++]=$ssid
-        if inarray "$ssid" "${ESSIDS[@]}"; then
-            if inarray "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
+        if in_array "$ssid" "${ESSIDS[@]}"; then
+            if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
                 ENTRIES[i]="+"  # Automatically generated
             else
                 ENTRIES[i]="*"  # Handmade
@@ -124,13 +121,13 @@ create_profile()
         fi
     fi
     cat << EOF > "$PROFILE_DIR/$PROFILE"
-CONNECTION='wireless'
-DESCRIPTION='Automatically generated profile by wifi-menu'
-INTERFACE='$INTERFACE'
-SECURITY='$security'
+Description='Automatically generated profile by wifi-menu'
+Interface=$INTERFACE
+Connection=wireless
+Security=$security
 ESSID=$(printf "%q" "$1")
 IP='dhcp'
-${key+KEY=$key}
+${key+Key=$key}
 EOF
     printf "%s" "$PROFILE"
     return 0
@@ -142,17 +139,14 @@ connect_to_ssid()
 {
     local msg
     PROFILE=$(ssid_to_profile "$1")
-    if [[ $? -eq 0 ]]; then
-        clear
-        check_profile "$PROFILE" && profile_down "$PROFILE"
-    else
+    if [[ $? -ne 0 ]]; then
         PROFILE=$(create_profile "$1")
         RETURN=$?
         (( RETURN == 0 )) || return $RETURN
         SPAWNED_PROFILE=1
-        clear
     fi
-    if ! profile_up "$PROFILE"; then
+    clear
+    if ! netctl restart "$PROFILE"; then
         if (( SPAWNED_PROFILE )); then
             msg="         CONNECTING FAILED
 
@@ -183,40 +177,35 @@ while [[ "$1" = -* ]]; do
     esac
 done
 if [[ $# -gt 1 ]]; then
-    report_err "Too many arguments"
+    report_error "Too many arguments"
     usage
     exit 255
 fi
 
-if [[ $(id -u) -ne 0 ]]; then
-    exit_stderr "This script needs to be run with root privileges"
-fi
+ensure_root "$(basename "$0")"
 if ! type dialog &> /dev/null; then
-    exit_stderr "Please install 'dialog' to use wifi-menu"
+    exit_error "Please install 'dialog' to use wifi-menu"
 fi
 
-INTERFACE=${1-$WIRELESS_INTERFACE}
+INTERFACE=${1-wlan0}
 if [[ -z "$INTERFACE" ]]; then
-    report_err "Missing interface specification"
+    report_error "Missing interface specification"
     usage
     exit 255
 fi
 
 cd /  # We do not want to spawn anything that can block unmounting
-is_interface "$INTERFACE" || exit_fail "No such interface: $INTERFACE"
-if ! interface_is_up "$INTERFACE"; then
-    [[ -f "$IFACE_DIR/$INTERFACE" ]] && . "$IFACE_DIR/$INTERFACE"
-    bring_interface up "$INTERFACE" || exit_fail "Interface unavailable"
-    SPAWNED_INTERFACE=1
+if [[ ! -d "/sys/class/net/$INTERFACE" ]]; then
+    exit_error "No such interface: $INTERFACE"
 fi
 
-report_try "Scanning for networks"
+echo -n "Scanning for networks... "
 CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 "^ssid=")
 CONNECTION=${CONNECTION#ssid=}
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
 if [[ $? -eq 0 ]]; then
     trap 'rm -f "$NETWORKS"' EXIT
-    report_success
+    echo "done"
     init_profiles "$INTERFACE"
     init_entries "$NETWORKS"
     MSG="Select the network you wish to use
@@ -233,7 +222,7 @@ Flags description:
         RETURN=$?
     fi
 else
-    report_fail
+    echo "failed"
     RETURN=3
 fi
 
@@ -244,20 +233,19 @@ case $RETURN in
         clear
         ;;
     3)  # No networks found
-        report_err "No networks found"
+        report_error "No networks found"
         ;;
     4)  # Invalid passphrase length (WEP keys have tighter restrictions)
         clear
-        report_err "Passphrase must be 8..63 characters"
+        report_error "Passphrase must be 8..63 characters"
         ;;
     255)  # ESC or error
         clear
-        report_err "Aborted"
+        report_error "Aborted"
         ;;
     *)  # Should not happen
-        report_err "Unexpected return code from dialog: $RETURN"
+        report_error "Unexpected return code from dialog: $RETURN"
         RETURN=7
         ;;
 esac
-(( RETURN && SPAWNED_INTERFACE )) && bring_interface down "$INTERFACE"
 exit $RETURN

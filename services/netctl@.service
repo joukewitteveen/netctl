@@ -1,13 +1,14 @@
 [Unit]
-Description=Netcfg networking service for profile %i
-Before=network.target
+Description=Networking for netctl profile %i
+Documentation=man:netctl.profile(5)
+Before=network.target netctl.service
 Wants=network.target
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/netcfg check-iface %i
-ExecStop=-/usr/bin/netcfg down %i
+ExecStart=/usr/lib/network/network start %i
+ExecStop=/usr/lib/network/network stop %i
 KillMode=none
 
 [Install]

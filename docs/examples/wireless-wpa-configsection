@@ -1,17 +1,18 @@
-CONNECTION='wireless'
-INTERFACE=wlan0
-SECURITY='wpa-configsection'
+Interface=wlan0
+Connection=wireless
+Security=wpa-configsection
 # Uncomment this if your ssid is hidden
-#HIDDEN=yes
+#Hidden=yes
 IP='dhcp'
-CONFIGSECTION='
-    ssid="University"
-    key_mgmt=WPA-EAP
-    eap=TTLS
-    group=TKIP
-    pairwise=TKIP CCMP
-    anonymous_identity="anonymous"
-    identity="myusername"
-    password="mypassword"
-    priority=1
-    phase2="auth=PAP"'
+WPAConfigSection=(
+    'ssid="University"'
+    'key_mgmt=WPA-EAP'
+    'eap=TTLS'
+    'group=TKIP'
+    'pairwise=TKIP CCMP'
+    'anonymous_identity="anonymous"'
+    'identity="myusername"'
+    'password="mypassword"'
+    'priority=1'
+    'phase2="auth=PAP"'
+)

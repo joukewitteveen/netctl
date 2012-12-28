@@ -1,5 +1,4 @@
-#! /bin/bash
-. /usr/lib/network/network
+# Contributed by: Thomas Bächler <thomas@archlinux.org>
 
 _quotestring() {
     echo "\"${1/\"/\\\"}\""
@@ -7,60 +6,58 @@ _quotestring() {
 
 pppoe_up() {
     local cfg
-    load_profile "$1"
 
-    mkdir -p "$STATE_DIR/pppoe.${INTERFACE}.$1/"
-    chmod 700 "$STATE_DIR/pppoe.${INTERFACE}.$1/"
-    cfg="$STATE_DIR/pppoe.${INTERFACE}.$1/options"
+    mkdir -p "$STATE_DIR/pppoe.${Interface}.$1/"
+    chmod 700 "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+    cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
     : > "${cfg}"
     chmod 600 "${cfg}"
 
     echo "plugin rp-pppoe.so" >> "${cfg}"
-    echo "nic-${INTERFACE}" >> "${cfg}"
+    echo "nic-${Interface}" >> "${cfg}"
     echo "noauth" >> "${cfg}"
-    if checkyesno ${DEFAULTROUTE:-1}; then
+    if is_yes "${DefaultRoute:-yes}"; then
         echo "defaultroute" >> "${cfg}"
     else
         echo "nodefaultroute" >> "${cfg}"
     fi
-    if checkyesno ${USEPEERDNS:-1}; then
+    if is_yes "${UsePeerDNS:-yes}"; then
         echo "usepeerdns" >> "${cfg}"
     fi
-    echo "linkname $(_quotestring "$1")" >> "${cfg}"
+    echo "linkname $(_quotestring "${Profile}")" >> "${cfg}"
     echo "maxfail 5" >> "${cfg}"
     echo "updetach" >> "${cfg}"
-    if [[ ${CONNECTION_MODE} == demand ]]; then
+    if [[ ${ConnectionMode} == demand ]]; then
         echo "demand" >> "${cfg}"
-        echo "idle ${IDLE_TIMEOUT}" >> "${cfg}"
+        echo "idle ${IdleTimeout}" >> "${cfg}"
     else
         echo "persist" >> "${cfg}"
     fi
-    echo "user $(_quotestring "${USER}")" >> "${cfg}"
-    echo "password $(_quotestring "${PASSWORD}")" >> "${cfg}"
-    [[ -n ${LCP_ECHO_INTERVAL} ]] && echo "lcp-echo-interval ${LCP_ECHO_INTERVAL}" >> "${cfg}"
-    [[ -n ${LCP_ECHO_FAILURE} ]] && echo "lcp-echo-failure ${LCP_ECHO_FAILURE}" >> "${cfg}"
-    [[ -n ${PPPOE_SERVICE} ]] && echo "rp_pppoe_service $(_quotestring "${PPPOE_SERVICE}")" >> "${cfg}"
-    [[ -n ${PPPOE_AC} ]] && echo "rp_pppoe_ac $(_quotestring "${PPPOE_AC}")" >> "${cfg}"
-    [[ -n ${PPPOE_SESSION} ]] && echo "rp_pppoe_sess $(_quotestring "${PPPOE_SESSION}")" >> "${cfg}"
-    [[ -n ${PPPOE_MAC} ]] && echo "pppoe-mac $(_quotestring "${PPPOE_MAC}")" >> "${cfg}"
-    [[ ${PPPOE_IP6} == yes ]] && echo "+ipv6" >> "${cfg}"
+    echo "user $(_quotestring "${User}")" >> "${cfg}"
+    echo "password $(_quotestring "${Password}")" >> "${cfg}"
+    [[ -n ${LCPEchoInterval} ]] && echo "lcp-echo-interval ${LCPEchoInterval}" >> "${cfg}"
+    [[ -n ${LCPEchoFailure} ]] && echo "lcp-echo-failure ${LCPEchoFailure}" >> "${cfg}"
+    [[ -n ${PPPoEService} ]] && echo "rp_pppoe_service $(_quotestring "${PPPoEService}")" >> "${cfg}"
+    [[ -n ${PPPoEAC} ]] && echo "rp_pppoe_ac $(_quotestring "${PPPoEAC}")" >> "${cfg}"
+    [[ -n ${PPPoESession} ]] && echo "rp_pppoe_sess $(_quotestring "${PPPoESession}")" >> "${cfg}"
+    [[ -n ${PPPoEMAC} ]] && echo "pppoe-mac $(_quotestring "${PPPoEMAC}")" >> "${cfg}"
+    [[ ${PPPoEIP6} == yes ]] && echo "+ipv6" >> "${cfg}"
 
-    /sbin/ip link set dev "${INTERFACE}" up
+    /sbin/ip link set dev "${Interface}" up
     /usr/sbin/pppd file "${cfg}"
 
     if [[ $? -ne 0 ]]; then
         rm "${cfg}"
-        rmdir "$STATE_DIR/pppoe.${INTERFACE}.$1/"
-        report_fail "Couldn't make pppd connection."
+        rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+        report_error "Couldn't make pppd connection."
         return 1
     fi
 }
 
 pppoe_down() {
-    load_profile "$1"
     local cfg
-    cfg="$STATE_DIR/pppoe.${INTERFACE}.$1/options"
-    PIDFILE="/var/run/ppp-$1.pid"
+    cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
+    PIDFILE="/var/run/ppp-${Profile}.pid"
 
     if [[ -e $PIDFILE ]]; then
         read PID < "$PIDFILE"
@@ -68,10 +65,8 @@ pppoe_down() {
     fi
 
     rm "${cfg}"
-    rmdir "$STATE_DIR/pppoe.${INTERFACE}.$1/"
+    rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
 }
 
-pppoe_$1 "$2"
-exit $?
 
 # vim: ft=sh ts=4 et sw=4:

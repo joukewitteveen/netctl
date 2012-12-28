@@ -1,0 +1,215 @@
+## /usr/lib/network/globals needs to be sourced before this file
+
+
+## Add resolv.conf entries for an interface
+# $1: interface name
+# $2...: entries, one line per variable
+resolvconf_add() {
+    local interface="$1"
+    shift
+    printf "%s\n" "$@" | resolvconf -a "$interface"
+}
+
+
+## Set up an IP configuration
+# $Interface: interface name
+# $IP: type of IPv4 configuration
+# $IP6: type of IPv6 configuration
+ip_set() {
+    local addr line route interface_sysctl=${Interface/.//}
+
+    if [[ -z $IP && -z $IP6 ]]; then
+        report_error "Neither IP, nor IP6 was specified"
+        return 1
+    fi
+
+    case $IP in
+      dhcp)
+        case ${DHCPClient:-dhcpcd} in
+          dhcpcd)
+            rm -f "/run/dhcpcd-$Interface".{pid,cache}
+            # If using own dns, tell dhcpcd to NOT replace resolv.conf
+            [[ $DNS ]] && DhcpcdOptions+=" -C resolv.conf"
+            do_debug dhcpcd -qL -t "${TimeoutDHCP:-10}" $DHCPOptions "$Interface" 2>&1 | report_debug "$(cat)"
+            # The first array value of PIPESTATUS is the exit status of dhcpcd
+            if (( PIPESTATUS != 0 )); then
+                report_error "DHCP IP lease attempt failed on interface '$Interface'"
+                return 1
+            fi
+            ;;
+          dhclient)
+            rm -f "/run/dhclient-${Interface}.pid"
+            if ! do_debug dhclient -q -e "TIMEOUT=${TimeoutDHCP:-10}" -pf "/run/dhclient-$Interface.pid" $DhclientOptions "$Interface"; then
+                report_error "DHCP IP lease attempt failed on interface '$Interface'"
+                return 1
+            fi
+            ;;
+          *)
+            report_error "Unsupported DHCP client: '$DHCPClient'"
+            return 1
+            ;;
+        esac
+        ;;
+      static)
+        if [[ $Address ]]; then
+            for addr in "${Address[@]}"; do
+                [[ $addr == */* ]] || addr+="/24"
+                if ! do_debug ip addr add "$addr" brd + dev "$Interface"; then
+                    report_error "Could not add address '$addr' to interface '$Interface'"
+                    return 1
+                fi
+            done
+        fi
+        if [[ $Gateway ]]; then
+            if ! do_debug ip route add default via "$Gateway" dev "$Interface"; then
+                report_error "Could not set gateway '$Gateway' on interface '$Interface'"
+                return 1
+            fi
+        fi
+        ;;
+      ""|no)
+        ;;
+      *)
+        report_error "IP must be either 'dhcp', 'static' or 'no'"
+        return 1
+        ;;
+    esac
+
+    # Add static IP routes
+    if [[ $IP && $Routes ]]; then
+        for route in "${Routes[@]}"; do
+            if ! do_debug ip route add $route dev "$Interface"; then
+                report_error "Could not add route '$route' to interface '$Interface'"
+                return 1
+            fi
+        done
+    fi
+
+    # Load ipv6 module if necessary
+    case "$IP6" in
+      dhcp*|stateless|static)
+        [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
+        ;;
+      no)
+        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
+        ;;
+      "")  # undefined IP6 does not prevent RA's from being received -> nop
+        ;;
+      *)
+        report_error "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
+        return 1
+        ;;
+    esac
+
+    case "$IP6" in
+      dhcp*)
+        if ! type dhclient &>/dev/null; then
+            report_error "You need to install dhclient to use DHCPv6"
+            return 1
+        fi
+        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=1"
+        [[ $IP6 == "dhcp-noaddr" ]] && Dhclient6Options+=" -S"
+        rm -f "/run/dhclient6-${Interface}.pid"
+        if ! do_debug dhclient -6 -q -e "TIMEOUT=${TimeoutDHCP:-10}" -pf "$Pidfile" $Dhclient6Options "$Interface"; then
+            report_error "DHCPv6 IP lease attempt failed on interface '$Interface'"
+            return 1
+        fi
+        ;;
+      stateless)
+        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=1"
+        ;;
+      static)
+        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
+        if [[ -n $Address6 ]]; then
+            for addr in "${Address6[@]}"; do
+                if ! do_debug ip -6 addr add $addr dev "$Interface"; then
+                    report_error "Could not add address '$addr' to interface '$Interface'"
+                fi
+            done
+        fi
+        ;;
+    esac
+
+    if [[ $IP6 ]]; then
+        # Wait for Duplicate Address Detection to finish
+        if ! timeout_wait "${TimeoutDAD:-3}" '[[ -z "$(ip -6 addr show dev "$Interface" tentative)" ]]'; then
+            report_error "Duplicate Address Detection is taking too long on interface '$Interface'"
+            return 1
+        fi
+
+        # Add static IPv6 routes
+        if [[ $Routes6 ]]; then
+            for route in "${Routes6[@]}"; do
+                if ! do_debug ip -6 route add $route dev "$Interface"; then
+                    report_error "Could not add route '$route' to interface '$Interface'"
+                    return 1
+                fi
+            done
+        fi
+
+        # Set a custom gateway after DAD has finished
+        if [[ $IP6 == "static" && $Gateway6 ]]; then
+            if ! do_debug ip -6 route replace default via "$Gateway6" dev "$Interface"; then
+                report_error "Could not set gateway '$Gateway6' on interface '$Interface'"
+                return 1
+            fi
+        fi
+    fi
+
+    if [[ $IPCustom ]]; then
+        for line in "${IPCustom[@]}"; do
+            if ! do_debug ip $line; then
+                report_error "Could not configure interface ($line)"
+                return 1
+            fi
+        done
+    fi
+
+    if [[ $Hostname ]]; then
+        if ! do_debug hostnamectl set-hostname "$Hostname"; then
+            report_error "Cannot set the hostname to '$Hostname'"
+            return 1
+        fi
+    fi
+
+    if [[ $DNS ]]; then
+        resolvconf_add "$Interface" \
+                       "${DNSDomain/#/domain }" \
+                       "${DNSSearch/#/search }" \
+                       "${DNS[@]/#/nameserver }" \
+                       "${DNSOptions[@]/#/options }"
+    fi
+}
+
+
+## Clean up the dynamic part of an IP configuration
+# $Interface: interface name
+# $IP: type of IPv4 configuration
+# $IP6: type of IPv6 configuration
+ip_unset() {
+    if [[ "$IP" == "dhcp" ]]; then
+        case $DHCPClient in
+          dhcpcd)
+            if [[ -f "/run/dhcpcd-$Interface.pid" ]]; then
+                do_debug dhcpcd -qk "$Interface" >/dev/null
+            fi
+            ;;
+          dhclient)
+            if [[ -f "/run/dhclient-$Interface.pid" ]]; then
+                # Alternatively, use -r instead of -x to also release the lease
+                do_debug dhclient -q -x "$Interface" -pf "/run/dhclient-$Interface.pid" >/dev/null
+            fi
+            ;;
+        esac
+    fi
+    if [[ "$IP6" == dhcp* ]]; then
+        if [[ -f "/run/dhclient6-$Interface.pid" ]]; then
+            do_debug dhclient -6 -q -x "$Interface" -pf "/run/dhclient6-$Interface.pid" >/dev/null
+        fi
+    fi
+
+    [[ $DNS ]] && resolvconf -d "$Interface"
+}
+
+
+# vim: ft=sh ts=4 et sw=4:

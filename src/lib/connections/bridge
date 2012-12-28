@@ -1,47 +1,42 @@
-#! /bin/bash
-. /usr/lib/network/network
+# Contributed by: Thomas Bächler <thomas@archlinux.org>
+
+. "$SUBR_DIR/ip"
+
 BRCTL="/usr/sbin/brctl"
 
 bridge_up() {
-    local bridge_interface
-    load_profile "$1"
-
-    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
-        if [[ ! -d "/sys/class/net/$INTERFACE/brif" ]]; then
-            report_fail "Interface $INTERFACE already exists and is not a bridge."
-            exit 1
+    if is_interface "$Interface"; then
+        if [[ ! -d "/sys/class/net/$Interface/brif" ]]; then
+            report_error "Interface '$Interface' already exists and is not a bridge"
+            return 1
         fi
     else
-        $BRCTL addbr "$INTERFACE"
+        $BRCTL addbr "$Interface"
     fi
 
-    for bridge_client in $BRIDGE_INTERFACES; do
-      ip link set "$bridge_client" promisc on up
-      ip addr flush dev "$bridge_client"
-      $BRCTL addif "$INTERFACE" "$bridge_client"
+    for member in "${BindsToInterfaces[@]}"; do
+        ip link set "$member" promisc on up
+        ip addr flush dev "$member"
+        $BRCTL addif "$Interface" "$member"
     done
     # Set options
-    [[ "$FWD_DELAY" ]] && $BRCTL setfd "$INTERFACE" "$FWD_DELAY"
-    [[ "$MAX_AGE" ]] && $BRCTL setmaxage "$INTERFACE" "$MAX_AGE"
+    [[ "$FwdDelay" ]] && $BRCTL setfd "$Interface" "$FwdDelay"
+    [[ "$MaxAge" ]] && $BRCTL setmaxage "$Interface" "$MaxAge"
 
-    "$CONN_DIR/ethernet" up "$1"
-    return 0
+    bring_interface_up "$Interface"
+    ip_set
 }
 
 bridge_down() {
-    local bridge_interface
-    load_profile "$1"
-
-    for bridge_client in $BRIDGE_INTERFACES; do
-      ip link set "$bridge_client" promisc off down
-      $BRCTL delif "$INTERFACE" "$bridge_client"
+    for member in "${BindsToInterfaces[@]}"; do
+      ip link set "$member" promisc off down
+      $BRCTL delif "$Interface" "$member"
     done
 
-    "$CONN_DIR/ethernet" down "$1"
-    $BRCTL delbr "$INTERFACE"
-    return 0
+    ip_unset
+    bring_interface_down "$Interface"
+    $BRCTL delbr "$Interface"
 }
 
-bridge_$1 "$2"
-exit $?
+
 # vim: set ts=4 et sw=4:

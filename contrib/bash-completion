@@ -1,49 +1,30 @@
-# netcfg completion
+# netctl completion
 
-_netcfg ()
+_netctl()
 {
-    local cur prev opts lopts cmds prfls
+    local cur prev prof
 
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    cur=${COMP_WORDS[COMP_CWORD]}
+    prev=${COMP_WORDS[COMP_CWORD-1]}
+    prof=$(find -L /etc/network.d -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n")
 
-    opts="-l -c -u -r -R -d -D -a -v -h"
-    lopts="--help --version"
-    cmds="list current check-iface up reconnect iface-recon down iface-down all-down all-suspend"
-    prfls="$(find -L /etc/network.d/ -maxdepth 1 -type f -not -name '*~' -not -name '*.conf' -not -name '.*' -printf '%f\n')"
-
-    case "${prev}" in
-        -R|iface-recon|-D|iface-down)
-            COMPREPLY=( $( compgen -W "$(ls /run/network/interfaces/)" -- $cur ) )
-            return 0
+    case $COMP_CWORD in
+      1)
+        COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to status enable disable reenable" -- $cur) )
+        ;;
+      2)
+        case $prev in
+          start|stop|restart|switch-to|status|enable|disable|reenable)
+            mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$prof" -- $cur)
             ;;
-        -r|reconnect|-d|down)
-            COMPREPLY=( $( compgen -W "$(ls /run/network/profiles/)" -- $cur ) )
-            return 0
-            ;;
-        -c|check-iface|-u|up)
-            COMPREPLY=( $( compgen -W "${prfls}" -- $cur ) )
-            return 0
-            ;;
+        esac
+        ;;
+      *)
+        COMPREPLY=()
+        ;;
     esac
+} &&
+complete -F _netctl netctl
 
-    case "${cur}" in
-        --*)
-            COMPREPLY=( $( compgen -W "${lopts}" -- $cur ) )
-            return 0
-            ;;
-        -*)
-            COMPREPLY=( $( compgen -W "${opts} ${lopts}" -- $cur ) )
-            return 0
-            ;;
-        *)
-            ((COMP_CWORD == 1)) && \
-                COMPREPLY=( $( compgen -W "${opts} ${lopts} ${cmds} ${prfls}" -- $cur ) )
-            ;;
-    esac
 
-    return 0
-}
-
-complete -F _netcfg netcfg
+# ex: ts=4 sw=4 et filetype=sh

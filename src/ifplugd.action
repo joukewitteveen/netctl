@@ -1,8 +1,10 @@
 #!/bin/bash
 #
-# ifplugd.action script for netcfg
+# ifplugd.action script for netctl
 
-. /usr/lib/network/network
+. /usr/lib/network/globals
+
+PROFILE_FILE="$STATE_DIR/ifplugd_$1.profile"
 
 case "$2" in
   up)
@@ -14,12 +16,12 @@ case "$2" in
     declare -a preferred_profiles
     declare -a dhcp_profiles
     declare -a static_profiles
-    for profile in $(list_profiles); do
+    while read -r profile; do
       (
-        echo "loading $profile"
-        load_profile "$profile"
-        [[ "$INTERFACE" == "$1" && "$CONNECTION" == "ethernet" ]] || continue
-        checkyesno "${AUTO_WIRED:-no}" && exit 1 # user preferred AUTO profile
+        echo "Reading profile '$profile'"
+        source "$PROFILE_DIR/$profile"
+        [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
+        is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
         [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
         exit 3 # static profile
       )
@@ -28,17 +30,20 @@ case "$2" in
         2) dhcp_profiles+=("$profile");;
         3) static_profiles+=("$profile");;
       esac
-    done
+    done < <(list_profiles)
     if [[ ${#preferred_profiles[@]} > 1 ]]; then
-      echo "AUTO_WIRED flag for $1 set in more than one profile (${preferred_profiles[*]})"
+      echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
     fi
     for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
-      profile_up "$profile" && exit 0
+      if "$SUBR_DIR/nework" start "$profile"; then
+        printf "%s" "$profile" > "$PROFILE_FILE"
+        exit 0
+      fi
     done
   ;;
   down)
-    if check_iface "$1"; then
-      interface_down "$1" && exit 0
+    if [[ -e "$PROFILE_FILE" ]]; then
+      "$SUBR_DIR/nework" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
     fi
   ;;
   *)

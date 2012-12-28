@@ -1,279 +1,75 @@
-#! /bin/bash
-# Source file for the 'ethernet' connection
-#   ethernet_up $profile
-#   ethernet_down $profile
-#   ethernet_status
+# Ethernet connection support for netctl
 
-. /usr/lib/network/network
+. "$SUBR_DIR/ip"
 
-report_iproute()
-{
-    report_fail "$*"
-    bring_interface down "$INTERFACE"
-    exit 1
-}
 
 ethernet_up() {
-    load_profile "$1"
-    SYSCTL_INTERFACE="${INTERFACE/.//}"
-
-    if ! is_interface "$INTERFACE"; then
-        report_iproute "Interface $INTERFACE does not exist"
-    fi
-
-    # Disable IPv6 before bringing the interface up to prevent SLAAC
-    if [[ "$IP6" == "no" ]]; then
-        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.disable_ipv6=1"
-    fi
-
-    report_debug ethernet_up bring_interface up "$INTERFACE"
-    bring_interface up "$INTERFACE"
-
-    if ! checkyesno "${SKIPNOCARRIER:-no}"; then
-        # Some cards are plain slow to come up. Don't fail immediately.
-        if ! timeout_wait "${CARRIER_TIMEOUT:-5}" '(( $(< "/sys/class/net/$INTERFACE/carrier") ))'; then
-            report_iproute "No connection"
-        fi
-    fi
-
-
-    if checkyesno "${AUTH8021X:-no}"; then
-        . "$SUBR_DIR/8021x"
-        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
-        [[ -z "$WPA_DRIVER" ]] && WPA_DRIVER="wired"
-
-        report_debug ethernet_up start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"
-        if ! start_wpa "$INTERFACE" "$WPA_CONF" "$WPA_DRIVER" "$WPA_OPTS"; then
-            report_fail "wpa_supplicant did not start, possible configuration error"
-            return 1
-        fi
-
-        if ! wpa_check "$INTERFACE" "$TIMEOUT" "ASSOCIATED"; then
-            bring_interface down "$INTERFACE"
-            report_fail "WPA Authentication/Association Failed"
-            return 1
-        fi
-    fi
-
-    if [[ -z "$IP" && -z "$IP6" ]]; then
-        report_iproute "At least one of IP or IP6 should be specified"
+    if ! is_interface "$Interface"; then
+        report_error "Interface '$Interface' does not exist"
         return 1
     fi
 
-    case "$IP" in
-    dhcp)
-        if checkyesno "${DHCLIENT:-no}"; then
-            rm -r "/run/dhclient-${INTERFACE}.pid" >/dev/null 2>&1
-            report_debug ethernet_up dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/run/dhclient-$INTERFACE.pid" "$INTERFACE"
-            if ! dhclient -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf "/run/dhclient-${INTERFACE}.pid" ${DHCLIENT_OPTIONS} "$INTERFACE"; then
-                report_fail "DHCP IP lease attempt failed."
-                stop_80211x
-                return 1
-            fi
-        else
-            # Clear remaining pid files.
-            rm -f "/run/dhcpcd-$INTERFACE".{pid,cache} >/dev/null 2>&1
-            # If using own dns, tell dhcpcd to NOT replace resolv.conf
-            [[ -n "$DNS" ]] && DHCP_OPTIONS="-C resolv.conf $DHCP_OPTIONS"
-            # Start dhcpcd
-            report_debug ethernet_up dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCPCD_INTERNAL_OPTIONS $DHCP_OPTIONS "$INTERFACE"
-            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" $DHCPCD_INTERNAL_OPTIONS $DHCP_OPTIONS "$INTERFACE" 2>&1 | report_debug "$(cat)"
-            if [[ "$PIPESTATUS" -ne 0 ]]; then
-                report_fail "DHCP IP lease attempt failed."
-                stop_80211x
-                return 1
-            fi
-        fi
-        ;;
-    static)
-        if [[ -n "$ADDR" ]]; then
-            [[ -z $NETMASK ]] && NETMASK=24
-            report_debug ethernet_up ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"
-            if ! ip addr add "$ADDR/$NETMASK" brd + dev "$INTERFACE"; then
-                report_iproute "Could not configure interface"
-            fi
-        fi
-        if [[ -n "$GATEWAY" ]]; then
-            report_debug ethernet_up ip route add default via "$GATEWAY" dev "$INTERFACE"
-            if ! ip route add default via "$GATEWAY" dev "$INTERFACE"; then
-                report_iproute "Adding gateway $GATEWAY failed"
-            fi
-        fi
-        ;;
-    ""|no)
-        ;;
-    *)
-        report_iproute "IP must be either 'dhcp', 'static' or 'no'"
-        ;;
-    esac
-
-    if [[ -n "$IP" && -n "$ROUTES" ]]; then
-        for route in "${ROUTES[@]}"; do
-            report_debug ethernet_up ip route add $route dev "$INTERFACE"
-            if ! ip route add $route dev "$INTERFACE"; then
-                report_iproute "Adding route '$route' failed"
-            fi
-        done
+    # Disable IPv6 before bringing the interface up to prevent SLAAC
+    if [[ $IP6 == "no" ]]; then
+        sysctl -q -w "net.ipv6.conf.${Interface/.//}.disable_ipv6=1"
     fi
 
-    # Load ipv6 module if necessary (FS#25530)
-    case "$IP6" in
-    dhcp*|stateless|static)
-        [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
-        ;;
-    no)
-        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=0"
-        ;;
-    "")  # undefined IP6 does not prevent RA's from being received -> nop
-        ;;
-    *)
-        report_iproute "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
-        ;;
-    esac
+    if ! bring_interface_up "$Interface"; then
+        report_error "Failed to bring interface '$Interface' up"
+        return 1
+    fi
 
-    case "$IP6" in
-    dhcp*)
-        if ! type dhclient &>/dev/null; then
-            report_fail "You need to install dhclient to use DHCPv6."
-            stop_80211x
+    if ! is_yes "${SkipNoCarrier:-no}"; then
+        # Some cards are plain slow to come up. Don't fail immediately.
+        if ! timeout_wait "${TimeoutCarrier:-5}" '(( $(< "/sys/class/net/$Interface/carrier") ))'; then
+            report_error "No connection on interface '$Interface'"
+            bring_interface_down "$Interface"
             return 1
         fi
-        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=1"
-        if [[ "$IP6" == "dhcp-noaddr" ]]; then
-            DHCLIENT6_OPTIONS="-S ${DHCLIENT6_OPTIONS}"
-        fi
-        _DHCLIENT_PIDFILE="/run/dhclient6-${INTERFACE}.pid"
-        rm -r ${_DHCLIENT_PIDFILE} &>/dev/null
-        report_debug ethernet_up dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} "$INTERFACE"
-        if ! dhclient -6 -q -e TIMEOUT="${DHCP_TIMEOUT:-10}" -pf ${_DHCLIENT_PIDFILE} ${DHCLIENT6_OPTIONS} "$INTERFACE"; then
-            report_fail "DHCPv6 IP lease attempt failed."
-            stop_80211x
+    fi
+
+
+    if is_yes "${Auth8021X:-no}"; then
+        . "$SUBR_DIR/8021x"
+        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+        : ${WPADriver:=wired}
+        : ${TimeoutWPA:=15}
+
+        if ! wpa_start "$Interface" "$WPADriver" "$WPAConfigFile"; then
+            report_error "The WPA supplicant did not start for interface '$Interface'"
+            bring_interface_down "$Interface"
             return 1
         fi
-        ;;
-    stateless)
-        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=1"
-        ;;
-    static)
-        sysctl -q -w "net.ipv6.conf.$SYSCTL_INTERFACE.accept_ra=0"
-        if [[ -n "$ADDR6" ]]; then
-            for addr in "${ADDR6[@]}"; do
-                report_debug ethernet_up ip -6 addr add $addr dev "$INTERFACE"
-                if ! ip -6 addr add $addr dev "$INTERFACE"; then
-                    report_iproute "Could not add address '$addr' to interface"
-                fi
-            done
-        fi
-        ;;
-    esac
 
-    if [[ -n "$IP6" ]]; then
-        # Wait for DAD to finish (FS#28887)
-        report_debug ethernet_up ip -6 addr show dev "$INTERFACE" tentative
-        if ! timeout_wait "${DAD_TIMEOUT:-3}" '[[ -z "$(ip -6 addr show dev "$INTERFACE" tentative)" ]]'; then
-            report_iproute "Duplicate Address Detection is taking too long"
-        fi
-
-        # Add static IPv6 routes
-        if [[ -n "$ROUTES6" ]]; then
-            for route in "${ROUTES6[@]}"; do
-            report_debug ethernet_up ip -6 route add $route dev "$INTERFACE"
-                if ! ip -6 route add $route dev "$INTERFACE"; then
-                    report_iproute "Adding route '$route' failed"
-                fi
-            done
-        fi
-
-        # Set a custom gateway after waiting for DAD to finish
-        if [[ "$IP6" == "static" && -n "$GATEWAY6" ]]; then
-            report_debug ethernet_up ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"
-            if ! ip -6 route replace default via "$GATEWAY6" dev "$INTERFACE"; then
-                report_iproute "Adding gateway $GATEWAY6 failed"
-            fi
+        if ! wpa_wait_until_state "$TimeoutWPA" "$Interface" "ASSOCIATED"; then
+            wpa_stop "$Interface"
+            bring_interface_down "$Interface"
+            report_error "WPA Authentication/Association Failed"
+            return 1
         fi
     fi
 
-    if [[ -n "$IPCFG" ]]; then
-        for line in "${IPCFG[@]}"; do
-            report_debug ethernet_up ip "$line"
-            if ! ip $line; then
-                report_iproute "Could not configure interface ($line)."
-            fi
-        done
+    if ! ip_set; then
+        stop_80211x
+        bring_interface_down "$Interface"
+        return 1
     fi
-
-    # Set hostname
-    if [[ -n "$HOSTNAME" ]]; then
-        report_debug ethernet_up hostname "$HOSTNAME"
-        if ! echo "$HOSTNAME" >/proc/sys/kernel/hostname; then
-            report_iproute "Cannot set hostname to $HOSTNAME"
-        fi
-    fi
-
-    # Generate a new resolv.conf
-    if [[ -n "$DNS" ]]; then
-        : >/etc/resolv.conf
-        [[ -n "$DOMAIN" ]] && echo "domain $DOMAIN" >>/etc/resolv.conf
-        [[ -n "$SEARCH" ]] && echo "search $SEARCH" >>/etc/resolv.conf
-        for dns in "${DNS[@]}"; do
-            echo "nameserver $dns" >>/etc/resolv.conf
-        done
-        for dnsoption in "${DNS_OPTIONS[@]}"; do
-            echo "options $dnsoption" >>/etc/resolv.conf
-        done
-    fi
-
-    return 0
 }
 
 ethernet_down() {
-    load_profile "$1"
-
-    if [[ "$IP" == "dhcp" ]]; then
-        if checkyesno "${DHCLIENT:-no}"; then
-            if [[ -f "/run/dhclient-$INTERFACE.pid" ]]; then
-                report_debug ethernet_down dhclient -q -x "$INTERFACE" -pf "/run/dhclient-$INTERFACE.pid"
-                dhclient -q -x "$INTERFACE" -pf "/run/dhclient-$INTERFACE.pid" &>/dev/null
-                #dhclient -q -r "$INTERFACE" &>/dev/null
-            fi
-        else
-            if [[ -f "/run/dhcpcd-$INTERFACE.pid" ]]; then
-                report_debug ethernet_down dhcpcd -qk "$INTERFACE"
-                dhcpcd -qk "$INTERFACE" &>/dev/null
-            fi
-        fi
-    fi
-    if [[ "$IP6" == dhcp* ]]; then
-        if [[ -f "/run/dhclient6-$INTERFACE.pid" ]]; then
-            report_debug ethernet_down dhclient -6 -q -x "$INTERFACE" -pf "/run/dhclient6-$INTERFACE.pid"
-            dhclient -6 -q -x "$INTERFACE" -pf "/run/dhclient6-$INTERFACE.pid" &>/dev/null
-            report_debug ethernet_down /bin/kill $(< /run/dhclient6-$INTERFACE.pid)
-            /bin/kill $(< /run/dhclient6-$INTERFACE.pid) &>/dev/null
-        fi
-    fi
-
+    ip_unset
     stop_80211x
-
-    if [[ "$CONNECTION" == "wireless" ]]; then
-        report_debug ethernet_down bring_interface flush "$INTERFACE"
-        bring_interface flush "$INTERFACE"
-    else
-        report_debug ethernet_down bring_interface down "$INTERFACE"
-        bring_interface down "$INTERFACE"
-    fi
-    return 0
+    bring_interface_down "$Interface"
 }
 
 # Stop wpa_supplicant if neccessary
 stop_80211x() {
-    if checkyesno "${AUTH8021X:-no}"; then
+    if is_yes "${Auth8021X:-no}"; then
         . "$SUBR_DIR/8021x"
-        [[ -z "$WPA_CONF" ]] && WPA_CONF="/etc/wpa_supplicant.conf"
-        report_debug ethernet_down stop_wpa "$INTERFACE"
-        stop_wpa "$INTERFACE"
+        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+        do_debug wpa_stop "$Interface"
     fi
 }
 
-ethernet_$1 "$2"
-exit $?
+
 # vim: set ts=4 et sw=4:

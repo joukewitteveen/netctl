@@ -1,8 +1,8 @@
-CONNECTION='wireless'
-DESCRIPTION='A simple opened wireless connection'
-INTERFACE='wlan0'
-SECURITY='none'
+Description='A simple opened wireless connection'
+Interface=wlan0
+Connection=wireless
+Security=none
 ESSID='MyNetwork'
 IP='dhcp'
 # Uncomment this if your ssid is hidden
-#HIDDEN=yes
+#Hidden=yes

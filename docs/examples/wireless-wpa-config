@@ -1,8 +1,8 @@
-CONNECTION='wireless'
-DESCRIPTION='A wpa_supplicant configuration based wireless connection'
-INTERFACE='wlan0'
-SECURITY='wpa-config'
-WPA_CONF='/etc/wpa_supplicant.conf'
+Description='A wpa_supplicant configuration based wireless connection'
+Interface=wlan0
+Connection=wireless
+Security=wpa-config
+WPAConfigFile='/etc/wpa_supplicant.conf'
 IP='dhcp' 
 # Uncomment this if your ssid is hidden
-#HIDDEN=yes
+#Hidden=yes

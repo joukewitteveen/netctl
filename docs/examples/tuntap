@@ -1,11 +1,10 @@
-INTERFACE='tun0'
-CONNECTION='tuntap'
-MODE='tun'
-USER='nobody'
-GROUP='nobody'
+Interface=tun0
+Connection=tuntap
+Mode='tun'
+User='nobody'
+Group='nobody'
 
 ## Example IP configuration
-#IP='static'
-#SKIPNOCARRIER='yes'
-#ADDR='10.10.1.2'
+#IP=static
+#Address='10.10.1.2'
 

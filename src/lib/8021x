@@ -1,171 +1,129 @@
-# Usage: wpa_call $interface $call ...
-# Wrapper around wpa_cli to deal with supplicant configurations that set a
-# non-standard control path.
-wpa_call()
-{
-    local args=("-i" "$1")
+## /usr/lib/network/globals needs to be sourced before this file
+
+
+## Wrapper around wpa_cli to deal with supplicant configurations that set a
+## non-standard control path.
+# $1: interface name
+# $2...: call to the supplicant
+wpa_call() {
+    local args=( "-i" "$1" )
     shift
 
-    if [[ -n "$WPA_CTRL_DIR" ]]; then
+    if [[ $WPA_CTRL_DIR ]]; then
         args+=("-p" "$WPA_CTRL_DIR")
-    elif [[ -n "$WPA_CONF" ]] && grep -q "^[[:space:]]*ctrl_interface=" "$WPA_CONF"; then
-        WPA_CTRL_DIR=$(grep -m 1 "^[[:space:]]*ctrl_interface=" "$WPA_CONF")
+    elif [[ $WPAConfigFile ]] && grep -q "^[[:space:]]*ctrl_interface=" "$WPAConfigFile"; then
+        WPA_CTRL_DIR=$(grep -m1 "^[[:space:]]*ctrl_interface=" "$WPAConfigFile")
         WPA_CTRL_DIR=${WPA_CTRL_DIR#*ctrl_interface=}
-        if [[ "$WPA_CTRL_DIR" == DIR=* ]]; then
+        if [[ $WPA_CTRL_DIR == DIR=* ]]; then
             WPA_CTRL_DIR=${WPA_CTRL_DIR:4}
             WPA_CTRL_DIR=${WPA_CTRL_DIR%% GROUP=*}
         fi
-        args+=("-p" "$WPA_CTRL_DIR")
+        args+=( "-p" "$WPA_CTRL_DIR" )
     fi
-    report_debug wpa_cli "${args[@]}" "$@"
-    wpa_cli "${args[@]}" "$@"
+    do_debug wpa_cli "${args[@]}" "$@"
 }
 
-# Uses wpa_supplicant to check for association to a network
-# wpa_check interface [timeout]
-wpa_check()
-{
-    local timeout=0 INTERFACE="$1" TIMEOUT="${2:-15}" CONDITION="${3:-COMPLETED}"
-    # CONDITION is required as wired connections are ready at ASSOCIATED not COMPLETED FS#20150
-
-    while (( timeout < TIMEOUT )); do
-        ( # Sometimes wpa_supplicant isn't ready so silence errors for 2s only to avoid hiding real errors
-        if (( timeout < 2 )); then
-            eval $(wpa_call "$INTERFACE" status 2> /dev/null | grep -F "wpa_state=")
-        else
-            eval $(wpa_call "$INTERFACE" status | grep -F "wpa_state=")
-        fi
-        [[ "$wpa_state" = "$CONDITION" ]]
-        ) && return 0
-        sleep 1
-        (( ++timeout ))
-    done
-    echo "$wpa_state"
-    # wpa_cli -i "$INTERFACE" terminate >/dev/null 2>&1   # callers sometimes called stop_wpa, which does more but seems redundant
-                                                        # termination should either be handled properly here, or by callers
-    stop_wpa "$INTERFACE"
-    return 1
+## Retrieves the state of an instance of the wpa supplicant
+## Displays one of: DISCONNECTED, INTERFACE_DISABLED, INACTIVE, SCANNING,
+##                  AUTHENTICATING, ASSOCIATING, ASSOCIATED, 4WAY_HANDSHAKE,
+##                  GROUP_HANDSHAKE, COMPLETED
+# $1: interface name
+wpa_get_state() {
+    local state
+    state=$(wpa_call $1 status | grep -m1 "^wpa_state=") || return 1
+    echo ${state#wpa_state=}
 }
 
-start_wpa()
-{
-    local INTERFACE="$1" WPA_CONF="$2" WPA_DRIVER="$3"
-    shift 3
-    local WPA_OPTS="$@" PIDFILE="/run/wpa_supplicant_${INTERFACE}.pid"
+## Waits until the wpa supplicant reaches a listed state
+# $1: timeout
+# $2: interface name
+# $3...: accepted states
+wpa_wait_until_state() {
+    local timeout=$1 interface=$2 states=( "${@:3}" )
+    timeout_wait "$timeout" \
+                 'in_array "$(wpa_get_state "$interface")" "${states[@]}"'
+}
 
-    if [[ -n "$WPA_CONF" ]]; then
-        WPA_CONF="-c$WPA_CONF"
+## Waits while the wpa supplicant is in a listed state
+# $1: timeout
+# $2: interface name
+# $3...: rejected states
+wpa_wait_while_state() {
+    local timeout=$1 interface=$2 states=( "${@:3}" )
+    timeout_wait "$timeout" \
+                 '! in_array "$(wpa_get_state "$interface")" "${states[@]}"'
+}
+
+## Start an instance of the wpa supplicant
+# $1: interface name
+# $2: interface driver(s)
+# $3: configuration file
+wpa_start() {
+    local interface=$1 driver=$2 configuration=$3
+    local pidfile="/run/wpa_supplicant_$interface.pid"
+
+    if [[ $configuration ]]; then
+        configuration="-c$configuration"
     else
         WPA_CTRL_DIR="/run/wpa_supplicant"
-        WPA_CONF="-C$WPA_CTRL_DIR"
+        configuration="-C$WPA_CTRL_DIR"
     fi
 
-    wpa_supplicant -B -P "$PIDFILE" -i "$INTERFACE" -D "$WPA_DRIVER" "$WPA_CONF" $WPA_OPTS
+    do_debug wpa_supplicant -B -P "$pidfile" -i "$interface" -D "$driver" \
+                            "$configuration" $WPAOptions
 
-    # wait up to one second for the pid file to appear
-    timeout_wait 1 '[[ -f "$PIDFILE" ]]';
-    return $?
-}
-
-stop_wpa()
-{
-    local INTERFACE="$1"
-    # we need this as long as wpa_cli has a different default than netcfg
-    [[ -z "$WPA_CTRL_DIR" && -z "$WPA_CONF" ]] && WPA_CTRL_DIR="/run/wpa_supplicant"
-
-    # done if wpa_supplicant is already terminated for this interface
-    [[ -e "$WPA_CTRL_DIR/$INTERFACE" ]] || return
-
-    wpa_call "$INTERFACE" terminate > /dev/null
-
-    # wait up to one second for the pid file to be removed
-    timeout_wait 1 '[[ ! -f "/run/wpa_supplicant_${INTERFACE}.pid" ]]' || \
-        kill "$(< "/run/wpa_supplicant_${INTERFACE}.pid")" &> /dev/null &
-}
-
-wpa_reconfigure() {
-    wpa_call "$1" reconfigure > /dev/null
-    return $?
-}
-
-wpa_check_current_essid() {
-    # usage: wpa_check_current_essid $interface $essid
-    # check that wpa_supplicant is connected to the right essid
-    local INTERFACE=$1 ESSID=$2 status
-    status=$(wpa_call "$INTERFACE" status | grep "^ssid=")
-    if (( $? == 0 )) && [[ "$status" == "ssid=$ESSID" ]]; then
-        return 0
-    else
+    # Wait up to one second for the pid file to appear
+    if ! timeout_wait 1 '[[ -f "$pidfile" ]]'; then
+        # Remove the configuration file if it was generated
+        configuration="$STATE_DIR/wpa_supplicant_$interface.conf"
+        [[ -f $configuration && -O $configuration ]] && rm -f "$configuration"
         return 1
     fi
 }
 
-wpa_find_essid() {
-    # usage: wpa_find_essid $INTERFACE $ESSID
-    # look for existence of a given essid. Assumes wpa_supplicant is
-    # running
-    result=$(wpa_supplicant_scan_and_find "$1" 5 "$2")
-    ret=$?
-    echo $result
-    report_debug wpa_find_essid "\"$result\""
-    return $ret
-}
-
-wpa_find_ap() {
-    # usage: wpa_find_essid $INTERFACE $ESSID
-    # look for existence of a given essid. Assumes wpa_supplicant is
-    # running
-    bssid=${2,,} # set to lowercase
-    result=$(wpa_supplicant_scan_and_find "$1" 1 "$bssid")
-    ret=$?
-    echo $result
-    report_debug wpa_find_ap "\"$result\""
-    return $ret
-}
-
-wpa_supplicant_scan_and_find() {
-    #usage: wpa_supplicant_scan_and_find $INTERFACE $FIELD $ITEM
-    # field = 1 for bssid, 5 for essid
-    # item = string to lookup
-    local INTERFACE="$1" FIELD="$2" ITEM="$3" RETRIES=5 scan_ok=0 try
-    for ((try=0; try < $RETRIES; try++)); do
-        local found
-        wpa_call "$INTERFACE" scan > /dev/null
-        sleep 2
-        found=$(wpa_call "$INTERFACE" scan_results | tail -n+2 | cut -f "$FIELD" | grep -F -x -m 1 -- "$ITEM")
-        (( $? == 0 )) && scan_ok=1
-
-        # ITEM has been found, echo it
-        if [[ -n "$found" ]]; then
-            echo "$found"
-            return 0
-        fi
-    done
-    if (( $scan_ok != 1 )); then
-        report_debug wpa_supplicant_scan_and_find "unable to retrieve scan results"
+## Stop an instance of the wpa supplicant
+# $1: interface name
+wpa_stop() {
+    local interface=$1 config_file="$STATE_DIR/wpa_supplicant_$1.conf"
+    # We need this as long as wpa_cli has a different default than netctl
+    if [[ -z $WPA_CTRL_DIR && -z $WPAConfigFile ]]; then
+        WPA_CTRL_DIR="/run/wpa_supplicant"
     fi
-    return 1
+
+    # Done if wpa_supplicant is already terminated for this interface
+    [[ -z $WPA_CTR_DIR || -e "$WPA_CTRL_DIR/$interface" ]] || return
+
+    wpa_call "$interface" terminate > /dev/null
+    [[ -f $config_file && -O $config_file ]] && rm -f "$config_file"
+
+    # Wait up to one second for the pid file to be removed
+    if ! timeout_wait 1 '[[ ! -f "/run/wpa_supplicant_$interface.pid" ]]'; then
+        kill "$(< "/run/wpa_supplicant_$interface.pid")" &> /dev/null
+    fi
 }
 
+## Scan for networks within range
+# $1: interface name
+# $2: fields of the wpa_supplicant scan_results
 wpa_supplicant_scan() {
-    local INTERFACE="$1" fields="$2" spawned_wpa=0 essids
+    local interface=$1 fields=$2 spawned_wpa=0 essids
     # temp file used, as keeping ESSID's with spaces in their name in arrays
     # is hard, obscure and kinda nasty. This is simpler and clearer.
 
-    [[ -z "$INTERFACE" ]] && return 1
+    [[ $interface ]] || return 1
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
-    if [[ "$(wpa_call "$INTERFACE" ping 2> /dev/null)" != "PONG" ]]; then
-        start_wpa "$INTERFACE" "" "${WPA_DRIVER:-nl80211,wext}" || return 1
+    if [[ "$(wpa_call "$interface" ping 2> /dev/null)" != "PONG" ]]; then
+        wpa_start "$interface" "${WPADriver:-nl80211,wext}" || return 1
         spawned_wpa=1
     fi
 
-    wpa_call "$INTERFACE" scan > /dev/null
+    wpa_call "$interface" scan > /dev/null
     # Wait at least 3 seconds for scan results
     sleep 3
-    # Sometimes, that is not enough (FS#29946)
-    timeout_wait 7 '! wpa_call "$INTERFACE" status | grep -F -q "wpa_state=SCANNING"'
-    wpa_call "$INTERFACE" scan_results |
+    # Sometimes, that is not enough
+    wpa_wait_while_state 7 "$interface" "SCANNING"
+    wpa_call "$interface" scan_results |
         tail -n+2 |
         sort -rn -k3 |
         sort -u -k5 |
@@ -179,97 +137,100 @@ wpa_supplicant_scan() {
     # Re-sort by strength as the removal disorders the list
     # Cut to the AP/essid fields only
 
-    (( $spawned_wpa == 1 )) && stop_wpa "$INTERFACE"
+    (( spawned_wpa == 1 )) && wpa_stop "$interface"
 
-    # File of 0 length, ie. no ssid's.
+    # File of 0 length: no ssid's
     if [[ ! -s "$essids" ]]; then
         rm -f "$essids"
         return 1
     fi
 
     echo "$essids"
-    return 0
 }
 
-# Requires already loaded profile
-make_wpa_config_file() {
-    local WPA_CONFD="$STATE_DIR/wpa.$1"
-
-    # make empty tmp dir with correct permissions, rename it
-    check_make_state_dir
-    mkdir -p /run/wpa_supplicant
-    rm -rf "$WPA_CONFD"
-    mv -f "$(mktemp -d --tmpdir=$STATE_DIR)" "$WPA_CONFD" || return 1
-    echo "ctrl_interface=/run/wpa_supplicant" >> "$WPA_CONFD/wpa.conf"
-    echo "ctrl_interface_group=${WPA_GROUP:-wheel}" >> "$WPA_CONFD/wpa.conf"
-    [[ $WPA_COUNTRY ]] && echo "country=$WPA_COUNTRY" >> "$WPA_CONFD/wpa.conf"
-    [[ -n "$ADHOC" ]] && echo "ap_scan=2" >> "$WPA_CONFD/wpa.conf"
-    echo "$WPA_CONFD/wpa.conf"
+## Print a string within quotes, unless it starts with the "-modifier
+## Quoted:     string   "string"   '""string"'
+## Non-quoted: \"string "\"string" '"string'
+# $1: string
+wpa_quote() {
+    local string=$1
+    if [[ $string == \"* ]]; then
+        printf '%s' "${string:1}"
+    else
+        printf '"%s"' "$string"
+    fi
 }
 
-# Requires already loaded profile
-make_wpa_config() {
-    case $SECURITY in
-    none|wep|wpa)
-        case "${ESSID_TYPE:-ascii}" in
-            ascii)
-                echo "ssid=\"$ESSID\""
-                ;;
-            hex)
-            # Hex ESSID is written unquoted and in lowercase (FS#24333)
-                echo "ssid=${ESSID,,}"
-                ;;
-            *)
-                report_fail "ESSID_TYPE must be set to 'ascii' or 'hex'."
-                return 1
-                ;;
-        esac
-        if [[ -n "$AP" ]]; then
-            echo "bssid=${AP,,}"
-        fi
-        [[ -n "$ADHOC" ]] && echo "mode=1"
+## Create a configuration file for wpa_supplicant without any network blocks
+# $1: interface name
+wpa_make_config_file() {
+    local config_file="$STATE_DIR/wpa_supplicant_$1.conf"
+
+    if [[ -e $config_file ]]; then
+        report_debug "The anticipated filename '$config_file' is not available"
+        return 1
+    fi
+    mkdir -p "$STATE_DIR" /run/wpa_supplicant
+    if ! : > "$config_file"; then
+        report_debug "Could not create the configuration file '$config_file'"
+        return 1
+    fi
+    chmod 600 "$config_file"
+
+    echo "ctrl_interface=/run/wpa_supplicant" >> "$config_file"
+    echo "ctrl_interface_group=${WPAGroup:-wheel}" >> "$config_file"
+    [[ $Country ]] && echo "country=$Country" >> "$config_file"
+    if is_yes "${AdHoc:-no}"; then
+        echo "ap_scan=2" >> "$config_file"
+    fi
+    echo "$config_file"
+}
+
+## Generate a network block for wpa_supplicant
+# $Security: type of wireless security
+wpa_make_config_block() {
+    case $Security in
+      none|wep|wpa)
+        echo "ssid=$(wpa_quote "$ESSID")"
+        [[ $AP ]] && echo "bssid=${AP,,}"
+        is_yes "${AdHoc:-no}" && echo "mode=1"
         ;;
-    wpa-configsection)
-        echo "$CONFIGSECTION"
+      wpa-configsection)
+        printf "%s\n" "${WPAConfigSection[@]}"
+        return
         ;;
-    *)
+      *)
+        report_error "Unsupported security setting: '$Security'"
         return 1
         ;;
     esac
 
     # Key management
-    case $SECURITY in
-    none)
+    case $Security in
+      none)
         echo "key_mgmt=NONE"
         ;;
-    wep)
+      wep)
         echo "key_mgmt=NONE"
         echo "wep_tx_keyidx=0"
-        if [[ ${KEY:0:2} == "s:" ]]; then # TODO: does wpa_supplicant handle this as expected?
-            echo "wep_key0=\"${KEY:2}\""
-        else
-            echo "wep_key0=$KEY"
-        fi
+        echo "wep_key0=$(wpa_quote "$Key")"
         ;;
-    wpa)
+      wpa)
         echo "proto=RSN WPA"
-        if [[ "${#KEY}" -eq 64 ]]; then
-            echo "psk=$KEY"
+        if [[ "${#Key}" -eq 64 ]]; then
+            echo "psk=$Key"
         else
-            echo "psk=\"$KEY\""
+            echo "psk=$(wpa_quote "$Key")"
         fi
         ;;
     esac
 
     # Hidden SSID
-    if checkyesno ${HIDDEN:-no}; then
-        echo "scan_ssid=1"
-    fi
+    is_yes "${Hidden:-no}" && echo "scan_ssid=1"
 
     # Priority group for the network
-    if [[ -n "$PRIORITY" ]]; then
-        echo "priority=$PRIORITY"
-    fi
+    [[ $Priority ]] && echo "priority=$Priority"
 }
 
-# vim: ft=sh ts=4 et sw=4 tw=0:
+
+# vim: ft=sh ts=4 et sw=4:

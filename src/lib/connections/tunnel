@@ -1,34 +1,28 @@
-#! /bin/bash
-. /usr/lib/network/network
+# Contributed by: Kyle Fuller <inbox@kylefuller.co.uk>
+
+. "$SUBR_DIR/ip"
 
 tunnel_up() {
-    load_profile "$1"
-
-    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
-        report_fail "Interface $INTERFACE already exists."
-        exit 1
+    if is_interface "$Interface"; then
+        report_error "Interface '$Interface' already exists"
+        return 1
     else
-        ip tunnel add "$INTERFACE" mode "$MODE" remote "$REMOTE"
+        ip tunnel add "$Interface" mode "$Mode" remote "$Remote"
     fi
 
-    if [[ -n "$LOCAL" ]]; then
-        ip tunnel change "$INTERFACE" local "$LOCAL"
+    if [[ -n "$Local" ]]; then
+        ip tunnel change "$Interface" local "$Local"
     fi
 
-    "$CONN_DIR/ethernet" up "$1"
-    return 0
+    bring_interface_up "$Interface"
+    ip_set
 }
 
 tunnel_down() {
-    load_profile "$1"
-
-    "$CONN_DIR/ethernet" down "$1"
-    ip tunnel del "$INTERFACE"
-
-    return 0
+    ip_unset
+    bring_interface_down "$Interface"
+    ip tunnel del "$Interface"
 }
 
-tunnel_$1 "$2"
-exit $?
 
 # vim: set ts=4 et sw=4:

@@ -1,9 +1,6 @@
-CONNECTION="bond"
-DESCRIPTION='Bond Interface'
-INTERFACE='bond0'
-IP='static'
-ADDR="10.0.0.1"
-NETMASK="255.0.0.0"
-SLAVE_INTERFACES=("eth0" "eth2")
-SKIPNOCARRIER="yes"
-
+Description='Bond Interface'
+Interface='bond0'
+Connection=bond
+BindsToInterfaces=(eth0 eth2)
+IP=static
+Address="10.0.0.1/8"

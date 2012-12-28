@@ -1,0 +1,55 @@
+NETCTL.SPECIAL(7)
+=================
+
+NAME
+----
+netctl.special - Special netctl systemd units
+
+
+SYNOPSIS
+--------
+netctl.service, netctl-auto.service, netctl-ifplugd.service
+
+
+DESCRIPTION
+-----------
+Bundled with netctl come a few systemd units that are not controlled
+through the netctl command. They can be used through the systemctl
+utility of systemd.
+
+
+SPECIAL UNITS
+-------------
+netctl.service::
+    When started, this unit tries to start the profiles that were
+    running when the unit was last stopped. In some cases, the interface
+    a profile binds to might not be available yet, when netctl.service
+    tries to bring a profile up. A simple, hackish, solution is to do:
+--------------------------------------------------------------------
+echo "[[ -t 0 ]] || sleep 3" > /etc/network.d/interfaces/<interface>
+chmod 755 /etc/network.d/interfaces/<interface>
+--------------------------------------------------------------------
+    A more concise solution is to first enable a profile through netctl
+    and then disable it again through systemctl:
+--------------------------------------------------------------------
+netctl enable <profile>
+systemctl disable netctl@<profile>
+--------------------------------------------------------------------
+    This way the unit configuration file for the profile remains in
+    existence, while the profile is not enabled.
+
+netctl-auto@<interface>.service::
+    This unit issues a scan on the interface it is used for and tries to
+    start a profile for a network it finds. It is targeted to wireless
+    interfaces.
+
+netctl-ifplugd@<interface>.service::
+    This unit starts ifplugd on the interface it is used for. It will
+    try to start a netctl profile whenever a cable is plugged into the
+    interface and stop the profile when the cable is unplugged. Note
+    that this unit does not provide network.target.
+
+
+SEE ALSO
+--------
+*netctl*(1), *netctl.profile*(5)

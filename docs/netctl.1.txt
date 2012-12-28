@@ -1,91 +1,92 @@
-NETCFG(8)
+NETCTL(1)
 =========
 
 NAME
 ----
-netcfg - start/stop/control network profiles
+netctl - Control the netctl network profile manager
 
 
 SYNOPSIS
 --------
-netcfg [_options_]
+*netctl* {*COMMAND*} [+PROFILE+]
 
-netcfg *profile*
+*netctl* [--help | --version]
 
 
 DESCRIPTION
 -----------
-*netcfg* is used to configure and manage network connections via
-profiles. It has pluggable support for a range of connection types, such
-as wireless, ethernet, ppp. It is also capable of starting/stopping many
-to one connections, that is, multiple connections within the same
-profile, optionally with bonding.
-
-It may be run at boot, by enabling the 'netcfg' systemd service, or, on
-legacy systems, by adding 'net-profiles' to +DAEMONS+ in '/etc/rc.conf'.
-After boot time, it may be used to start profiles, simply by passing only
-the profile name.
-
-When run without options, `netcfg profile` is equivalent to `netcfg -u
-profile`.
+*netctl* may be used to introspect and control the state of the systemd
+services for the network profile manager.
 
 
 OPTIONS
 -------
-*-l, list*::
-  List all available profiles
-*current*::
-  Report currently running profiles
-*-c, check-iface* _profile_::
-  Start the specified profile, only if it's interface is not currently up.
-*-u, up* _profile_::
-  Start the specified profile
-*-r, reconnect* _profile_::
-  Disconnect and reconnect the specified profile
-*-R, iface-recon* _interface_::
-  Reconnect profile active on specified interface
-*-d, down* _profile_::
-  Stop the specified profile
-*-D, iface-down* _interface_::
-  Stop the profile up on the specified interface.
-*-a, all-down*::
-  Stop all connected profiles
-*all-suspend*::
-  Suspend and store the name of all active profiles.
-*all-resume*::
-  Reconnect any profiles that have been suspended.
-*-v, --version*::
-  Display version information and exit
-*-h, --help*::
-  Display help message and exit
+The following commands are understood:
+
+*list*::
+    List all available profiles. Active profiles will be marked with a
+    `*'.
+
+*store*::
+    Saves which profiles are currently active.
+
+*restore*::
+    Loads the profiles that were active during the last invocation of
+    `*store*'.
+
+*stop-all*::
+    Stops all active network profiles.
+
+*start [+PROFILE+]*::
+    Start the network profile specified on the command line.
+
+*stop [+PROFILE+]*::
+    Stop the network profile specified on the command line.
+
+*restart [+PROFILE+]*::
+    Restart the network profile specified on the command line. If it is
+    not started yet, it will be started.
+
+*switch-to [+PROFILE+]*::
+    Starts the network profile specified on the command line after
+    stopping all profiles that refer to the same interface.
+
+*status [+PROFILE+]*::
+    Show terse runtime status information about a profile, followed by
+    its most recent log data from the journal.
+
+*enable [+PROFILE+]*::
+    Enable the systemd unit for the profile specified. This will create
+    a unit configuration file. If the file already exists, the command
+    fails. No other profiles than the one specified will be enabled.
+    Changes to the general options in a profile specification will not
+    propagate to the unit configuration file automatically. After such
+    changes, it is necessary to `*reenable*' the profile.
+
+*disable [+PROFILE+]*::
+    Disable the systemd unit for the profile specified. This will remove
+    the file created by `*enable*' even if it was customized, so be
+    carefull.
+
+*reenable [+PROFILE+]*::
+    Reenable the systemd unit for the profile specified. This is
+    effectively a combination of `*disable*' and `*enable*'.
 
 
-CONFIGURATION FILES
--------------------
-'/etc/conf.d/netcfg'::
-  Parameters for startup.
-'/etc/network.d/'::
-  User-defined profiles.
+EXIT STATUS
+-----------
+On success 0 is returned, a non-zero failure code otherwise.
 
 
-FILES
------
-'/usr/lib/network/connections/'::
-  Currently installed network profile types.
-'/etc/network.d/examples/'::
-  Example profiles.
-'/usr/share/doc/netcfg/contrib/'::
-  Inspirational scripts.
-
-
-ENVIRONMENT VARIABLES
----------------------
-+NETCFG_DEBUG+::
-  Set to 1 to activate debug output.
+ENVIRONMENT
+-----------
+'$NETCTL_DEBUG'::
+    If set to `"yes"`, debugging output is generated.
+'$NETCTL_STATE_FILE'::
+    The location of the state file. Defaults to
+    '/var/lib/netctl/netctl.state'.
 
 
 SEE ALSO
 --------
-*netcfg-profiles*(5) on how to configure netcfg.
-
-include::footer.txt[]
+*netctl.profile*(5) *netctl.special*(7) *systemctl*(1)

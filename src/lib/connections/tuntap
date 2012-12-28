@@ -1,28 +1,24 @@
-#! /bin/bash
-. /usr/lib/network/network
+# Contributed by: Rémy Oudompheng <remy@archlinux.org>
+
+. "$SUBR_DIR/ip"
 
 tuntap_up() {
-    load_profile "$1"
-
-    if [[ -e /sys/class/net/$INTERFACE ]]; then
-        report_fail "Interface $INTERFACE already exists."
-        exit 1
+    if is_interface "$Interface"; then
+        report_error "Interface '$Interface' already exists"
+        return 1
     else
-        ip tuntap add dev "$INTERFACE" mode "$MODE" \
-            user "$USER" group "$GROUP"
+        ip tuntap add dev "$Interface" mode "$Mode" \
+            user "$User" group "$Group"
     fi
-    IP=${IP-no} "$CONN_DIR/ethernet" up "$1"
-    return 0
+    bring_interface_up "$Interface"
+    IP=${IP-no} ip_set
 }
 
 tuntap_down() {
-    load_profile "$1"
-
-    "$CONN_DIR/ethernet" down "$1"
-    ip tuntap del dev "$INTERFACE" mode "$MODE"
-    return 0
+    ip_unset
+    bring_interface_down "$Interface"
+    ip tuntap del dev "$Interface" mode "$Mode"
 }
 
-tuntap_$1 "$2"
-exit $?
+
 # vim: set ts=4 et sw=4 tw=0:

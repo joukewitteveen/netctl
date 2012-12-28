@@ -1,28 +1,26 @@
-#! /bin/bash
-. /usr/lib/network/network
+# Contributed by: Thomas S Hatch <thatch45@gmail.com>
+
+. "$CONN_DIR/ethernet"
 
 vlan_up() {
-    load_profile "$1"
-
-    if [[ -e "/sys/class/net/$INTERFACE" ]]; then
-        report_fail "Interface $INTERFACE already exists."
-        exit 1
-    else
-        bring_interface up "$VLAN_PHYS_DEV"
-        ip link add link "$VLAN_PHYS_DEV" name "$INTERFACE" type vlan id "$VLAN_ID"
+    if [[ ${#BindsToInterfaces} -ne 1 ]]; then
+        report_error "No unique physical device for VLAN interface '$Interface' specified"
+        return 1
     fi
-    "$CONN_DIR/ethernet" up "$1"
-    return 0
+    if is_interface "$Interface"; then
+        report_error "Interface '$Interface' already exists"
+        return 1
+    else
+        bring_interface_up "$BindsToInterfaces"
+        ip link add link "$BindsToInterfaces" name "$Interface" type vlan id "$VLANID"
+    fi
+
+    ethernet_up
 }
 
 vlan_down() {
-    load_profile "$1"
-
-    "$CONN_DIR/ethernet" down "$1"
-    ip link delete "$INTERFACE"
-    return 0
+    ethernet_down
+    ip link delete "$Interface"
 }
 
-vlan_$1 "$2"
-exit $?
 # vim: set ts=4 et sw=4:

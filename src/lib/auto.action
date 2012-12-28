@@ -1,56 +1,57 @@
 #! /bin/bash
 
+. /usr/lib/network/globals
+. "$SUBR_DIR/ip"
+
 interface="$1"
 ssid="$2"
 profile="$3"
 action="$4"
+PROFILE_FILE="$STATE_DIR/wpa_actiond_$interface.profile"
 
-. /usr/lib/network/network
+# Is it possible that we don't get a profile?!
 [[ "$profile" ]] && load_profile "$profile"
 
+# TODO: copy some from 'network'
 case $action in
-    CONNECT)
-        if [[ -z $profile ]]; then
-            # Load interface specific config
-            [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
-            dhcpcd -qL -t "${DHCP_TIMEOUT:-10}" -K $DHCP_OPTIONS "$interface"
-            exit $?
+  CONNECT)
+    if [[ -z $profile ]]; then
+        if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
+            source "$PROFILE_DIR/interfaces/$interface"
         fi
-        if ! DHCPCD_INTERNAL_OPTIONS="-K" $CONN_DIR/ethernet up "$profile"; then
-            exit 1 # what to do if fail?
-        fi
-
-        set_profile up "$profile"
-
-        if ! ( eval $POST_UP ); then    # JP: sandbox the eval
-            # failing POST_UP will take interface down
-            "$CONN_DIR/$ethernet" down "$profile"
-            exit 1
-        fi
-        ;;
-    DISCONNECT)
-        if [[ -z $profile ]]; then
-            dhcpcd -k "$interface"
-            exit $?
-        fi
-        if ! ( eval $PRE_DOWN ); then   # JP: sandbox the eval
-            exit 1
-        fi
-        if ! "$CONN_DIR/ethernet" down "$profile"; then
-            exit 1
-        fi
-        if ! ( eval $POST_DOWN ); then  # JP: sandbox the eval
-            exit 1
-        fi
-        set_profile down "$profile"
-        ;;
-    LOST|REESTABLISHED)
-        # Not handled.
-        exit 0
-        ;;
-    *)
-        # ???
+        dhcpcd -qL -t "${TimeoutDHCP:-10}" $DHCPOptions -K "$interface"
+        exit $?
+    fi
+    DHCPOptions+=" -K"
+    ip_set || exit 1
+    printf "%s" "$profile" > "$PROFILE_FILE"
+    # JP: sandbox the eval
+    if ! ( eval $ExecUpPost ); then
+        # Failing ExecUpPost will take the connection down
+        netctl-auto stop "$interface"
         exit 1
-        ;;
+    fi
+    ;;
+  DISCONNECT)
+    if [[ -z $profile ]]; then
+        dhcpcd -k "$interface"
+        exit $?
+    fi
+    # JP: sandbox the eval
+    if ! ( eval $ExecDownPre ); then
+        exit 1
+    fi
+    ip_unset && rm -f "$PROFILE_FILE"
+    ;;
+  LOST|REESTABLISHED)
+    # Not handled.
+    exit 0
+    ;;
+  *)
+    # ???
+    exit 1
+    ;;
 esac
 
+
+# vim: ft=sh ts=4 et sw=4:

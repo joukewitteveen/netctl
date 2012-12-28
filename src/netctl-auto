@@ -1,87 +1,74 @@
 #! /bin/bash
-. /usr/lib/network/network
+
+. /usr/lib/network/globals
 . "$SUBR_DIR/8021x"
 . "$SUBR_DIR/rfkill"
-. /etc/conf.d/netcfg
 
 AUTOWIFI="/usr/sbin/wpa_actiond -p /run/wpa_supplicant"
-ACTION_SCRIPT="/usr/bin/netcfg-wpa_actiond-action"
+ACTION_SCRIPT="/usr/lib/network/auto.action"
+
+if [[ $# != 2 || $1 != @(start|stop) ]]; then
+    exit_error "Usage: netctl-auto [start|stop] <interface>"
+fi
+
+INTERFACE=$2
+PIDFILE="$STATE_DIR/wpa_actiond_$INTERFACE.pid"
+PROFILE_FILE="$STATE_DIR/wpa_actiond_$INTERFACE.profile"
+shift 2
 
 case $1 in
-    help)
-        echo "netcfg-wpa_actiond <interface>"
-        echo "netcfg-wpa_actiond stop <interface>"
-        exit
-        ;;
-    stop)
-        [[ -z $2 ]] && echo "Please specify an interface to stop" && exit 1
-        interface=$2
-        PIDFILE="/run/wpa_actiond_${interface}.pid"
-        [[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
-        netcfg -D "$interface"
-        timeout_wait 1 '[[ ! -f "$PIDFILE" ]]' || kill "$(< "$PIDFILE")"
-        # only try to disable software rfkill switches (FS#25514)
-        if [[ "$RFKILL" == "soft" ]]; then
-            set_rf_state "$interface" disabled $RFKILL_NAME || exit $?
+  start)
+    if [[ -e "/run/wpa_supplicant_$INTERFACE.pid" ]]; then
+        exit_error "The interface ($INTERFACE) is already in use"
+    fi
+    if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
+        source "$PROFILE_DIR/interfaces/$INTERFACE"
+    fi
+    [[ $RFKill ]] && enable_rf "$INTERFACE" "$RFKill" || exit 1
+
+    WPA_CONF=$(wpa_make_config_file "$INTERFACE")
+    list_profiles | while read -r profile; do
+        report_notice "$profile"
+        (
+            source "$PROFILE_DIR/$profile"
+            is_yes "${ExcludeAuto:-no}"&& exit 1
+            : ${Security:=none}
+            [[ $Interface != "$INTERFACE" ]] && exit 1
+            [[ $Connection != "wireless" ]] && exit 1
+            # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
+            [[ $Security == "wpa-config" ]] && exit 1
+
+            printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$WPA_CONF"
+        )
+    done
+
+    # Kill any lingering WPA supplicants
+    WPAConfigFile= wpa_stop "$INTERFACE" &> /dev/null
+
+    # Start the WPA supplicant
+    : ${WPADriver:=nl80211,wext}
+    WPAOptions+=" -W"
+    if wpa_start "$INTERFACE" "$WPADriver" "$WPA_CONF"; then
+        if $AUTOWIFI -i "$INTERFACE" -P "$PIDFILE" -a "$ACTION_SCRIPT" "$@"; then
+            exit 0
         fi
-        exit
-        ;;
-    *)
-        interface=$1; shift
-        PIDFILE="/run/wpa_actiond_${interface}.pid"
-        EXTRA_AUTOWIFI_OPTIONS="$*"
-        ;;
+    fi
+    exit 1
+    ;;
+  stop)
+    if [[ -e $PROFILE_FILE ]]; then
+        "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
+    else
+        if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
+            source "$PROFILE_DIR/interfaces/$INTERFACE"
+        fi
+        wpa_stop "$INTERFACE"
+        ip link set dev "$INTERFACE" down
+        [[ $RFKill ]] && disable_rf "$INTERFACE" "$RFKill"
+    fi
+    timeout_wait 1 '[[ ! -f "$PIDFILE" ]]' || kill "$(< "$PIDFILE")"
+    ;;
 esac
 
-if [[ -z $interface ]]; then
-    echo "No interface specified"
-    exit 1
-fi
 
-# Load interface specific config
-[[ -f "$IFACE_DIR/$interface" ]] && source "$IFACE_DIR/$interface"
-
-if [[ -f "$CONN_DIR/interfaces/$interface" ]]; then
-    netcfg -D "$interface"
-fi
-
-if [[ -n "$RFKILL" ]]; then # Enable radio if necessary
-    enable_rf "$interface" "$RFKILL" "$RFKILL_NAME" || exit $?
-fi
-
-WPA_CONF="$(make_wpa_config_file "$interface")"
-
-if [[ -n "${AUTO_PROFILES}" ]]; then
-    for prof in "${AUTO_PROFILES[@]}"; do echo "$prof"; done
-else
-    list_profiles
-fi | while read profile; do
-    echo "$profile"
-    (
-    load_profile "$profile"
-
-    [[ $CONNECTION != "wireless" ]] && exit 1
-    [[ $INTERFACE != $interface ]] && exit 1
-    # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
-    [[ -z "$SECURITY" ]] && SECURITY="none"
-    [[ $SECURITY == "wpa-config" ]] && exit 1
-
-    printf "%s\n" "network={" "$(make_wpa_config)" "id_str=\"$profile\"" "}" >> "$WPA_CONF"
-    )
-done
-
-
-[[ -z $WPA_DRIVER ]] && WPA_DRIVER="nl80211,wext"
-WPA_OPTS="-W $WPA_OPTS"
-
-# Kill any existing wpa_supplicant on this interface
-stop_wpa "$interface" &> /dev/null
-
-if start_wpa "$interface" "$WPA_CONF" "$WPA_DRIVER" $WPA_OPTS; then
-    if $AUTOWIFI -i "$interface" -P "$PIDFILE" -a "$ACTION_SCRIPT" $EXTRA_AUTOWIFI_OPTIONS; then
-        exit 0
-    fi
-fi
-
-exit 1
-
+# vim: ft=sh ts=4 et sw=4:
