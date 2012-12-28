@@ -1,0 +1,28 @@
+Support for connection types is implemented by connection files in
+
+  /usr/lib/network/connections/
+
+The file name determines the name of the connection type, so support
+for the aviancarrier connection type will be provided by the file:
+
+  /usr/lib/network/connections/aviancarrier
+
+Files that implement support for a connection type should NOT be
+executable. Such files should contain valid Bash code, among which two
+functions, namely <connection_type>_up and <connection_type>_down. For
+the aviancarrier file this would be:
+
+  aviancarrier_up
+  aviancarrier_down
+
+These functions are responsible for bringing the network up and down,
+respectively. When the functions are called, three bash files are
+already sourced, so all functions and variables in those files are
+available. The readily sourced files are:
+
+  /usr/lib/network/network
+  /usr/lib/network/globals
+  /etc/network.d/<profile>
+
+Here, <profile> is the profile file specifying the desired network
+configuration.

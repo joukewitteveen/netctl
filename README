@@ -1,26 +1,23 @@
 Dependencies:
-- Linux
+- systemd
 - Bash 4.x
 - GNU Coreutils
 - iproute2
-- dialog: for interactive menu
+- resolvconf
+
+Optional:
+- dhcpcd or dhclient: for DHCP support
+- wpa_supplicant: for WPA support
+- dialog: for the interactive assistant
 - ifplugd: for automatic connection
-- wireless_tools: for net_rename
-
-For DHCP support:
-- dhcpcd
-- dhclient (for DHCPv6)
-
-For wireless support:
-- wpa_supplicant
 - wpa_actiond: for automatic connection
-
-For bonding support
-- ifenslave
-
-For bridge support:
-- bridge-utils
+- ifenslave: for bonding support
+- bridge-utils: for bridge support
 
 For documentation generation:
 - asciidoc
 
+Naming Conventions for Variables:
+end-user variables - CamelCase
+local variables    - lower_case
+other variables    - UPPER_CASE

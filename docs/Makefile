@@ -1,21 +1,12 @@
-# Makefile for netcfg documentation
+# Makefile for netctl documentation
 
-MANPAGES = netcfg.8 netcfg-profiles.5
-WEBPAGES = index.html features.html $(MANPAGES:%=%.html)
+MANPAGES = netctl.1 netctl.profile.5 netctl.special.7
 
-.PHONY: manpages website clean
+.PHONY: manpages clean
 manpages: $(MANPAGES)
-website: website.tar.xz
-
-$(MANPAGES): %: %.txt footer.txt
+$(MANPAGES): %: %.txt
 	a2x -d manpage -f manpage -a manversion=$(VERSION) $<
 
-$(WEBPAGES): %.html: %.txt
-	asciidoc -a disable-javascript -a linkcss -a max-width=960px $<
-
-website.tar.xz: $(WEBPAGES)
-	tar --transform "s%^%netcfg/%" -cJf $@ $^ -C /etc/asciidoc/stylesheets asciidoc.css
-
 clean:
-	-@rm -vf $(MANPAGES) $(WEBPAGES) website.tar.xz 2>/dev/null
+	-@rm -vf $(MANPAGES) 2>/dev/null
 

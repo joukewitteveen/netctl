@@ -1,4 +1,0 @@
-CONNECTION='ppp'
-INTERFACE='ignore'
-PEER='provider'
-PPP_TIMEOUT=10
