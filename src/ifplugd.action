@@ -36,6 +36,7 @@ case "$2" in
     fi
     for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
       if "$SUBR_DIR/nework" start "$profile"; then
+        mkdir -p "$(dirname "$PROFILE_FILE")"
         printf "%s" "$profile" > "$PROFILE_FILE"
         exit 0
       fi

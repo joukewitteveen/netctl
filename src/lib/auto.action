@@ -24,6 +24,7 @@ case $action in
     fi
     DHCPOptions+=" -K"
     ip_set || exit 1
+    mkdir -p "$(dirname "$PROFILE_FILE")"
     printf "%s" "$profile" > "$PROFILE_FILE"
     # JP: sandbox the eval
     if ! ( eval $ExecUpPost ); then

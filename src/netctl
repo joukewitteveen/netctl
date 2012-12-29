@@ -36,6 +36,7 @@ list() {
 }
 
 store() {
+    mkdir -p "$(dirname "$STATE_FILE")"
     systemctl list-units --type=service --full --no-legend --no-pager | \
       cut -d\  -f1 | grep "^netctl@" > "$STATE_FILE"
 }
