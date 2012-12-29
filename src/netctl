@@ -44,15 +44,18 @@ store() {
 restore() {
     if [[ ! -r $STATE_FILE ]]; then
         exit_error "Could not read state file '$STATE_FILE'"
+    elif [[ ! -s $STATE_FILE ]]; then
+        report_debug "No profiles to restore in state file '$STATE_FILE'"
+    else
+        mapfile -t Units < "$STATE_FILE"
+        do_debug systemctl start "${Units[@]}"
     fi
-    mapfile -t Units < "$STATE_FILE"
-    do_debug systemctl start "${Units[@]}"
 }
 
 stop_all() {
     # We cannot pipe to mapfile, as the end of a pipe is inside a subshell
     mapfile -t Profiles < <(list_profiles)
-    do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
+    [[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
       >(grep -Fv "not loaded" >&2)
 }
 
@@ -70,7 +73,7 @@ switch_to() {
     fi
     mapfile -t AllProfiles < <(list_profiles)
     mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
-    do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
+    [[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
       >(grep -Fv "not loaded" >&2)
     do_debug systemctl start "netctl@$1"
 }
