@@ -1,6 +1,7 @@
 [Unit]
 Description=Automatic wired network connection using netctl profiles
 Documentation=man:netctl.special(7)
+BindsTo=sys-subsystem-net-devices-%i.device
 
 [Service]
 ExecStart=/usr/bin/ifplugd -i %i -r /etc/ifplugd/netctl.action -fIns

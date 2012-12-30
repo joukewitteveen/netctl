@@ -222,6 +222,10 @@ of the `wireless' type:
     selection, the matched network with the highest priority will be
     selected. Defaults to ``0`'.
 
+'ExcludeAuto='::
+    Whether or not to exclude this profile from automatic profile
+    selection. Defaults to ``no`'.
+
 'WPAGroup='::
     Group that has the authority to configure *wpa_supplicant* via its
     control interface. Defaults to ``wheel`'.

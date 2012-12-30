@@ -12,7 +12,6 @@ PROFILE_FILE="$STATE_DIR/wpa_actiond_$interface.profile"
 # Is it possible that we don't get a profile?!
 [[ "$profile" ]] && load_profile "$profile"
 
-# TODO: copy some from 'network'
 case $action in
   CONNECT)
     if [[ -z $profile ]]; then
