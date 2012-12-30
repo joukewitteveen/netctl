@@ -45,15 +45,6 @@ wireless_up() {
         return 1
     fi
 
-    if is_yes "${Scan:-no}"; then
-        if ! wpa_wait_while_state "$TimeoutWPA" "$Interface" "DISCONNECTED" "SCANNING"; then
-            report_error "Wireless network '$ESSID' (or access point) not present"
-            wpa_stop "$Interface"
-            bring_interface_down "$interface"
-            return 1
-        fi
-    fi
-        
     # Bring interface up after starting wpa_supplicant
     # This is important since cards such as iwl3945 do not support
     # mode switching when they are already up.
@@ -61,6 +52,7 @@ wireless_up() {
 
     if ! wpa_wait_until_state "$TimeoutWPA" "$Interface" "COMPLETED"; then
         report_error "WPA association/authentication failed for interface '$Interface'"
+        report_debug "WPA state for interface '$Interface': $(wpa_get_state "$Interface")"
         wpa_stop "$Interface"
         bring_interface_down "$Interface"
         return 1

@@ -211,11 +211,6 @@ of the `wireless' type:
     Whether or not the specified network is a hidden network. Defaults
     to ``no`'.
 
-'Scan='::
-    Whether or not to scan for the presence of a network before
-    attempting to connect. Hidden networks do not appear in a scan.
-    Defaults to ``no`'.
-
 'AdHoc='::
     Whether or not to use ad-hoc mode. Defaults to ``no`'.
 
