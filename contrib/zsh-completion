@@ -12,6 +12,11 @@ _profile_opts=(
     'disable' 'reenable'
     )
 
+__systemctl()
+{
+  systemctl --full --no-legend --no-pager "$@"
+}
+
 for fun in start switch-to; do
     (( $+function[_netctl_$fun] )) || _netctl_$fun(){
         local -a _profiles
@@ -34,19 +39,19 @@ done
 
 (( $+functions[_netctl_enable] )) || _netctl_enable(){
     local -a _profiles
-    _profiles=(${${(M)${(f)"$(_call_program "Disabled Netctl Units" "systemctl list-unit-files 2>/dev/null")"}:#netctl*disabled*}%% *}) 
+    _profiles=(${${(M)${(f)"$(_call_program "Disabled Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl*disabled*}%% *}) 
     _describe "Disabled Netctl Units" _profiles
 }
 
 (( $+functions[_netctl_disable] )) || _netctl_disable(){
     local -a _profiles
-    _profiles=(${${(M)${(f)"$(_call_program "Enabled Netctl Units" "systemctl list-unit-files 2>/dev/null")"}:#netctl*enabled*}%% *}) 
+    _profiles=(${${(M)${(f)"$(_call_program "Enabled Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl*enabled*}%% *}) 
     _describe 'Enabled Netctl Units' _profiles
 }
 
 (( $+function[_netctl_reenable] )) || _netctl_reenable(){
     local -a _profiles
-    _profiles=(${${(M)${(f)"$(_call_program "Netctl Units" "systemctl list-unit-files 2>/dev/null")"}:#netctl*}%% *}) 
+    _profiles=(${${(M)${(f)"$(_call_program "Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl*}%% *}) 
     _describe "Netctl Units" _profiles
 }
 
