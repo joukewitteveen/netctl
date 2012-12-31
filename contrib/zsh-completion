@@ -1,4 +1,4 @@
-#compdef netctl
+#compdef netctl netctl-auto
 
 local -a _long_opts _profile_opts
 _long_opts=(
@@ -107,6 +107,43 @@ _netctl_command(){
     fi
 }
 
-_arguments \
-    "$_long_opts[@]" \
-    '*::netctl commands:_netctl_command'
+(( $+functions[_auto_command] )) || _auto_command(){
+    local -a _interfaces _command_opts
+    _interfaces=(${${${(M)${(f)"$(_call_program interfaces "ip l 2>/dev/null")"}:#(0|1|2|3|4|5|6|7|8|9)*}#* }%%:*})
+    _command_opts=(
+        'start:start interface'
+        'stop:stop interface'
+        )
+
+    if (( CURRENT == 1 )); then
+        _describe "netctl-auto Commands" _command_opts
+    else
+        cmd="${${_command_opts[(r)$words[1]:*]%%:*}}"
+        if (( $#cmd )); then
+            if ((CURRENT < 3 )); then
+                _describe interfaces _interfaces
+            else
+                _message "No More Options."
+            fi
+        else
+            _message "Unknown netctl command: $words[1]"
+        fi
+        return ret;
+    fi
+}
+
+case $service in
+    netctl)
+        _arguments \
+            "$_long_opts[@]" \
+            '*::netctl commands:_netctl_command'
+        ;;
+    netctl-auto)
+        _arguments \
+            '--help[Show Help Message]' \
+            '*::network interfaces:_auto_command'
+        ;;
+    *)
+        _message "Unknown Command: $words[0]"
+        ;;
+esac
