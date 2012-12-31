@@ -23,6 +23,12 @@ wpa_call() {
     do_debug wpa_cli "${args[@]}" "$@"
 }
 
+## Check if an instance of the wpa supplicant is active on an interface
+# $1: interface name
+wpa_is_active(){
+    [[ $(wpa_call "$1" ping 2> /dev/null) == "PONG" ]]
+}
+
 ## Retrieves the state of an instance of the wpa supplicant
 ## Displays one of: DISCONNECTED, INTERFACE_DISABLED, INACTIVE, SCANNING,
 ##                  AUTHENTICATING, ASSOCIATING, ASSOCIATED, 4WAY_HANDSHAKE,
@@ -113,7 +119,7 @@ wpa_supplicant_scan() {
     [[ $interface ]] || return 1
     essids=$(mktemp --tmpdir essid.XXXXXXXX)
 
-    if [[ "$(wpa_call "$interface" ping 2> /dev/null)" != "PONG" ]]; then
+    if ! wpa_is_active "$interface"; then
         wpa_start "$interface" "${WPADriver:-nl80211,wext}" || return 1
         spawned_wpa=1
     fi
