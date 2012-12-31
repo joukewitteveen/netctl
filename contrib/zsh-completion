@@ -35,20 +35,14 @@ done
 
 (( $+functions[_netctl_restart] )) || _netctl_restart(){
     local -a _profiles
-    _profiles=( ${${(f)"$(_call_program profiles "$service list 2>/dev/null")"}##[\* ] })
+    _profiles=( ${${(M)${(f)"$(_call_program profiles "$service list 2>/dev/null")"}:#\**}##\* })
     [[ -z "$_profiles" ]] && _message "No More Options." && return 0
     _describe 'profiles' _profiles
 }
 
 (( $+functions[_netctl_enable] )) || _netctl_enable(){
     local -a _profiles
-    #_profiles=(${${${(M)${(f)"$(_call_program "Disabled Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl@*enabled*}%%.service *}#netctl@}) 
     _profiles=( ${${(f)"$(_call_program profiles "$service list 2>/dev/null")"}##[\* ] })
-    for f in $_profiles; do
-        if test ! "$(__systemctl is-enabled netctl@"${f}".service 2>/dev/null)"; then
-            _profiles=(${_profiles:#$f})
-        fi
-    done
     [[ -z "$_profiles" ]] && _message "No More Options."
     _describe "Disabled Netctl Units" _profiles
 }
