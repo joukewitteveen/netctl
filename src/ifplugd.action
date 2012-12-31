@@ -35,7 +35,7 @@ case "$2" in
       echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
     fi
     for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
-      if "$SUBR_DIR/nework" start "$profile"; then
+      if "$SUBR_DIR/network" start "$profile"; then
         mkdir -p "$(dirname "$PROFILE_FILE")"
         printf "%s" "$profile" > "$PROFILE_FILE"
         exit 0
@@ -44,7 +44,7 @@ case "$2" in
   ;;
   down)
     if [[ -e "$PROFILE_FILE" ]]; then
-      "$SUBR_DIR/nework" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
+      "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
     fi
   ;;
   *)
