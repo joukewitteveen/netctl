@@ -21,6 +21,7 @@ for fun in start switch-to; do
     (( $+function[_netctl_$fun] )) || _netctl_$fun(){
         local -a _profiles
         _profiles=( ${${${(f)"$(_call_program profiles "$service list 2>/dev/null")"}:#\**}##  })
+        [[ -z "$_profiles" ]] && _message "No More Options." && return 0
         _describe 'Stopped Profiles' _profiles
     }
 done
@@ -28,38 +29,53 @@ done
 (( $+functions[_netctl_stop] )) || _netctl_stop(){
     local -a _profiles
     _profiles=( ${${(M)${(f)"$(_call_program profiles "$service list 2>/dev/null")"}:#\**}##\* })
+    [[ -z "$_profiles" ]] && _message "No More Options." && return 0
     _describe 'Running Profiles' _profiles
 }
 
 (( $+functions[_netctl_restart] )) || _netctl_restart(){
     local -a _profiles
     _profiles=( ${${(f)"$(_call_program profiles "$service list 2>/dev/null")"}##[\* ] })
+    [[ -z "$_profiles" ]] && _message "No More Options." && return 0
     _describe 'profiles' _profiles
 }
 
 (( $+functions[_netctl_enable] )) || _netctl_enable(){
     local -a _profiles
-    _profiles=(${${(M)${(f)"$(_call_program "Disabled Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl*disabled*}%% *}) 
+    #_profiles=(${${${(M)${(f)"$(_call_program "Disabled Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl@*enabled*}%%.service *}#netctl@}) 
+    _profiles=( ${${(f)"$(_call_program profiles "$service list 2>/dev/null")"}##[\* ] })
+    for f in $_profiles; do
+        if test ! "$(__systemctl is-enabled netctl@"${f}".service 2>/dev/null)"; then
+            _profiles=(${_profiles:#$f})
+        fi
+    done
+    [[ -z "$_profiles" ]] && _message "No More Options."
     _describe "Disabled Netctl Units" _profiles
 }
 
 (( $+functions[_netctl_disable] )) || _netctl_disable(){
     local -a _profiles
-    _profiles=(${${(M)${(f)"$(_call_program "Enabled Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl*enabled*}%% *}) 
+    _profiles=(${${${(M)${(f)"$(_call_program "Enabled Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl@*enabled*}%%.service *}#netctl@}) 
+    [[ -z "$_profiles" ]] && _message "No More Options."
     _describe 'Enabled Netctl Units' _profiles
 }
 
 (( $+function[_netctl_reenable] )) || _netctl_reenable(){
     local -a _profiles
-    _profiles=(${${(M)${(f)"$(_call_program "Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl*}%% *}) 
+    _profiles=(${${${(M)${(f)"$(_call_program "Netctl Units" "__systemctl list-unit-files 2>/dev/null")"}:#netctl@*}%%.service *}#netctl@}) 
+    [[ -z "$_profiles" ]] && _message "No More Options."
     _describe "Netctl Units" _profiles
 }
 
 for fun in $_profile_opts[@]; do
     (( $+functions[_netctl_$fun] )) || _netctl_$fun () {
-        local -a prof
-        prof=( $(find -L /etc/network.d -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n") )
-        compadd "$prof[@]"
+        local -a _profiles
+        _profiles=( $(find -L /etc/network.d -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n") )
+        for f in $words[@]; do
+            _profiles=(${_profiles:#$f})
+        done
+        [[ -z "$_profiles" ]] && _message "No More Options."
+        compadd "$_profiles[@]"
     }
 done
 
@@ -85,8 +101,11 @@ _netctl_command(){
     else
         cmd="${${_command_opts[(r)$words[1]:*]%%:*}}"
         if (( $#cmd )); then
-            curcontext="${curcontext%:*:*}:loginctl-${cmd}:"
-            _call_function ret _netctl_$cmd || _message "no more options"
+            if ((CURRENT < 3 )); then
+                _call_function ret _netctl_$cmd || _message "no more options"
+            else
+                _message "No More Options."
+            fi
         else
             _message "Unknown netctl command: $words[1]"
         fi
