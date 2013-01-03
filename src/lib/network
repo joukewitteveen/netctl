@@ -22,19 +22,19 @@ interface_is_up() {
 ## Activate an interface
 # $1: interface name
 bring_interface_up() {
-  local interface=$1
-  ip link set dev "$interface" up &>/dev/null
-  timeout_wait "${TimeoutUp:-5}" 'interface_is_up "$interface"'
+    local interface=$1
+    ip link set dev "$interface" up &>/dev/null
+    timeout_wait "${TimeoutUp:-5}" 'interface_is_up "$interface"'
 }
 
 ## Deactivate an interface
 # $1: interface name
 bring_interface_down() {
-  local interface=$1
-  ip addr flush dev "$interface" &>/dev/null
-  ip link set dev "$interface" down &>/dev/null
-  # We reuse the up timeout (down normally is faster)
-  timeout_wait "${TimeoutUp:-5}" '! interface_is_up "$interface"'
+    local interface=$1
+    ip addr flush dev "$interface" &>/dev/null
+    ip link set dev "$interface" down &>/dev/null
+    # We reuse the up timeout (down normally is faster)
+    timeout_wait "${TimeoutUp:-5}" '! interface_is_up "$interface"'
 }
 
 
@@ -69,7 +69,7 @@ case $1 in
         exit 1
     fi
     report_notice "Started network profile '$Profile'"
-    ;;
+  ;;
   stop)
     report_notice "Stopping network profile '$Profile'..."
     # JP: sandbox the eval
@@ -88,7 +88,7 @@ case $1 in
         exit 1
     fi
     report_notice "Stopped network profile '$Profile'"
-    ;;
+  ;;
 esac
 
 

@@ -200,27 +200,27 @@ wpa_make_config_block() {
         echo "ssid=$(wpa_quote "$ESSID")"
         [[ $AP ]] && echo "bssid=${AP,,}"
         is_yes "${AdHoc:-no}" && echo "mode=1"
-        ;;
+      ;;
       wpa-configsection)
         printf "%s\n" "${WPAConfigSection[@]}"
         return
-        ;;
+      ;;
       *)
         report_error "Unsupported security setting: '$Security'"
         return 1
-        ;;
+      ;;
     esac
 
     # Key management
     case $Security in
       none)
         echo "key_mgmt=NONE"
-        ;;
+      ;;
       wep)
         echo "key_mgmt=NONE"
         echo "wep_tx_keyidx=0"
         echo "wep_key0=$(wpa_quote "$Key")"
-        ;;
+      ;;
       wpa)
         echo "proto=RSN WPA"
         if [[ "${#Key}" -eq 64 ]]; then
@@ -228,7 +228,7 @@ wpa_make_config_block() {
         else
             echo "psk=$(wpa_quote "$Key")"
         fi
-        ;;
+      ;;
     esac
 
     # Hidden SSID

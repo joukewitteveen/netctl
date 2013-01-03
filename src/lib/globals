@@ -45,14 +45,14 @@ is_yes() {
     case ${1,,} in
       yes|true|on|1)
         return 0
-        ;;
+      ;;
       no|false|off|0)
         return 1
-        ;;
+      ;;
       *)
         report_error "Not a valid truth value: '$1'"
         return 1
-        ;;
+      ;;
     esac
 }
 
@@ -61,8 +61,8 @@ is_yes() {
 
 ## Show what we evaluate when debugging, but always evaluate
 do_debug() {
-  report_debug "${FUNCNAME[1]}:" "$@"
-  "$@"
+    report_debug "${FUNCNAME[1]}:" "$@"
+    "$@"
 }
 
 ## Exit if we are not effectively root

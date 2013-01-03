@@ -35,16 +35,16 @@ case $STARTSTOP in
     list_profiles | while read -r profile; do
         report_debug "Examining profile '$profile'"
         (
-            source "$PROFILE_DIR/$profile"
-            is_yes "${ExcludeAuto:-no}" && exit 1
-            : ${Security:=none}
-            [[ $Interface != "$INTERFACE" ]] && exit 1
-            [[ $Connection != "wireless" ]] && exit 1
-            # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
-            [[ $Security == "wpa-config" ]] && exit 1
+          source "$PROFILE_DIR/$profile"
+          [[ $Interface == "$INTERFACE" ]] || continue
+          is_yes "${ExcludeAuto:-no}" && exit 1
+          [[ $Connection != "wireless" ]] && exit 1
+          : ${Security:=none}
+          # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
+          [[ $Security == "wpa-config" ]] && exit 1
 
-            printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$WPA_CONF"
-            report_notice "Included profile '$profile'"
+          printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$WPA_CONF"
+          report_notice "Included profile '$profile'"
         )
     done
 
@@ -58,7 +58,7 @@ case $STARTSTOP in
         wpa_stop "$INTERFACE"
     fi
     exit 1
-    ;;
+  ;;
   stop)
     if [[ -e $PROFILE_FILE ]]; then
         "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
@@ -71,7 +71,7 @@ case $STARTSTOP in
         [[ $RFKill ]] && disable_rf "$INTERFACE" "$RFKill"
     fi
     timeout_wait 1 '[[ ! -f "$PIDFILE" ]]' || kill "$(< "$PIDFILE")"
-    ;;
+  ;;
 esac
 
 

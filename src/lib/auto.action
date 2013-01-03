@@ -31,7 +31,7 @@ case $action in
         netctl-auto stop "$interface"
         exit 1
     fi
-    ;;
+  ;;
   DISCONNECT)
     if [[ -z $profile ]]; then
         dhcpcd -k "$interface"
@@ -42,15 +42,15 @@ case $action in
         exit 1
     fi
     ip_unset && rm -f "$PROFILE_FILE"
-    ;;
+  ;;
   LOST|REESTABLISHED)
     # Not handled.
     exit 0
-    ;;
+  ;;
   *)
     # ???
     exit 1
-    ;;
+  ;;
 esac
 
 

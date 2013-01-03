@@ -11,17 +11,17 @@ _netctl()
     case $COMP_CWORD in
       1)
         COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to status enable disable reenable" -- $cur) )
-        ;;
+      ;;
       2)
         case $prev in
           start|stop|restart|switch-to|status|enable|disable|reenable)
             mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$prof" -- $cur)
-            ;;
+          ;;
         esac
-        ;;
+      ;;
       *)
         COMPREPLY=()
-        ;;
+      ;;
     esac
 } &&
 complete -F _netctl netctl

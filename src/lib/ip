@@ -36,20 +36,20 @@ ip_set() {
                 report_error "DHCP IP lease attempt failed on interface '$Interface'"
                 return 1
             fi
-            ;;
+          ;;
           dhclient)
             rm -f "/run/dhclient-${Interface}.pid"
             if ! do_debug dhclient -q -e "TIMEOUT=${TimeoutDHCP:-10}" -pf "/run/dhclient-$Interface.pid" $DhclientOptions "$Interface"; then
                 report_error "DHCP IP lease attempt failed on interface '$Interface'"
                 return 1
             fi
-            ;;
+          ;;
           *)
             report_error "Unsupported DHCP client: '$DHCPClient'"
             return 1
-            ;;
+          ;;
         esac
-        ;;
+      ;;
       static)
         if [[ $Address ]]; then
             for addr in "${Address[@]}"; do
@@ -66,13 +66,13 @@ ip_set() {
                 return 1
             fi
         fi
-        ;;
+      ;;
       ""|no)
-        ;;
+      ;;
       *)
         report_error "IP must be either 'dhcp', 'static' or 'no'"
         return 1
-        ;;
+      ;;
     esac
 
     # Add static IP routes
@@ -89,16 +89,16 @@ ip_set() {
     case "$IP6" in
       dhcp*|stateless|static)
         [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
-        ;;
+      ;;
       no)
         [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
-        ;;
+      ;;
       "")  # undefined IP6 does not prevent RA's from being received -> nop
-        ;;
+      ;;
       *)
         report_error "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
         return 1
-        ;;
+      ;;
     esac
 
     case "$IP6" in
@@ -114,10 +114,10 @@ ip_set() {
             report_error "DHCPv6 IP lease attempt failed on interface '$Interface'"
             return 1
         fi
-        ;;
+      ;;
       stateless)
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=1"
-        ;;
+      ;;
       static)
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
         if [[ -n $Address6 ]]; then
@@ -127,7 +127,7 @@ ip_set() {
                 fi
             done
         fi
-        ;;
+      ;;
     esac
 
     if [[ $IP6 ]]; then
@@ -193,13 +193,13 @@ ip_unset() {
             if [[ -f "/run/dhcpcd-$Interface.pid" ]]; then
                 do_debug dhcpcd -qk "$Interface" >/dev/null
             fi
-            ;;
+          ;;
           dhclient)
             if [[ -f "/run/dhclient-$Interface.pid" ]]; then
                 # Alternatively, use -r instead of -x to also release the lease
                 do_debug dhclient -q -x "$Interface" -pf "/run/dhclient-$Interface.pid" >/dev/null
             fi
-            ;;
+          ;;
         esac
     fi
     if [[ "$IP6" == dhcp* ]]; then

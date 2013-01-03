@@ -17,34 +17,34 @@ case "$2" in
     declare -a dhcp_profiles
     declare -a static_profiles
     while read -r profile; do
-      (
-        echo "Reading profile '$profile'"
-        source "$PROFILE_DIR/$profile"
-        [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
-        is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
-        [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
-        exit 3 # static profile
-      )
-      case $? in
-        1) preferred_profiles+=("$profile");;
-        2) dhcp_profiles+=("$profile");;
-        3) static_profiles+=("$profile");;
-      esac
+        (
+          echo "Reading profile '$profile'"
+          source "$PROFILE_DIR/$profile"
+          [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
+          is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
+          [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
+          exit 3 # static profile
+        )
+        case $? in
+          1) preferred_profiles+=("$profile");;
+          2) dhcp_profiles+=("$profile");;
+          3) static_profiles+=("$profile");;
+        esac
     done < <(list_profiles)
     if [[ ${#preferred_profiles[@]} > 1 ]]; then
-      echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
+        echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
     fi
     for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
-      if ForceConnect=yes "$SUBR_DIR/network" start "$profile"; then
-        mkdir -p "$(dirname "$PROFILE_FILE")"
-        printf "%s" "$profile" > "$PROFILE_FILE"
-        exit 0
-      fi
+        if ForceConnect=yes "$SUBR_DIR/network" start "$profile"; then
+            mkdir -p "$(dirname "$PROFILE_FILE")"
+            printf "%s" "$profile" > "$PROFILE_FILE"
+            exit 0
+        fi
     done
   ;;
   down)
     if [[ -e "$PROFILE_FILE" ]]; then
-      "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
+        "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
     fi
   ;;
   *)
