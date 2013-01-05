@@ -188,7 +188,7 @@ ip_set() {
 # $IP6: type of IPv6 configuration
 ip_unset() {
     if [[ "$IP" == "dhcp" ]]; then
-        case $DHCPClient in
+        case ${DHCPClient:-dhcpcd} in
           dhcpcd)
             if [[ -f "/run/dhcpcd-$Interface.pid" ]]; then
                 do_debug dhcpcd -qk "$Interface" >/dev/null

@@ -44,7 +44,10 @@ case "$2" in
   ;;
   down)
     if [[ -e "$PROFILE_FILE" ]]; then
-        "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
+        if ForceConnect=yes "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")"; then
+            rm -f "$PROFILE_FILE"
+            exit 0
+        fi
     fi
   ;;
   *)
