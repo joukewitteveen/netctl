@@ -1,4 +1,4 @@
-Description='A more versatile static ethernet connection using iproute'
+Description='A more versatile static ethernet connection'
 Interface=eth0
 Connection=ethernet
 IP=static

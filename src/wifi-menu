@@ -126,7 +126,7 @@ Interface=$INTERFACE
 Connection=wireless
 Security=$security
 ESSID=$(printf "%q" "$1")
-IP='dhcp'
+IP=dhcp
 ${key+Key=$key}
 EOF
     printf "%s" "$PROFILE"

@@ -1,8 +1,8 @@
-Description='A simple opened wireless connection'
+Description='A simple open wireless connection'
 Interface=wlan0
 Connection=wireless
 Security=none
 ESSID='MyNetwork'
-IP='dhcp'
+IP=dhcp
 # Uncomment this if your ssid is hidden
 #Hidden=yes

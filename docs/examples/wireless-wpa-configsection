@@ -1,9 +1,8 @@
+Description='A wireless connection using a custom network block configuration'
 Interface=wlan0
 Connection=wireless
 Security=wpa-configsection
-# Uncomment this if your ssid is hidden
-#Hidden=yes
-IP='dhcp'
+IP=dhcp
 WPAConfigSection=(
     'ssid="University"'
     'key_mgmt=WPA-EAP'

@@ -3,12 +3,11 @@ Interface=wlan0
 Connection=wireless
 Security=wpa
 
+IP=dhcp
+
 ESSID='MyNetwork'
 # Prepend hexadecimal keys with \"
 # If your key starts with ", write it as '"""<key>"'
 Key='WirelessKey'
-
-IP='dhcp' 
-
 # Uncomment this if your ssid is hidden
 #Hidden=yes

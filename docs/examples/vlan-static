@@ -1,3 +1,4 @@
+Description='Virtual LAN 11 on interface eth0'
 Interface=eth0.11
 Connection=vlan
 # The variable name is plural, but needs precisely one interface

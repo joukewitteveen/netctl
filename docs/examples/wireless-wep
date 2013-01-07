@@ -5,7 +5,7 @@ Security=wep
 ESSID='MyNetwork'
 # Prepend hexadecimal keys with \"
 Key=\"1234567890abcdef
-IP='dhcp'
+IP=dhcp
 # Uncomment this if your ssid is hidden
 #Hidden=yes
 # Uncomment if you are using an ad-hoc connection

@@ -1,4 +1,4 @@
-Description='A basic dhcp ethernet connection using iproute'
+Description='A basic dhcp ethernet connection'
 Interface=eth0
 Connection=ethernet
 IP=dhcp
@@ -6,4 +6,3 @@ IP=dhcp
 #IP6=dhcp
 ## for IPv6 autoconfiguration
 #IP6=stateless
-

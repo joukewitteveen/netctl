@@ -4,6 +4,6 @@ Connection=wireless
 Security=wep
 ESSID='MyNetwork'
 Key='Wireless Key'
-IP='dhcp'
+IP=dhcp
 # Uncomment this if your ssid is hidden
 #Hidden=yes

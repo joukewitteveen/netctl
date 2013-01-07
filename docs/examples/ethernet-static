@@ -1,8 +1,9 @@
-Description='A basic static ethernet connection using iproute'
+Description='A basic static ethernet connection'
 Interface=eth0
 Connection=ethernet
 IP=static
-Address='192.168.1.23'
+# The netmask in the IPv4 address is optional and defaults to 24
+Address='192.168.1.23/28'
 #Routes=('192.168.0.0/24 via 192.168.1.2')
 Gateway='192.168.1.1'
 DNS=('192.168.1.1')
