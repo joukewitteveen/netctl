@@ -1,2 +1,6 @@
+netctl 0.2
+- Drop the Scan parameter for wireless networking
+- Assorted fixes for bugs introduced by forking
+
 netctl 0.1
-- forked from netcfg 3.1 and changed considerably
+- Forked from netcfg 3.1 and changed considerably
