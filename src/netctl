@@ -6,7 +6,7 @@ NETCTL_VERSION=notpackaged
 
 
 usage() {
-    cat << END
+	cat << END
 Usage: netctl {COMMAND} [PROFILE]
               [--help|--version]
 
@@ -27,128 +27,127 @@ END
 }
 
 list() {
-    local indicators=( '*' ' ' )
-    list_profiles | while read -r Profile; do
-        systemctl is-active --quiet "netctl@$Profile.service" &> /dev/null
-        # Make the return variable boolean
-        [[ $? -eq 0 ]]; printf '%s %s\n' "${indicators[$?]}" "$Profile"
-    done
+	local indicators=( '*' ' ' )
+	list_profiles | while read -r Profile; do
+		systemctl is-active --quiet "netctl@$Profile.service" &> /dev/null
+		# Make the return variable boolean
+		[[ $? -eq 0 ]]; printf '%s %s\n' "${indicators[$?]}" "$Profile"
+	done
 }
 
 store() {
-    mkdir -p "$(dirname "$STATE_FILE")"
-    systemctl list-units --type=service --full --no-legend --no-pager | \
-      cut -d\  -f1 | grep "^netctl@" > "$STATE_FILE"
+	mkdir -p "$(dirname "$STATE_FILE")"
+	systemctl list-units --type=service --full --no-legend --no-pager | \
+		cut -d\  -f1 | grep "^netctl@" > "$STATE_FILE"
 }
 
 restore() {
-    if [[ ! -r $STATE_FILE ]]; then
-        exit_error "Could not read state file '$STATE_FILE'"
-    elif [[ ! -s $STATE_FILE ]]; then
-        report_debug "No profiles to restore in state file '$STATE_FILE'"
-    else
-        mapfile -t Units < "$STATE_FILE"
-        do_debug systemctl start "${Units[@]}"
-    fi
+	if [[ ! -r $STATE_FILE ]]; then
+		exit_error "Could not read state file '$STATE_FILE'"
+	elif [[ ! -s $STATE_FILE ]]; then
+		report_debug "No profiles to restore in state file '$STATE_FILE'"
+	else
+		mapfile -t Units < "$STATE_FILE"
+		do_debug systemctl start "${Units[@]}"
+	fi
 }
 
 stop_all() {
-    # We cannot pipe to mapfile, as the end of a pipe is inside a subshell
-    mapfile -t Profiles < <(list_profiles)
-    [[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
-      >(grep -Fv "not loaded" >&2)
+	# We cannot pipe to mapfile, as the end of a pipe is inside a subshell
+	mapfile -t Profiles < <(list_profiles)
+	[[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
+		>(grep -Fv "not loaded" >&2)
 }
 
 switch_to() {
-    cd "$PROFILE_DIR"
-    if [[ ! -r $1 ]]; then
-        exit_error "Profile '$1' does not exist or is not readable"
-    fi
-    # We assume interface names are not quoted
-    # Using read removes leading whitespace
-    read InterfaceLine < \
-      <(grep -om1 "^[[:space:]]*Interface=[[:alnum:]:._-]\+" "$1")
-    if [[ -z $InterfaceLine ]]; then
-        exit_error "Profile '$1' does not specify an interface"
-    fi
-    mapfile -t AllProfiles < <(list_profiles)
-    mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
-    [[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
-      >(grep -Fv "not loaded" >&2)
-    do_debug systemctl start "netctl@$1"
+	cd "$PROFILE_DIR"
+	if [[ ! -r $1 ]]; then
+		exit_error "Profile '$1' does not exist or is not readable"
+	fi
+	# We assume interface names are not quoted
+	# Using read removes leading whitespace
+	read InterfaceLine < \
+		<(grep -om1 "^[[:space:]]*Interface=[[:alnum:]:._-]\+" "$1")
+	if [[ -z $InterfaceLine ]]; then
+		exit_error "Profile '$1' does not specify an interface"
+	fi
+	mapfile -t AllProfiles < <(list_profiles)
+	mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
+	[[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
+		>(grep -Fv "not loaded" >&2)
+	do_debug systemctl start "netctl@$1"
 }
 
 unit_enable() {
-    local unit="/etc/systemd/system/netctl@$1.service"
-    if [[ -e $unit ]]; then
-        report_error "A unit file for profile '$1' already exists"
-        return 1
-    fi
-    load_profile "$1"
-    echo ".include /usr/lib/systemd/system/netctl@.service" > "$unit"
-    echo -e "\n[Unit]" >> "$unit"
-    [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
-    : ${BindsToInterfaces=$Interface}
-    printf 'BindsTo=sys-subsystem-net-devices-%s.device\n' \
-           "${BindsToInterfaces[@]}" >> "$unit"
-    if [[ -n $After ]]; then
-        printf 'After="netctl@%s.service"\n' "${After[@]//\"/\\\"}" >> "$unit"
-    fi
-    systemctl daemon-reload
-    systemctl reenable "netctl@$1.service"
+	local unit="/etc/systemd/system/netctl@$1.service"
+	if [[ -e $unit ]]; then
+		report_error "A unit file for profile '$1' already exists"
+		return 1
+	fi
+	load_profile "$1"
+	echo ".include /usr/lib/systemd/system/netctl@.service" > "$unit"
+	echo -e "\n[Unit]" >> "$unit"
+	[[ -n $Description ]] && echo "Description=$Description" >> "$unit"
+	: ${BindsToInterfaces=$Interface}
+	printf 'BindsTo=sys-subsystem-net-devices-%s.device\n' \
+			"${BindsToInterfaces[@]}" >> "$unit"
+	if [[ -n $After ]]; then
+		printf 'After="netctl@%s.service"\n' "${After[@]//\"/\\\"}" >> "$unit"
+	fi
+	systemctl daemon-reload
+	systemctl reenable "netctl@$1.service"
 }
 
 unit_disable() {
-    local unit="/etc/systemd/system/netctl@$1.service"
-    if systemctl is-enabled --quiet "netctl@$1.service"; then
-        systemctl disable "netctl@$1.service"
-    fi
-    if [[ ! -f $unit ]]; then
-        report_error "No regular unit file found for profile '$1'"
-        return 1
-    fi
-    do_debug rm "$unit"
-    systemctl daemon-reload
+	local unit="/etc/systemd/system/netctl@$1.service"
+	if systemctl is-enabled --quiet "netctl@$1.service"; then
+		systemctl disable "netctl@$1.service"
+	fi
+	if [[ ! -f $unit ]]; then
+		report_error "No regular unit file found for profile '$1'"
+		return 1
+	fi
+	do_debug rm "$unit"
+	systemctl daemon-reload
 }
 
 
 case $# in
-  1)
-    case $1 in
-      --version)
-        report_notice "netctl version $NETCTL_VERSION";;
-      --help)
-        usage;;
-      list)
-        list;;
-      store|restore)
-        ensure_root "$(basename "$0")"
-        "$1";;
-      stop-all)
-        stop_all;;
-      *)
-        exit_error "$(usage)";;
-    esac;;
-  2)
-    case $1 in
-      start|stop|restart|status)
-        systemctl $1 "netctl@$2";;
-      switch-to)
-        ensure_root "$(basename "$0")"
-        switch_to "$2";;
-      enable|disable)
-        ensure_root "$(basename "$0")"
-        "unit_$1" "$2";;
-      reenable)
-        ensure_root "$(basename "$0")"
-        unit_disable "$2"
-        unit_enable "$2";;
-      *)
-        exit_error "$(usage)";;
-    esac;;
-  *)
-    exit_error "$(usage)";;
+	1)
+		case $1 in
+			--version)
+				report_notice "netctl version $NETCTL_VERSION";;
+			--help)
+				usage;;
+			list)
+				list;;
+			store|restore)
+				ensure_root "$(basename "$0")"
+				"$1";;
+			stop-all)
+				stop_all;;
+			*)
+				exit_error "$(usage)";;
+		esac;;
+	2)
+		case $1 in
+			start|stop|restart|status)
+				systemctl $1 "netctl@$2";;
+			switch-to)
+				ensure_root "$(basename "$0")"
+				switch_to "$2";;
+			enable|disable)
+				ensure_root "$(basename "$0")"
+				"unit_$1" "$2";;
+			reenable)
+				ensure_root "$(basename "$0")"
+				unit_disable "$2"
+				unit_enable "$2";;
+			*)
+				exit_error "$(usage)";;
+		esac;;
+	*)
+	exit_error "$(usage)";;
 esac
 
-
-# vim: ft=sh ts=4 et sw=4:
+# vim: ft=sh:
