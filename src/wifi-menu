@@ -187,11 +187,17 @@ if ! type dialog &> /dev/null; then
     exit_error "Please install 'dialog' to use wifi-menu"
 fi
 
-INTERFACE=${1-wlan0}
+INTERFACE=${1}
 if [[ -z "$INTERFACE" ]]; then
-    report_error "Missing interface specification"
-    usage
-    exit 255
+    w=(/sys/class/net/*/wireless/)
+    if [[ ! -d "${w[0]}" || "${#w[@]}" -gt 1 ]]; then
+        report_error "Invalid interface specification"
+        usage
+        exit 255
+    fi
+    w=("${w[@]%/wireless/}")
+    INTERFACE=("${w[@]##*/}")
+    echo "$INTERFACE"
 fi
 
 cd /  # We do not want to spawn anything that can block unmounting
