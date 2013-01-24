@@ -7,15 +7,15 @@
 usage()
 {
     cat << END
-Usage: wifi-menu [-h | --help] [-o | --obscure] [interface]
+Usage: wifi-menu [-h | --help] [-o | --obscure] [INTERFACE]
 
-Interactively connect to a wireless network.
+Interactively connect to a wireless network on INTERFACE using netctl.
+If only one wireless interface is available, INTERFACE can be omitted.
 
 Arguments:
-  -h, --help     Show this help.
+  -h, --help     Show this help
   -o, --obscure  Show asterisks for the characters of the password
-                 and store the password as a hexadecimal string.
-  interface      The wireless interface to use (default: wlan0).
+                 and store the password as a hexadecimal string
 END
 }
 
@@ -170,7 +170,7 @@ while [[ "$1" = -* ]]; do
             shift
             ;;
         -*)
-            report_err "Invalid option: $1"
+            report_error "Invalid option: $1"
             usage
             exit 255
             ;;
@@ -187,11 +187,16 @@ if ! type dialog &> /dev/null; then
     exit_error "Please install 'dialog' to use wifi-menu"
 fi
 
-INTERFACE=${1-wlan0}
+INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
-    report_error "Missing interface specification"
-    usage
-    exit 255
+    INTERFACE=(/sys/class/net/*/wireless/)
+    if [[ "${#INTERFACE[@]}" -ne 1 || ! -d "$INTERFACE" ]]; then
+        report_error "Invalid interface specification"
+        usage
+        exit 255
+    fi
+    INTERFACE=${INTERFACE:15:-10}
+    report_debug "Using interface '$INTERFACE'"
 fi
 
 cd /  # We do not want to spawn anything that can block unmounting
