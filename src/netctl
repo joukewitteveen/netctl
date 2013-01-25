@@ -91,6 +91,8 @@ unit_enable() {
     : ${BindsToInterfaces=$Interface}
     printf 'BindsTo=sys-subsystem-net-devices-%s.device\n' \
            "${BindsToInterfaces[@]}" >> "$unit"
+    printf 'After=sys-subsystem-net-devices-%s.device\n' \
+           "${BindsToInterfaces[@]}" >> "$unit"
     if [[ -n $After ]]; then
         printf 'After="netctl@%s.service"\n' "${After[@]//\"/\\\"}" >> "$unit"
     fi
