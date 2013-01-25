@@ -146,7 +146,7 @@ connect_to_ssid()
         SPAWNED_PROFILE=1
     fi
     clear
-    if ! netctl restart "$PROFILE"; then
+    if ! netctl switch-to "$PROFILE"; then
         if (( SPAWNED_PROFILE )); then
             msg="         CONNECTING FAILED
 
