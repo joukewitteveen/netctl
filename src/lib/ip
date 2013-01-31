@@ -53,7 +53,6 @@ ip_set() {
       static)
         if [[ $Address ]]; then
             for addr in "${Address[@]}"; do
-                [[ $addr == */* ]] || addr+="/24"
                 if ! do_debug ip addr add "$addr" brd + dev "$Interface"; then
                     report_error "Could not add address '$addr' to interface '$Interface'"
                     return 1

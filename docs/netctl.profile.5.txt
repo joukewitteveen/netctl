@@ -103,10 +103,9 @@ network. In particular, these connection types are +ethernet+,
     packages, which is blocked by `no'.
 
 'Address=()' [requires 'IP=static']::
-    An array of IP addresses, optionally suffixed with ``/<netmask>`',
-    where netmask is an integer between 0 and 255. The default netmask
-    is 24. Leaving out brackets for arrays consisting of a single
-    element is accepted in the Bash syntax.
+    An array of IP addresses suffixed with ``/<netmask>`'.
+    Leaving out brackets for arrays consisting of a single element is
+    accepted in the Bash syntax.
 
 'Gateway=' [requires 'IP=static']::
     An IP routing gateway address.
