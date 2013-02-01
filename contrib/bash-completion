@@ -1,30 +1,57 @@
 # netctl completion
 
+
+_wireless_interfaces()
+{
+    local iface
+
+    for iface in /sys/class/net/*/wireless/; do
+        echo ${iface:15:-10}
+    done
+}
+
+
+_netctl_profiles()
+{
+    find -L /etc/network.d -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
+}
+
+
 _netctl()
 {
-    local cur prev prof
-
-    cur=${COMP_WORDS[COMP_CWORD]}
-    prev=${COMP_WORDS[COMP_CWORD-1]}
-    prof=$(find -L /etc/network.d -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n")
+    local cur=${COMP_WORDS[COMP_CWORD]}
 
     case $COMP_CWORD in
       1)
-        COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to status enable disable reenable" -- $cur) )
+        COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to status enable disable reenable" -- "$cur") )
       ;;
       2)
-        case $prev in
-          start|stop|restart|switch-to|status|enable|disable|reenable)
-            mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$prof" -- $cur)
-          ;;
-        esac
-      ;;
-      *)
-        COMPREPLY=()
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(start|stop|restart|switch-to|status|enable|disable|reenable) ]] &&
+          mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;
     esac
 } &&
 complete -F _netctl netctl
+
+
+_netctl_auto()
+{
+    local cur=${COMP_WORDS[COMP_CWORD]}
+
+    case $COMP_CWORD in
+      1) COMPREPLY=( $(compgen -W "start stop" -- "$cur") );;
+      2) COMPREPLY=( $(compgen -W "$(_wireless_interfaces)" -- "$cur") );;
+    esac
+} &&
+complete -F _netctl_auto netctl-auto
+
+
+_wifi_menu()
+{
+    (( COMP_CWORD == 1 )) &&
+      COMPREPLY=( $(compgen -W "$(_wireless_interfaces)" -- "${COMP_WORDS[1]}") )
+} &&
+complete -F _wifi_menu wifi-menu
 
 
 # ex: ts=4 sw=4 et filetype=sh

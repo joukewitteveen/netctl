@@ -1,0 +1,64 @@
+#compdef netctl netctl-auto wifi-menu
+
+
+(( $+function[_wireless_interfaces] )) ||
+_wireless_interfaces() {
+    local interfaces
+    interfaces=(/sys/class/net/*/wireless(/))
+    print -l ${${(R)interfaces%/wireless}:t}
+}
+
+
+(( $+function[_netctl_command] )) ||
+_netctl_command() {
+    [[ $words[1] = (start|stop|restart|switch-to|status|enable|disable|reenable) ]] &&
+      compadd "${(f)$(find -L /etc/network.d -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n")}"
+}
+
+
+_netctl_commands() {
+    local -a _commands
+    _commands=(
+        'list:List available profiles'
+        'store:Save which profiles are active'
+        'restore:Load saved profiles'
+        'stop-all:Stops all profiles'
+        'start:Start a profile'
+        'stop:Stop a profile'
+        'restart:Restart a profile'
+        'switch-to:Switch to a profile'
+        'status:Show runtime status of a profile'
+        'enable:Enable the systemd unit for a profile'
+        'disable:Disable the systemd unit for a profile'
+        'reenable:Reenable the systemd unit for a profile'
+      )
+    _describe "netctl commands" _commands
+}
+
+
+case $service in
+  netctl)
+    case $CURRENT in
+      2)
+        _arguments \
+          '(- :)--version[display version information]' \
+          '(- :)--help[display help message]' \
+          '(-)::netctl commands:_netctl_commands'
+      ;;
+      3)
+        shift words
+        [[ $words[1] != -* ]] &&
+          curcontext="${curcontext%:*}-${words[1]}:" _netctl_command
+      ;;
+    esac
+  ;;
+  netctl-auto)
+    case $CURRENT in
+      2) compadd start stop;;
+      3) compadd "${(f)$(_wireless_interfaces)}";;
+    esac
+  ;;
+  wifi-menu)
+    (( CURRENT == 2 )) && compadd "${(f)$(_wireless_interfaces)}"
+  ;;
+esac
