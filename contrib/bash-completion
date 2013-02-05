@@ -13,7 +13,7 @@ _wireless_interfaces()
 
 _netctl_profiles()
 {
-    find -L /etc/network.d -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
+    find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
 }
 
 

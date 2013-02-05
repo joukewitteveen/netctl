@@ -13,18 +13,18 @@ netctl.profile
 
 DESCRIPTION
 -----------
-Profiles for netctl live under '/etc/network.d/' and are plain text
-files. The files consist of variable definitions following the bash
-shell syntax and are not expected to execute any code. It is good to
-omit as much quoting as possible. For a few WPA-related variables,
-special quoting rules (see below) apply.
+Profiles for netctl live under '/etc/netctl/' and are plain text files.
+The files consist of variable definitions following the bash shell
+syntax and are not expected to execute any code. It is good to omit as
+much quoting as possible. For a few WPA-related variables, special
+quoting rules (see below) apply.
 
 The name of the profile is the name of the file. Profile names must not
 contain newlines and should not end in '.service' or '.conf'. Whenever a
-profile is read, all executable scripts in '/etc/network.d/hooks/' and
-any executable script in '/etc/network.d/interfaces/' with the name of
-the interface for the profile are sourced. For each connection type,
-there are example profile files in '/etc/network.d/examples/'.
+profile is read, all executable scripts in '/etc/netctl/hooks/' and any
+executable script in '/etc/netctl/interfaces/' with the name of the
+interface for the profile are sourced. For each connection type, there
+are example profile files in '/etc/netctl/examples/'.
 
 
 AVAILABLE CONNECTION TYPES

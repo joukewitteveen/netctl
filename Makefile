@@ -4,8 +4,8 @@ export VERSION = 0.4
 
 install: install-docs
 	# Configuration files
-	install -d $(DESTDIR)/etc/network.d/{examples,hooks,interfaces}
-	install -m644 docs/examples/* $(DESTDIR)/etc/network.d/examples/
+	install -d $(DESTDIR)/etc/netctl/{examples,hooks,interfaces}
+	install -m644 docs/examples/* $(DESTDIR)/etc/netctl/examples/
 	# Libs
 	install -d $(DESTDIR)/usr/lib/network/connections
 	install -m644 src/lib/{8021x,globals,ip,rfkill} $(DESTDIR)/usr/lib/network/
