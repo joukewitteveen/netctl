@@ -1,3 +1,7 @@
+netctl 0.4
+- Remove default IPv4 netmask
+- Add zsh completion
+
 netctl 0.3
 - Correctly wait for devices on boot
 - Use the first available network interface by default in wifi-menu

@@ -3,8 +3,8 @@
 pkgname=netctl
 pkgver=%pkgver%
 pkgrel=1
-pkgdesc="Network configuration and profile scripts"
-url="http://archlinux.org/netctl/"
+pkgdesc="Profile based systemd network management"
+url="http://projects.archlinux.org/netctl.git/"
 license=("GPL")
 depends=("coreutils" "iproute2" "openresolv")
 #makedepends=('asciidoc')  # The source tarball includes pre-built documentation.
