@@ -10,6 +10,3 @@ RemainAfterExit=yes
 ExecStart=/usr/lib/network/network start %i
 ExecStop=/usr/lib/network/network stop %i
 KillMode=none
-
-[Install]
-WantedBy=multi-user.target

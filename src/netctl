@@ -96,8 +96,9 @@ unit_enable() {
     if [[ -n $After ]]; then
         printf 'After="netctl@%s.service"\n' "${After[@]//\"/\\\"}" >> "$unit"
     fi
+    echo "ln -s '$unit' '${unit/system\//system/multi-user.target.wants/}'"
+    ln -s "$unit" "${unit/system\//system/multi-user.target.wants/}"
     systemctl daemon-reload
-    systemctl reenable "netctl@$1.service"
 }
 
 unit_disable() {
