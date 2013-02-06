@@ -5,7 +5,7 @@ Security=wpa
 ESSID='MyNetwork'
 Key='WirelessKey'
 IP=static
-Address='192.168.1.23'
+Address='192.168.1.23/24'
 Gateway='192.168.1.1'
 DNS=('192.168.1.1')
 # Uncomment this if your ssid is hidden
