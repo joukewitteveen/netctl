@@ -1,3 +1,6 @@
+netctl 0.5
+- Move the configuration directory to /etc/netctl
+
 netctl 0.4
 - Remove default IPv4 netmask
 - Add zsh completion
