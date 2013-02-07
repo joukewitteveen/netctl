@@ -42,12 +42,16 @@ netctl-$(VERSION).tar.xz: | docs
 	mv src/netctl{.orig,}
 	tar --exclude-vcs --transform "s%^%netctl-$(VERSION)/%" --owner=root --group=root --mtime=./netctl-$(VERSION).tar -rf netctl-$(VERSION).tar docs/*.[1-8]
 	xz netctl-$(VERSION).tar
+	gpg --detach-sign $@
 
 pkgbuild: PKGBUILD
 PKGBUILD: netctl-$(VERSION).tar.xz
 	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum $< | cut -d ' ' -f 1)/" contrib/PKGBUILD > $@
 
+upload: netctl-$(VERSION).tar.xz
+	scp $< $<.sig nymeria.archlinux.org:/srv/ftp/other/packages/netctl
+
 clean:
 	$(MAKE) -C docs clean
-	-@rm -vf PKGBUILD *.xz 2>/dev/null
+	-@rm -vf PKGBUILD *.tar.xz *.tar.xz.sig 2>/dev/null
 
