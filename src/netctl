@@ -89,6 +89,7 @@ unit_enable() {
     echo -e "\n[Unit]" >> "$unit"
     [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
     : ${BindsToInterfaces=$Interface}
+    BindsToInterfaces=( "${BindsToInterfaces[@]//-/\\x2d}" )
     printf 'BindsTo=sys-subsystem-net-devices-%s.device\n' \
            "${BindsToInterfaces[@]}" >> "$unit"
     printf 'After=sys-subsystem-net-devices-%s.device\n' \
