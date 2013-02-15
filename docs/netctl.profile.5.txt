@@ -116,7 +116,9 @@ network. In particular, these connection types are +ethernet+,
 
 'Address6=()' [requires 'IP6=static']::
     An array of IPv6 addresses. Prefix length may be specified via
-    `1234:bcd::11/64' syntax.
+    `1234:bcd::11/64' syntax. It is possible to specify modifiers, in
+    particular, `1234:bcd::11/64 nodad' disables Duplicate Address
+    Detection for the address.
 
 'Gateway6=' [requires 'IP6=static']::
     An IPv6 routing gateway address.
