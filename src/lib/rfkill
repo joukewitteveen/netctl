@@ -40,7 +40,8 @@ enable_rf() {
         report_error "Transmission is hard-blocked on interface '$interface'"
         return 1
     elif (( soft )); then
-        do_debug echo 0 > "$path/soft"
+        report_debug "$FUNCNAME: echo 0 > '$path/soft'"
+        echo 0 > "$path/soft"
         timeout_wait 1 '(( ! $(< "$path/soft") ))'
     fi
 }
@@ -52,7 +53,8 @@ disable_rf() {
     local interface=$1 rfkill=$2 path
 
     path=$(get_rf_path "$interface" "$rfkill") || return 1
-    do_debug echo 1 > "$path/soft"
+    report_debug "$FUNCNAME: echo 1 > '$path/soft'"
+    echo 1 > "$path/soft"
     timeout_wait 1 '(( $(< "$path/soft") ))'
 }
 
