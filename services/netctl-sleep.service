@@ -1,0 +1,13 @@
+[Unit]
+Description=netctl sleep hook
+Before=sleep.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/netctl store ; /usr/bin/netctl stop-all
+ExecStop=-/usr/bin/netctl restore
+
+[Install]
+WantedBy=sleep.target

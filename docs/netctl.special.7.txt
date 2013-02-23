@@ -38,6 +38,11 @@ systemctl disable netctl@<profile>
     This way the unit configuration file for the profile remains in
     existence, while the profile is not enabled.
 
+netctl-sleep.service::
+    When enabled, this unit stores and stops the active network profiles
+    before the machine is put to sleep. After the system is resumed,
+    previously stored profiles are restarted.
+
 netctl-auto@<interface>.service::
     This unit issues a scan on the interface it is used for and tries to
     start a profile for a network it finds. It is targeted to wireless
