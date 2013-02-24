@@ -1,0 +1,8 @@
+post_install() {
+  echo "See netctl(1) netctl.profile(5) netctl.special(7)"
+  echo "For detials on how to configure network profiles."
+}
+
+post_upgrade() {
+  post_install()
+}
