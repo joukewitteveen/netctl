@@ -55,10 +55,10 @@ GENERAL OPTIONS
 'Description='::
     A description of the profile.
 
-'Connection=' [mandatory for all profiles]::
+'Connection=' [*mandatory* for all profiles]::
     The connection type used by the profile.
 
-'Interface=' [mandatory for all profiles]::
+'Interface=' [*mandatory* for all profiles]::
     The name of the associated network interface. The interface name
     should not be quoted.
 
@@ -92,11 +92,11 @@ These options apply to all connections that set up an IP-enabled
 network. In particular, these connection types are +ethernet+,
 +wireless+, +bond+, +bridge+, +tunnel+, +tuntap+, and +vlan+.
 
-'IP=' [mandatory for IPv4]::
+'IP=' [*mandatory* for IPv4]::
     One of `static', `dhcp', or `no', depending on the desired way of
     obtaining an address.
 
-'IP6=' [mandatory for IPv6]::
+'IP6=' [*mandatory* for IPv6]::
     One of `static', `stateless', `dhcp-noaddr', `dhcp', `no' or left
     out (empty) altogether. The difference between not specifying and
     setting to `no' is in the handling of __router advertisement__
@@ -197,16 +197,21 @@ of the `wireless' type:
     One of `none', `wep', `wpa', `wpa-configsection', or `wpa-config'.
     Defaults to ``none`'.
 
-'ESSID=' [mandatory]::
+'ESSID=' [*mandatory*]::
     The name of the network to connect to.
-    Special quoting rules (see below) apply.
+    Special *quoting* rules (see below) apply.
 
 'AP='::
     The BSSID (MAC address) of the access point to connect to.
 
 'Key='::
-    The secret key to a WEP, or WPA encrypted network.
-    Special quoting rules (see below) apply.
+    The secret key to a WEP, or WPA encrypted network. 
+       -'ASCII' (plain text)
+        Special *quoting* rules (see below) apply.
+       -'256-bit PSK' (*wpa_passphrase*(8))
+	Special *non-quoting* rules (see below) apply.
+       -Keys using 'special characters'
+        Special *quoting* rules (see below) apply.
 
 'Hidden='::
     Whether or not the specified network is a hidden network. Defaults
@@ -231,7 +236,7 @@ of the `wireless' type:
     Group that has the authority to configure *wpa_supplicant* via its
     control interface. Defaults to ``wheel`'.
 
-'WPAConfigSection=()' [mandatory for 'Security=wpa-configsection']::
+'WPAConfigSection=()' [*mandatory* for 'Security=wpa-configsection']::
     Array of lines that form a network block for *wpa_supplicant*.
 
 'WPAConfigFile='::
