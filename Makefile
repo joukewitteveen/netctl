@@ -46,7 +46,10 @@ netctl-$(VERSION).tar.xz: | docs
 
 pkgbuild: PKGBUILD
 PKGBUILD: netctl-$(VERSION).tar.xz
-	sed -e "s/%pkgver%/$(VERSION)/" -e "s/%md5sum%/$(shell md5sum $< | cut -d ' ' -f 1)/" contrib/PKGBUILD > $@
+	sed -e "s/%pkgver%/$(VERSION)/g" \
+	    -e "s/%md5sum%/$(shell md5sum $< | cut -d ' ' -f 1)/" \
+	    -e "s/%md5sum.sig%/$(shell md5sum $<.sig | cut -d ' ' -f 1)/" \
+	    contrib/PKGBUILD > $@
 
 upload: netctl-$(VERSION).tar.xz
 	scp $< $<.sig nymeria.archlinux.org:/srv/ftp/other/packages/netctl
