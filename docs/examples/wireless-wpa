@@ -7,7 +7,8 @@ IP=dhcp
 
 ESSID='MyNetwork'
 # Prepend hexadecimal keys with \"
-# If your key starts with ", write it as '"""<key>"'
+# If your key starts with ", write it as '""<key>"'
+# See also: the section on special quoting rules in netctl.profile(5)
 Key='WirelessKey'
 # Uncomment this if your ssid is hidden
 #Hidden=yes

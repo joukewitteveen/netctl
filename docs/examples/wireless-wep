@@ -3,7 +3,7 @@ Interface=wlan0
 Connection=wireless
 Security=wep
 ESSID='MyNetwork'
-# Prepend hexadecimal keys with \"
+# Prepend \" to hexadecimal keys
 Key=\"1234567890abcdef
 IP=dhcp
 # Uncomment this if your ssid is hidden
