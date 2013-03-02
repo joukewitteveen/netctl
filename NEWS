@@ -1,3 +1,8 @@
+netctl 0.6
+- Add a sleep hook
+- Assorted fixes, including fixes to rfkill and the documentation
+- Sources are signed for packaging
+
 netctl 0.5
 - Move the configuration directory to /etc/netctl
 

@@ -1,4 +1,4 @@
-export VERSION = 0.5
+export VERSION = 0.6
 
 .PHONY: install install-docs docs tarball pkgbuild clean
 
