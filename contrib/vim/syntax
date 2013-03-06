@@ -1,0 +1,113 @@
+" Filename:     netctl.vim
+" Purpose:      Vim syntax file
+" Language:     netctl profiles
+" Maintainer:   Thomas Weißschuh <thomas t-8ch de>
+" Last Change:  2013-03-06
+"
+if exists("b:current_syntax") && !exists ("g:syntax_debug")
+  finish
+endif
+
+" TODO
+" cleanup
+" ensure proper closing of braces
+" arrays
+" quoting
+
+syn case match
+syntax sync fromstart
+
+syn match   netctlComment /^#.*/ contains=netctlTodo containedin=ALL
+syn keyword netctlTodo contained TODO XXX FIXME NOTE
+
+syn match netctlUInt     contained nextgroup=netctlErr /\d\+/
+syn keyword netctlBool   contained nextgroup=netctlErr yes no
+syn match netctlErr contained /\s*\S\+/ nextgroup=netctlErr
+
+syn match netctlConType contained /\(ethernet\|wireless\|bond\|bridge\|pppoe\|tunnel\|tuntap\|vlan\)\_s/
+syn match netctlIPType contained /\(static\|dhcp\|no\)\_s/
+syn match netctlIP6Type contained /\(static\|stateless\|dhcp-noaddr\|dhcp\|no\)\_s/
+syn match netctlModeType contained /\(ipip\|sit\|isatap\|gre\|ip6ip6\|ipip6\|any\|tun\|tap\)\_s/
+syn match netctlDHCPClientType contained /\(dhcpcd\|dhclient\)\_s/
+syn match netctlWPADriverType contained /\(wext\|nl80211\|wired\)\_s/
+syn match netctlWLANSecType contained /\(none\|wep\|wpa\|wpa-configsection\|wpa-config\)\_s/
+
+syn match netctlConfigKey /^Connection=/ nextgroup=netctlConType,netctlErr
+syn match netctlConfigKey /^IP=/ nextgroup=netctlIPType,netctlErr
+syn match netctlConfigKey /^IP6=/ nextgroup=netctlIP6Type,netctlErr
+syn match netctlConfigKey /^Mode=/ nextgroup=netctlModeType,netctlErr
+syn match netctlConfigKey /^DHCPClient=/ nextgroup=netctlDHCPClientType,netctlErr
+syn match netctlConfigKey /^Timeout\(DHCP\|DAD\|Carrier\|WPA\)=/ nextgroup=netctlUInt
+syn match netctlConfigKey /^\(Priority\|FwdDelay\|MaxAge\)=/ nextgroup=netctlUInt
+syn match netctlConfigKey /^\(SkipNoCarrier\|Auth8021X\|Hidden\|AdHoc\|ExcludeAuto\)=/ nextgroup=netctlBool,netctlErr
+syn match netctlConfigKey /^WPADriver=/ nextgroup=netctlWPADriverType,netctlErr
+syn match netctlConfigKey /^Security=/ nextgroup=netctlWLANSecType,netctlErr
+
+syn match netctlConfigKey /^Description=/
+" TODO interface name
+syn match netctlConfigKey /^Interface=/
+" TODO array of interface names
+syn match netctlConfigKey /^BindsToInterfaces=/
+" TODO array of profile names
+syn match netctlConfigKey /^After=/
+syn match netctlConfigKey /^Exec\(UpPost\|DownPre\)=/
+
+" TODO array of v4 addresses, optional netmask
+syn match netctlConfigKey /^Address=/
+" TODO v4 address
+syn match netctlConfigKey /^Gateway=/
+" TODO array of v4 routing directives
+syn match netctlConfigKey /^Routes=/
+" TODO array of v6 addresses, optional prefix length, optional modifier
+syn match netctlConfigKey /^Address6=/
+" TODO v6 address
+syn match netctlConfigKey /^Gateway6=/
+" TODO array of v6 routing directives
+syn match netctlConfigKey /^Routes6=/
+" TODO array
+syn match netctlConfigKey /^\(IPCustom\|DNSOptions\)=/
+syn match netctlConfigKey /^Hostname=/
+" TODO array of v4 or v6
+syn match netctlConfigKey /^DNS=/
+" TODO domain
+syn match netctlConfigKey /^\(DNSSearch\|DNSDomain\)=/
+
+" TODO absolute path
+syn match netctlConfigKey /^WPAConfigFile=/
+syn match netctlConfigKey /^ESSID=/
+" TODO MAC address
+syn match netctlConfigKey /^AP=/
+syn match netctlConfigKey /^Key=/
+" TODO Country Code
+syn match netctlConfigKey /^Country=/
+" TODO unix group
+syn match netctlConfigKey /^WPAGroup=/
+" TODO array
+syn match netctlConfigKey /^WPAConfigSection=/
+" TODO device name
+syn match netctlConfigKey /^RFKill=/
+
+" TODO v4 or v6 address
+syn match netctlConfigKey /^\(Local\|Remote\)=/
+" TODO unix group/user
+syn match netctlConfigKey /^\(User\|Group\)=/
+
+hi def link netctlErr     Error
+hi def link netctlValue   Constant
+hi def link netctlComment Comment
+hi def link netctlKey     Statement
+hi def link netctlTodo    Todo
+
+hi def link netctlConfigKey netctlKey
+
+hi def link netctlConType        netctlValue
+hi def link netctlIP6Type        netctlValue
+hi def link netctlIPType         netctlValue
+hi def link netctlModeType       netctlValue
+hi def link netctlUInt           netctlValue
+hi def link netctlBool           netctlValue
+hi def link netctlDHCPClientType netctlValue
+hi def link netctlWPADriverType  netctlValue
+hi def link netctlWLANSecType    netctlValue
+
+let b:current_syntax = "netctl"

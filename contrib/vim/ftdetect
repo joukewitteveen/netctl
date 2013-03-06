@@ -1,0 +1,2 @@
+au BufNewFile,BufRead /etc/netctl/[^/]\+ set filetype=netctl
+au BufNewFile,BufRead /etc/netctl/examples/* set filetype=netctl
