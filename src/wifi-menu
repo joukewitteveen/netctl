@@ -55,24 +55,24 @@ init_entries()
     local i=0 flags signal ssid
     while IFS=$'\t' read signal flags ssid; do
         ENTRIES[i]=$ssid
-        #if in_array "$ssid" "${ESSIDS[@]}"; then
-            #if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
-                #ENTRIES[i]+="+"  # Automatically generated
-            #else
-                #ENTRIES[i]+="*"  # Handmade
-            #fi
-        #else
-            #ENTRIES[i]+="-"  # Not present
-        #fi
-        #if [[ "$ssid" = "$CONNECTION" ]]; then
-            #ENTRIES[i]+="!"  # Currently connected
-        #fi
-        if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
-            ENTRIES[i]+=" [${BASH_REMATCH[0],,}]"
+        if in_array "$ssid" "${ESSIDS[@]}"; then
+            if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
+                ENTRIES[i]+=" [Generated]"  # Automatically generated
+            else
+                ENTRIES[i]+=" [Handmade]"  # Handmade
+            fi
         else
-            ENTRIES[i]+=" [none]"
+            ENTRIES[i]+=" [No profile]"  # Not present
         fi
-        ENTRIES[i]+=" ($signal)"
+        if [[ "$ssid" = "$CONNECTION" ]]; then
+            ENTRIES[i]+=" [Active]"  # Currently connected
+        fi
+        if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
+            ENTRIES[i]+=" [Security: ${BASH_REMATCH[0],,}]"
+        else
+            ENTRIES[i]+=" [Security: none]"
+        fi
+        ENTRIES[i]+=" [Signal: $signal]"
         (( ++i ))
     done < "$1"
 }
@@ -204,7 +204,7 @@ if [[ $? -eq 0 ]]; then
 # + - automatically generated profile present
 # - - no profile present
 # ! - active connection present"
-    CHOICE=$(echo "$(printf "%s\n" "${ENTRIES[@]}")" | dmenu -p "Select the network you wish to use")
+    CHOICE=$(echo "$(printf "%s\n" "${ENTRIES[@]}")" | dmenu -i -p "Select the network you wish to use" -l "${#ENTRIES[@]}")
     if in_array "$CHOICE" "${ENTRIES[@]}"; then
         CHOICE="$(echo "$CHOICE" | cut -d ' ' -f 1)"
         connect_to_ssid "$CHOICE"
