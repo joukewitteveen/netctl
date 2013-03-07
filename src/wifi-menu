@@ -7,15 +7,13 @@
 usage()
 {
     cat << END
-Usage: wifi-menu [-h | --help] [-o | --obscure] [INTERFACE]
+Usage: wifi-menu [-h | --help] [INTERFACE]
 
 Interactively connect to a wireless network on INTERFACE using netctl.
 If only one wireless interface is available, INTERFACE can be omitted.
 
 Arguments:
   -h, --help     Show this help
-  -o, --obscure  Show asterisks for the characters of the password
-                 and store the password as a hexadecimal string
 END
 }
 
@@ -51,31 +49,30 @@ init_profiles()
     done < <(list_profiles)
 }
 
-# Builds ENTRIES as an argument list for dialog based on scan results in $1.
+# Builds ENTRIES as an argument list for dmenu based on scan results in $1.
 init_entries()
 {
     local i=0 flags signal ssid
     while IFS=$'\t' read signal flags ssid; do
-        ENTRIES[i++]="--"  # $ssid might look like an option to dialog.
-        ENTRIES[i++]=$ssid
-        if in_array "$ssid" "${ESSIDS[@]}"; then
-            if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
-                ENTRIES[i]="+"  # Automatically generated
-            else
-                ENTRIES[i]="*"  # Handmade
-            fi
-        else
-            ENTRIES[i]="-"  # Not present
-        fi
-        if [[ "$ssid" = "$CONNECTION" ]]; then
-            ENTRIES[i]="!"  # Currently connected
-        fi
+        ENTRIES[i]=$ssid
+        #if in_array "$ssid" "${ESSIDS[@]}"; then
+            #if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
+                #ENTRIES[i]+="+"  # Automatically generated
+            #else
+                #ENTRIES[i]+="*"  # Handmade
+            #fi
+        #else
+            #ENTRIES[i]+="-"  # Not present
+        #fi
+        #if [[ "$ssid" = "$CONNECTION" ]]; then
+            #ENTRIES[i]+="!"  # Currently connected
+        #fi
         if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
-            ENTRIES[i]+=":${BASH_REMATCH[0],,}"
+            ENTRIES[i]+=" [${BASH_REMATCH[0],,}]"
         else
-            ENTRIES[i]+=":none"
+            ENTRIES[i]+=" [none]"
         fi
-        ENTRIES[i]+="   :$signal"
+        ENTRIES[i]+=" ($signal)"
         (( ++i ))
     done < "$1"
 }
@@ -96,7 +93,7 @@ ssid_to_profile()
 # Creates a profile for ssid $1.
 create_profile()
 {
-    local box flags key msg security
+    local flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
     flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
@@ -106,16 +103,10 @@ create_profile()
         security=none
     fi
     if [[ "$flags" =~ PSK|WEP ]]; then
-        [[ "$OBSCURE" ]] && box="--insecure --passwordbox" || box="--inputbox"
         msg="Enter $security security key for\n'$1'"
-        key=$(dialog $box "$msg" 10 40 --stdout) || return $?
+        key=$(: | dmenu -p "$msg") || return $?
         if [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
-            if [[ "$OBSCURE" ]]; then
-                key=$(wpa_passphrase "$1" "$key" | grep -m 1 "^[[:space:]]*psk=")
-                key=${key#*psk=}
-            else
-                key=$(printf "%q" "$key")
-            fi
+            key=$(printf "%q" "$key")
         elif ! [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
             return 4
         fi
@@ -148,10 +139,8 @@ connect_to_ssid()
     clear
     if ! netctl switch-to "$PROFILE"; then
         if (( SPAWNED_PROFILE )); then
-            msg="         CONNECTING FAILED
-
-Do you want to keep the generated profile ('$PROFILE')?"
-            dialog --yesno "$msg" 10 40 --stdout || rm "$PROFILE_DIR/$PROFILE"
+            msg="CONNECTING FAILED. Do you want to keep the generated profile ('$PROFILE')?"
+            [[ "$(echo -e "no\nyes" | dmenu -p "$msg")" == "yes" ]] || rm "$PROFILE_DIR/$PROFILE"
             clear
         fi
         return 2
@@ -164,10 +153,6 @@ while [[ "$1" = -* ]]; do
         -h|--help)
             usage
             exit
-            ;;
-        -o|--obscure)
-            OBSCURE=1
-            shift
             ;;
         -*)
             report_error "Invalid option: $1"
@@ -183,8 +168,8 @@ if [[ $# -gt 1 ]]; then
 fi
 
 ensure_root "$(basename "$0")"
-if ! type dialog &> /dev/null; then
-    exit_error "Please install 'dialog' to use wifi-menu"
+if ! type dmenu &> /dev/null; then
+    exit_error "Please install 'dmenu' to use wifi-menu"
 fi
 
 INTERFACE=$1
@@ -213,18 +198,19 @@ if [[ $? -eq 0 ]]; then
     echo "done"
     init_profiles "$INTERFACE"
     init_entries "$NETWORKS"
-    MSG="Select the network you wish to use
-Flags description:
- * - handmade profile present
- + - automatically generated profile present
- - - no profile present
- ! - active connection present"
-    CHOICE=$(dialog --column-separator : --menu "$MSG" 24 50 12 \
-                 "${ENTRIES[@]}" --stdout)
-    RETURN=$?
-    if (( RETURN == 0 )); then
+    #MSG="Select the network you wish to use
+#Flags description:
+# * - handmade profile present
+# + - automatically generated profile present
+# - - no profile present
+# ! - active connection present"
+    CHOICE=$(echo "$(printf "%s\n" "${ENTRIES[@]}")" | dmenu -p "Select the network you wish to use")
+    if in_array "$CHOICE" "${ENTRIES[@]}"; then
+        CHOICE="$(echo "$CHOICE" | cut -d ' ' -f 1)"
         connect_to_ssid "$CHOICE"
         RETURN=$?
+    else
+        RETURN=5
     fi
 else
     echo "failed"
@@ -249,7 +235,7 @@ case $RETURN in
         report_error "Aborted"
         ;;
     *)  # Should not happen
-        report_error "Unexpected return code from dialog: $RETURN"
+        report_error "Unexpected return code from dmenu: $RETURN"
         RETURN=7
         ;;
 esac
