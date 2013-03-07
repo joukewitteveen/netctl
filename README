@@ -8,7 +8,7 @@ Dependencies:
 Optional:
 - dhcpcd or dhclient: for DHCP support
 - wpa_supplicant: for WPA support
-- dialog: for the interactive assistant
+- dmenu: for the interactive assistant
 - ifplugd: for automatic connection
 - wpa_actiond: for automatic connection
 - ifenslave: for bonding support
