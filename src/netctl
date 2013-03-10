@@ -26,10 +26,18 @@ Commands:
 END
 }
 
+# Wrapper around systemctl to convert profile names to unit names.
+sd_call() {
+    local cmd=$1 units
+    shift
+    mapfile -t units < <(printf 'netctl@%s.service\n' "$@")
+    systemctl $cmd "${units[@]}"
+}
+
 list() {
     local indicators=( '*' ' ' )
     list_profiles | while read -r Profile; do
-        systemctl is-active --quiet "netctl@$Profile.service" &> /dev/null
+        sd_call "is-active --quiet" "$Profile" &> /dev/null
         # Make the return variable boolean
         [[ $? -eq 0 ]]; printf '%s %s\n' "${indicators[$?]}" "$Profile"
     done
@@ -37,8 +45,11 @@ list() {
 
 store() {
     mkdir -p "$(dirname "$STATE_FILE")"
-    systemctl list-units --type=service --full --no-legend --no-pager | \
-      cut -d\  -f1 | grep "^netctl@" > "$STATE_FILE"
+    list_profiles | while read -r Profile; do
+        if sd_call "is-active --quiet" "$Profile" &> /dev/null; then
+            printf "%s\n" "$Profile"
+        fi
+    done > "$STATE_FILE"
 }
 
 restore() {
@@ -47,15 +58,15 @@ restore() {
     elif [[ ! -s $STATE_FILE ]]; then
         report_debug "No profiles to restore in state file '$STATE_FILE'"
     else
-        mapfile -t Units < "$STATE_FILE"
-        do_debug systemctl start "${Units[@]}"
+        mapfile -t Profiles < "$STATE_FILE"
+        do_debug sd_call start "${Profiles[@]}"
     fi
 }
 
 stop_all() {
     # We cannot pipe to mapfile, as the end of a pipe is inside a subshell
     mapfile -t Profiles < <(list_profiles)
-    [[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
+    [[ $Profiles ]] && do_debug sd_call stop "${Profiles[@]}" 2> \
       >(grep -Fv "not loaded" >&2)
 }
 
@@ -73,9 +84,9 @@ switch_to() {
     fi
     mapfile -t AllProfiles < <(list_profiles)
     mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
-    [[ $Profiles ]] && do_debug systemctl stop "${Profiles[@]/#/netctl@}" 2> \
+    [[ $Profiles ]] && do_debug sd_call stop "${Profiles[@]}" 2> \
       >(grep -Fv "not loaded" >&2)
-    do_debug systemctl start "netctl@$1"
+    do_debug sd_call start "$1"
 }
 
 unit_enable() {
@@ -104,8 +115,8 @@ unit_enable() {
 
 unit_disable() {
     local unit="/etc/systemd/system/netctl@$1.service"
-    if systemctl is-enabled --quiet "netctl@$1.service"; then
-        systemctl disable "netctl@$1.service"
+    if sd_call "is-enabled --quiet" "$1" &> /dev/null; then
+        sd_call disable "$1"
     fi
     if [[ ! -f $unit ]]; then
         report_error "No regular unit file found for profile '$1'"
@@ -136,7 +147,7 @@ case $# in
   2)
     case $1 in
       start|stop|restart|status)
-        systemctl $1 "netctl@$2";;
+        sd_call "$1" "$2";;
       switch-to)
         ensure_root "$(basename "$0")"
         switch_to "$2";;
