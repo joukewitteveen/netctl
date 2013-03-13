@@ -125,7 +125,7 @@ Description='Automatically generated profile by wifi-menu'
 Interface=$INTERFACE
 Connection=wireless
 Security=$security
-ESSID=$(printf "%q" "$1")
+ESSID=$(printf "%s" "$1")
 IP=dhcp
 ${key+Key=$key}
 EOF
