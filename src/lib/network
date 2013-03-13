@@ -46,7 +46,7 @@ ensure_root netctl
 cd /
 
 # Expose the profile name
-Profile=$2
+Profile=${1/\\x20/ }
 load_profile "$Profile"
 source "$CONN_DIR/$Connection"
 case $1 in
