@@ -14,7 +14,7 @@ Commands:
   list                 List available profiles
   store                Save which profiles are active
   restore              Load saved profiles
-  stop-all             Stops all profiles.
+  stop-all             Stops all profiles
   start [PROFILE]      Start a profile
   stop [PROFILE]       Stop a profile
   restart [PROFILE]    Restart a profile
@@ -26,12 +26,22 @@ Commands:
 END
 }
 
-# Wrapper around systemctl to convert profile names to unit names.
+sd_escape() {
+    local IFS=''
+    # Prevent a recursion loop on backspaces
+    set "${@//\\/\\x5c}"
+    while [[ "$*" =~ [^[:alnum:].:_/\\] ]]; do
+        set "${@//$BASH_REMATCH/$(printf '\\x%x' "'$BASH_REMATCH")}"
+    done
+    printf '%s\n' "${@//\//-}"
+}
+
+# Wrapper around systemctl to convert profile names to unit names
 sd_call() {
-    local cmd=$1 units
+    local command=$1
     shift
-    mapfile -t units < <(printf 'netctl@%s.service\n' "$@")
-    systemctl $cmd "${units[@]}"
+    set $(sd_escape "$@")
+    systemctl $command $(printf 'netctl@%s.service\n' "$@")
 }
 
 list() {
@@ -90,7 +100,7 @@ switch_to() {
 }
 
 unit_enable() {
-    local unit="/etc/systemd/system/netctl@$1.service"
+    local unit="/etc/systemd/system/netctl@$(sd_escape "$1").service"
     if [[ -e $unit ]]; then
         report_error "A unit file for profile '$1' already exists"
         return 1
@@ -100,13 +110,13 @@ unit_enable() {
     echo -e "\n[Unit]" >> "$unit"
     [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
     : ${BindsToInterfaces=$Interface}
-    BindsToInterfaces=( "${BindsToInterfaces[@]//-/\\x2d}" )
     printf 'BindsTo=sys-subsystem-net-devices-%s.device\n' \
-           "${BindsToInterfaces[@]}" >> "$unit"
+           $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
     printf 'After=sys-subsystem-net-devices-%s.device\n' \
-           "${BindsToInterfaces[@]}" >> "$unit"
+           $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
     if [[ -n $After ]]; then
-        printf 'After="netctl@%s.service"\n' "${After[@]//\"/\\\"}" >> "$unit"
+        printf 'After="netctl@%s.service"\n' \
+               $(sd_escape "${After[@]}") >> "$unit"
     fi
     echo "ln -s '$unit' '${unit/system\//system/multi-user.target.wants/}'"
     ln -s "$unit" "${unit/system\//system/multi-user.target.wants/}"
@@ -114,7 +124,7 @@ unit_enable() {
 }
 
 unit_disable() {
-    local unit="/etc/systemd/system/netctl@$1.service"
+    local unit="/etc/systemd/system/netctl@$(sd_escape "$1").service"
     if sd_call "is-enabled --quiet" "$1" &> /dev/null; then
         sd_call disable "$1"
     fi

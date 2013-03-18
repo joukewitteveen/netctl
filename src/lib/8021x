@@ -2,7 +2,7 @@
 
 
 ## Wrapper around wpa_cli to deal with supplicant configurations that set a
-## non-standard control path.
+## non-standard control path
 # $1: interface name
 # $2...: call to the supplicant
 wpa_call() {

@@ -7,8 +7,8 @@ Before=network.target
 Wants=network.target
 
 [Service]
-ExecStart=/usr/bin/netctl-auto start %i
-ExecStop=/usr/bin/netctl-auto stop %i
+ExecStart=/usr/bin/netctl-auto start %I
+ExecStop=/usr/bin/netctl-auto stop %I
 RemainAfterExit=yes
 Type=forking
 
