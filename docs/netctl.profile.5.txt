@@ -131,6 +131,10 @@ network. In particular, these connection types are +ethernet+,
     The name of the preferred DHCP client. Supported options are
     `dhcpcd' and `dhclient'. Defaults to `dhcpcd'.
 
+'DHCPOptions='::
+    Additional options to be passed to the DHCP client. Do not use this
+    unless you know what you are doing.
+
 'IPCustom=()'::
     An array of argument lines to pass to `ip`. This can be used to
     achieve complicated configurations within the framework of *netctl*.
