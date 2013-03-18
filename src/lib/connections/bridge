@@ -2,7 +2,7 @@
 
 . "$SUBR_DIR/ip"
 
-BRCTL="/usr/sbin/brctl"
+: ${BRCTL:=brctl}
 
 bridge_up() {
     if is_interface "$Interface"; then

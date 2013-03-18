@@ -2,7 +2,7 @@
 
 . "$SUBR_DIR/ip"
 
-IFENSLAVE="/sbin/ifenslave"
+: ${IFENSLAVE:=ifenslave}
 
 bond_up() {
     if is_interface "$Interface"; then

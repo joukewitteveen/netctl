@@ -16,6 +16,7 @@ optdepends=('dialog: for the menu based wifi assistant'
             'wpa_actiond: for automatic wireless connections through netctl-auto'
             'ifenslave: for bond connections'
             'bridge-utils: for bridge connections'
+            'ppp: for pppoe connections'
            )
 conflicts=("netcfg")
 source=(ftp://ftp.archlinux.org/other/packages/netctl/netctl-${pkgver}.tar.xz{,.sig})

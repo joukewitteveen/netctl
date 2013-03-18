@@ -1,5 +1,7 @@
 # Contributed by: Thomas Bächler <thomas@archlinux.org>
 
+: ${PPPD:=pppd}
+
 _quotestring() {
     echo "\"${1/\"/\\\"}\""
 }
@@ -43,8 +45,8 @@ pppoe_up() {
     [[ -n ${PPPoEMAC} ]] && echo "pppoe-mac $(_quotestring "${PPPoEMAC}")" >> "${cfg}"
     [[ ${PPPoEIP6} == yes ]] && echo "+ipv6" >> "${cfg}"
 
-    /sbin/ip link set dev "${Interface}" up
-    /usr/sbin/pppd file "${cfg}"
+    ip link set dev "${Interface}" up
+    $PPPD file "${cfg}"
 
     if [[ $? -ne 0 ]]; then
         rm "${cfg}"
