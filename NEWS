@@ -1,3 +1,7 @@
+netctl 0.7
+- Add support for systemd character escaping
+- Assorted fixes, including to vlan connections and the documentation
+
 netctl 0.6
 - Add a sleep hook
 - Assorted fixes, including fixes to rfkill and the documentation
