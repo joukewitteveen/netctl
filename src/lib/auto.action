@@ -7,7 +7,6 @@ interface="$1"
 ssid="$2"
 profile="$3"
 action="$4"
-PROFILE_FILE="$STATE_DIR/wpa_actiond_$interface.profile"
 
 # Is it possible that we don't get a profile?!
 [[ "$profile" ]] && load_profile "$profile"
@@ -23,8 +22,6 @@ case $action in
     fi
     DHCPOptions+=" -K"
     ip_set || exit 1
-    mkdir -p "$(dirname "$PROFILE_FILE")"
-    printf "%s" "$profile" > "$PROFILE_FILE"
     # JP: sandbox the eval
     if ! ( eval $ExecUpPost ); then
         # Failing ExecUpPost will take the connection down
@@ -41,7 +38,7 @@ case $action in
     if ! ( eval $ExecDownPre ); then
         exit 1
     fi
-    ip_unset && rm -f "$PROFILE_FILE"
+    ip_unset
   ;;
   LOST|REESTABLISHED)
     # Not handled.

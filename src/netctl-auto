@@ -4,8 +4,8 @@
 . "$SUBR_DIR/8021x"
 . "$SUBR_DIR/rfkill"
 
-AUTOWIFI="/usr/sbin/wpa_actiond -p /run/wpa_supplicant"
-ACTION_SCRIPT="$SUBR_DIR/auto.action"
+: ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
+: ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
 
 if [[ $# != 2 || $1 != @(start|stop) ]]; then
     exit_error "Usage: netctl-auto [start|stop] <interface>"
@@ -14,7 +14,6 @@ fi
 STARTSTOP=$1
 INTERFACE=$2
 PIDFILE="$STATE_DIR/wpa_actiond_$INTERFACE.pid"
-PROFILE_FILE="$STATE_DIR/wpa_actiond_$INTERFACE.profile"
 shift 2
 
 case $STARTSTOP in
@@ -52,7 +51,7 @@ case $STARTSTOP in
     : ${WPADriver:=nl80211,wext}
     WPAOptions+=" -W"
     if wpa_start "$INTERFACE" "$WPADriver" "$WPA_CONF"; then
-        if $AUTOWIFI -i "$INTERFACE" -P "$PIDFILE" -a "$ACTION_SCRIPT" "$@"; then
+        if $ACTIOND -i "$INTERFACE" -P "$PIDFILE" -a "$ACTION_SCRIPT" "$@"; then
             exit 0
         fi
         wpa_stop "$INTERFACE"
@@ -60,17 +59,14 @@ case $STARTSTOP in
     exit 1
   ;;
   stop)
-    if [[ -e $PROFILE_FILE ]]; then
-        "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")" && rm -f "$PROFILE_FILE"
-    else
-        if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
-            source "$PROFILE_DIR/interfaces/$INTERFACE"
-        fi
-        wpa_stop "$INTERFACE"
-        ip link set dev "$INTERFACE" down
-        [[ $RFKill ]] && disable_rf "$INTERFACE" "$RFKill"
+    kill "$(< "$PIDFILE")"
+    if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
+        source "$PROFILE_DIR/interfaces/$INTERFACE"
     fi
-    timeout_wait 1 '[[ ! -f "$PIDFILE" ]]' || kill "$(< "$PIDFILE")"
+    timeout_wait 1 '! wpa_is_active "$INTERFACE"' || wpa_stop "$INTERFACE"
+    ip link set dev "$INTERFACE" down
+    [[ $RFKill ]] && disable_rf "$INTERFACE" "$RFKill"
+    exit 0
   ;;
 esac
 
