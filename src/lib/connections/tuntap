@@ -2,6 +2,8 @@
 
 . "$SUBR_DIR/ip"
 
+: ${BindsToInterfaces=}
+
 tuntap_up() {
     if is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"

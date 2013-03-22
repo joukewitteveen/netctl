@@ -48,7 +48,6 @@ cd /
 # Expose the profile name
 Profile=$2
 load_profile "$Profile"
-source "$CONN_DIR/$Connection"
 case $1 in
   start)
     report_notice "Starting network profile '$Profile'..."

@@ -115,6 +115,7 @@ load_profile() {
     if [[ -x "$PROFILE_DIR/interfaces/$Interface" ]]; then
         source "$PROFILE_DIR/interfaces/$Interface"
     fi
+    source "$CONN_DIR/$Connection"
 }
 
 

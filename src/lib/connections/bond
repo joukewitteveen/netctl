@@ -3,6 +3,7 @@
 . "$SUBR_DIR/ip"
 
 : ${IFENSLAVE:=ifenslave}
+: ${BindsToInterfaces=}
 
 bond_up() {
     if is_interface "$Interface"; then
