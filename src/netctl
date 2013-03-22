@@ -29,9 +29,9 @@ END
 sd_escape() {
     local IFS=''
     # Prevent a recursion loop on backspaces
-    set "${@//\\/\\x5c}"
+    set -- "${@//\\/\\x5c}"
     while [[ "$*" =~ [^[:alnum:].:_/\\] ]]; do
-        set "${@//$BASH_REMATCH/$(printf '\\x%x' "'$BASH_REMATCH")}"
+        set -- "${@//$BASH_REMATCH/$(printf '\\x%x' "'$BASH_REMATCH")}"
     done
     printf '%s\n' "${@//\//-}"
 }
@@ -40,7 +40,7 @@ sd_escape() {
 sd_call() {
     local command=$1
     shift
-    set $(sd_escape "$@")
+    set -- $(sd_escape "$@")
     systemctl $command $(printf 'netctl@%s.service\n' "$@")
 }
 
@@ -109,11 +109,12 @@ unit_enable() {
     echo ".include /usr/lib/systemd/system/netctl@.service" > "$unit"
     echo -e "\n[Unit]" >> "$unit"
     [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
-    : ${BindsToInterfaces=$Interface}
-    printf 'BindsTo=sys-subsystem-net-devices-%s.device\n' \
-           $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
-    printf 'After=sys-subsystem-net-devices-%s.device\n' \
-           $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
+    if [[ -n ${BindsToInterfaces=$Interface} ]]; then
+        printf 'BindsTo=sys-subsystem-net-devices-%s.device\n' \
+               $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
+        printf 'After=sys-subsystem-net-devices-%s.device\n' \
+               $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
+    fi
     if [[ -n $After ]]; then
         printf 'After="netctl@%s.service"\n' \
                $(sd_escape "${After[@]}") >> "$unit"
