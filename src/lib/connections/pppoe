@@ -9,7 +9,7 @@ _quotestring() {
 pppoe_up() {
     local cfg
 
-    mkdir -p "$STATE_DIR/pppoe.${Interface}.$1/"
+    mkdir -p "$STATE_DIR/pppoe.${Interface}.${Profile}/"
     chmod 700 "$STATE_DIR/pppoe.${Interface}.${Profile}/"
     cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
     : > "${cfg}"
