@@ -1,3 +1,7 @@
+netctl 0.8
+- Fix escaping of unfortunate strings
+- Add support for configuration defaults to connection scripts
+
 netctl 0.7
 - Add support for systemd character escaping
 - Assorted fixes, including to vlan connections and the documentation
