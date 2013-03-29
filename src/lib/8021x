@@ -196,23 +196,6 @@ wpa_make_config_file() {
 # $Security: type of wireless security
 wpa_make_config_block() {
     case $Security in
-      none|wep|wpa)
-        echo "ssid=$(wpa_quote "$ESSID")"
-        [[ $AP ]] && echo "bssid=${AP,,}"
-        is_yes "${AdHoc:-no}" && echo "mode=1"
-      ;;
-      wpa-configsection)
-        printf "%s\n" "${WPAConfigSection[@]}"
-        return
-      ;;
-      *)
-        report_error "Unsupported security setting: '$Security'"
-        return 1
-      ;;
-    esac
-
-    # Key management
-    case $Security in
       none)
         echo "key_mgmt=NONE"
       ;;
@@ -229,12 +212,20 @@ wpa_make_config_block() {
             echo "psk=$(wpa_quote "$Key")"
         fi
       ;;
+      wpa-configsection)
+        printf "%s\n" "${WPAConfigSection[@]}"
+        return
+      ;;
+      *)
+        report_error "Unsupported security setting: '$Security'"
+        return 1
+      ;;
     esac
 
-    # Hidden SSID
+    echo "ssid=$(wpa_quote "$ESSID")"
+    [[ $AP ]] && echo "bssid=${AP,,}"
     is_yes "${Hidden:-no}" && echo "scan_ssid=1"
-
-    # Priority group for the network
+    is_yes "${AdHoc:-no}" && echo "mode=1"
     [[ $Priority ]] && echo "priority=$Priority"
 }
 
