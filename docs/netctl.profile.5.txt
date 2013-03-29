@@ -103,7 +103,7 @@ network. In particular, these connection types are +ethernet+,
     packages, which is blocked by `no'.
 
 'Address=()' [requires 'IP=static']::
-    An array of IP addresses suffixed with ``/<netmask>`'.
+    An array of IP addresses suffixed with `++/<netmask>++'.
     Leaving out brackets for arrays consisting of a single element is
     accepted in the Bash syntax.
 
@@ -147,21 +147,21 @@ network. In particular, these connection types are +ethernet+,
     of the DNS nameservers.
 
 'DNSDomain='::
-    A ``domain`' line for '/etc/resolv.conf'.
+    A `++domain++' line for '/etc/resolv.conf'.
 
 'DNSSearch='::
-    A ``search`' line for '/etc/resolv.conf'.
+    A `++search++' line for '/etc/resolv.conf'.
 
 'DNSOptions=()'::
-    An array of ``options`' lines for '/etc/resolv.conf'.
+    An array of `++options++' lines for '/etc/resolv.conf'.
 
 'TimeoutDHCP='::
     Maximum time, in seconds, to wait for DHCP to be successful.
-    Defaults to ``10`'.
+    Defaults to `++10++'.
 
 'TimeoutDAD='::
     Maximum time, in seconds, to wait for IPv6's Duplicate Address
-    Detection to succeed. Defaults to ``3`'.
+    Detection to succeed. Defaults to `++3++'.
 
 
 OPTIONS FOR `ethernet' CONNECTIONS
@@ -171,10 +171,10 @@ of the `ethernet' type:
 
 'SkipNoCarrier='::
     Whether or not the absence of a carrier (plugged-in cable) is
-    acceptable. Defaults to ``no`'.
+    acceptable. Defaults to `++no++'.
 
 'Auth8021X='::
-    Set to ``yes`' to use 802.11x authentication.
+    Set to `++yes++' to use 802.11x authentication.
 
 'WPAConfigFile='::
     Path to a *wpa_supplicant* configuration file. Defaults to
@@ -182,14 +182,15 @@ of the `ethernet' type:
 
 'WPADriver='::
     The *wpa_supplicant* driver to use for 802.11x authentication.
-    Defaults to ``wired`'.
+    Defaults to `++wired++'.
 
 'TimeoutCarrier='::
-    Maximum time, in seconds, to wait for a carrier. Defaults to ``5`'.
+    Maximum time, in seconds, to wait for a carrier. Defaults to
+    `++5++'.
 
 'TimeoutWPA='::
     Maximum time, in seconds, to wait for 802.11x authentication to
-    succeed. Defaults to ``15`'.
+    succeed. Defaults to `++15++'.
 
 
 OPTIONS FOR `wireless' CONNECTIONS
@@ -199,7 +200,7 @@ of the `wireless' type:
 
 'Security='::
     One of `none', `wep', `wpa', `wpa-configsection', or `wpa-config'.
-    Defaults to ``none`'.
+    Defaults to `++none++'.
 
 'ESSID=' [mandatory]::
     The name of the network to connect to.
@@ -214,47 +215,50 @@ of the `wireless' type:
 
 'Hidden='::
     Whether or not the specified network is a hidden network. Defaults
-    to ``no`'.
+    to `++no++'.
 
 'AdHoc='::
-    Whether or not to use ad-hoc mode. Defaults to ``no`'.
-
-'Country='::
-    The country for which frequency regulations will be enforced.
+    Whether or not to use ad-hoc mode. Defaults to `++no++'.
 
 'Priority='::
     Priority group for the network. In case of automatic profile
     selection, the matched network with the highest priority will be
-    selected. Defaults to ``0`'.
+    selected. Defaults to `++0++'.
 
-'ExcludeAuto='::
-    Whether or not to exclude this profile from automatic profile
-    selection. Defaults to ``no`'.
+'WPAConfigSection=()' [mandatory for 'Security=wpa-configsection']::
+    Array of lines that form a network block for *wpa_supplicant*. All
+    of the above options will be ignored.
+
+'WPAConfigFile='::
+    Path to a *wpa_supplicant* configuration file. Used only for
+    'Security=wpa-config'. All options except 'WPADriver', 'TimeoutWPA',
+    and 'RFKill' will be ignored. The profile is excluded from
+    automatic profile selection. Defaults to '/etc/wpa_supplicant.conf'.
+
+'Country='::
+    The country for which frequency regulations will be enforced.
 
 'WPAGroup='::
     Group that has the authority to configure *wpa_supplicant* via its
-    control interface. Defaults to ``wheel`'.
-
-'WPAConfigSection=()' [mandatory for 'Security=wpa-configsection']::
-    Array of lines that form a network block for *wpa_supplicant*.
-
-'WPAConfigFile='::
-    Path to a *wpa_supplicant* configuration file. Defaults to
-    '/etc/wpa_supplicant.conf'. Used for 'Security=wpa-config'.
+    control interface. Defaults to `++wheel++'.
 
 'WPADriver='::
-    The *wpa_supplicant* driver to use. Defaults to ``nl80211,wext`'.
+    The *wpa_supplicant* driver to use. Defaults to `++nl80211,wext++'.
 
 'TimeoutWPA='::
     Maximum time, in seconds, to wait for steps in the association and
-    authentication to succeed. Defaults to ``15`'.
+    authentication to succeed. Defaults to `++15++'.
 
 'RFKill='::
     The name of an *rfkill* device. When specified, the device is used
     to block/unblock the interface when appropriate. Names can be found
     in '/sys/class/rfkill/rfkillX/name'. It is also possible to set this
-    variable to ``auto`'. In that case an *rfkill* device that is
+    variable to `++auto++'. In that case an *rfkill* device that is
     associated with the network interface is used.
+
+'ExcludeAuto='::
+    Whether or not to exclude this profile from automatic profile
+    selection. Defaults to `++no++'.
 
 
 OPTIONS FOR `bond' CONNECTIONS
@@ -288,6 +292,7 @@ the *ip options*, the following are understood for connections of the
 
 'Local='::
     The address of the local end of the tunnel.
+
 'Remote='::
     The address of the remote end of the tunnel.
 
@@ -299,7 +304,7 @@ the *ip options*, the following are understood for connections of the
 `tuntap' type:
 
 'Mode='::
-    Either ``tun`', or ``tap`'.
+    Either `tun', or `tap'.
 
 'User='::
     The owning user of the tun/tap interface.

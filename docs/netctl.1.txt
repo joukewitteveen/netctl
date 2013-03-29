@@ -81,7 +81,7 @@ On success 0 is returned, a non-zero failure code otherwise.
 ENVIRONMENT
 -----------
 '$NETCTL_DEBUG'::
-    If set to `"yes"`, debugging output is generated.
+    If set to +"yes"+, debugging output is generated.
 '$NETCTL_STATE_FILE'::
     The location of the state file. Defaults to
     '/var/lib/netctl/netctl.state'.
