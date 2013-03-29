@@ -30,7 +30,7 @@ install-docs: docs
 	install -m644 docs/*.7 $(DESTDIR)/usr/share/man/man7/
 
 docs:
-	$(MAKE) -C $@
+	$(MAKE) -B -C $@
 
 tarball: netctl-$(VERSION).tar.xz
 netctl-$(VERSION).tar.xz: | docs
