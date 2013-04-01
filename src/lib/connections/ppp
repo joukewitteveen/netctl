@@ -121,7 +121,7 @@ ppp_up() {
     $PPPD file "${cfg}"
 
     if [[ $? -ne 0 ]]; then
-        rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+        rmdir "$STATE_DIR/ppp.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
         return 1
     fi
