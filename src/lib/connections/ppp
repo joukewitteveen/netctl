@@ -1,0 +1,148 @@
+# Contributed by Robbie Smith <zoqaeski@gmail.com>
+# Based on Thomas Bächler’s <thomas@archlinux.org> pppoe script
+# Also see <https://wiki.archlinux.org/index.php/3G_and_GPRS_modems_with_pppd> for more information.
+
+: ${PPPD:=pppd}
+
+_quotestring() {
+    echo "\"${1/\"/\\\"}\""
+}
+
+mobile_up() {
+    local cfg
+    local chat
+
+    mkdir -p "$STATE_DIR/mobile.${Interface}.${Profile}/"
+    chmod 700 "$STATE_DIR/mobile.${Interface}.${Profile}/"
+    cfg="$STATE_DIR/mobile.${Interface}.${Profile}/options"
+    chat="$STATE_DIR/mobile.${Interface}.${Profile}/modem.chat"
+    : > "${cfg}"
+    chmod 600 "${cfg}"
+
+    echo "linkname $(_quotestring "${Profile}")" >> "${cfg}"
+
+    # Set device
+    if [ -n "${Device}" ]; then
+        echo "${Device}" >> "${cfg}"
+    else
+        echo "ttyUSB0" >> "${cfg}"
+    fi
+
+    echo "921600" >> "${cfg}"
+    echo "lock" >> "${cfg}"
+    echo "crtscts" >> "${cfg}"
+    echo "modem" >> "${cfg}"
+    echo "passive" >> "${cfg}"
+    echo "novj" >> "${cfg}"
+    echo "holdoff 10" >> "${cfg}"
+    echo "maxfail 5" >> "${cfg}"
+
+    # Debug pppd output separately from netcfg
+    if is_yes "${PPPDebug:-yes}"; then
+        echo "debug" >> "${cfg}"
+    fi
+
+    # Sets up route
+    if is_yes "${DefaultRoute:-yes}"; then
+        echo "defaultroute" >> "${cfg}"
+    else
+        echo "nodefaultroute" >> "${cfg}"
+    fi
+    if is_yes "${UsePeerDNS:-yes}"; then
+        echo "usepeerdns" >> "${cfg}"
+    fi
+
+    # Writes username and password
+    echo "noauth" >> "${cfg}"
+    echo "hide-password" >> ${cfg}
+    [[ -n ${User} ]] && echo "user $(_quotestring "${User}")" >> "${cfg}"
+    [[ -n ${Password} ]] && echo "password $(_quotestring "${Password}")" >> "${cfg}"
+
+    # Now that we’ve got the ppp configuration set up, write the chat script
+    echo "ECHO ON" >> "${chat}"
+    echo "ABORT 'BUSY'" >> "${chat}"
+    echo "ABORT 'NO CARRIER'" >> "${chat}"
+    echo "ABORT 'VOICE'" >> "${chat}"
+    echo "ABORT 'NO DIALTONE'" >> "${chat}"
+    echo "ABORT 'NO DIAL TONE'" >> "${chat}"
+    echo "ABORT 'NO ANSWER'" >> "${chat}"
+    echo "ABORT 'DELAYED'" >> "${chat}"
+    echo "ABORT   '\nRINGING\r\n\r\nRINGING\r'" >> "${chat}"
+    echo "REPORT CONNECT" >> "${chat}"
+    echo "TIMEOUT 6" >> "${chat}"
+    echo "'' 'ATQ0'" >> "${chat}"
+    echo "'OK-AT-OK' 'ATZ'" >> "${chat}"
+    echo "TIMEOUT 3" >> "${chat}"
+
+    #echo "'OK' @/etc/ppp/chatscripts/pin" >> "${chat}"
+    if [ -n "${Pin}" ]; then
+        echo "'OK' 'AT+CPIN=${Pin}'" >> "${chat}"
+    else
+        echo "'OK' 'AT'" >> "${chat}"
+    fi
+
+    echo "'OK\d-AT-OK' 'ATI'" >> "${chat}"
+    echo "'OK' 'ATZ'" >> "${chat}"
+    echo "'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'" >> "${chat}"
+
+    # Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
+    # Only works for Huawei modems
+    #echo "'OK' @/etc/ppp/chatscripts/mode" >> "${chat}"
+    case "${Mode}" in
+        3Gonly)
+            echo "'OK' 'AT\^SYSCFG=14,2,3fffffff,0,1'" >> "${chat}"
+            ;;
+        3Gpref)
+            echo "'OK' 'AT\^SYSCFG=2,2,3fffffff,0,1'" >> "${chat}"
+            ;;
+        GPRSonly)
+            echo "'OK' 'AT\^SYSCFG=13,1,3fffffff,0,0'" >> "${chat}"
+            ;;
+        GPRSpref)
+            echo "'OK' 'AT\^SYSCFG=2,1,3fffffff,0,0'" >> "${chat}"
+            ;;
+        *)
+            echo "'OK' 'AT'" >> "${chat}"
+            ;;
+    esac
+
+    # Set up Access Point Name
+    echo "'OK-AT-OK' AT+CGDCONT=1,\"IP\",\"${AccessPointName}\"" >> "${chat}"
+
+    echo "'OK' 'ATDT*99#'" >> "${chat}"
+    echo "TIMEOUT 30" >> "${chat}"
+    echo "CONNECT ''" >> "${chat}"
+
+    # Add the chat script line to the configuration
+    echo "connect \"/usr/sbin/chat -v -t15 -f ${chat}\"" >> "${cfg}"
+
+    ip link set dev "${Interface}" up
+    #$PPPD call "$Peer" updetach child-timeout "$PPPTimeout" linkname "$Peer"
+    $PPPD file "${cfg}"
+
+    if [[ $? -ne 0 ]]; then
+        rmdir "$STATE_DIR/mobile.${Interface}.${Profile}/"
+        report_error "Couldn't make pppd connection."
+        return 1
+    fi
+}
+
+mobile_down() {
+    local cfg
+    local chat
+    cfg="$STATE_DIR/mobile.${Interface}.${Profile}/options"
+    chat="$STATE_DIR/mobile.${Interface}.${Profile}/modem.chat"
+    PIDFILE="/var/run/mobile-${Profile}.pid"
+
+    if [[ -e $PIDFILE ]]; then
+        read PID < "$PIDFILE"
+        [[ "$PID" ]] && kill "$PID"
+    fi
+
+    rm "${cfg}"
+    rm "${chat}"
+    rmdir "$STATE_DIR/mobile.${Interface}.${Profile}/"
+}
+
+
+# vim: ft=sh ts=4 et sw=4:
