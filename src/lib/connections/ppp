@@ -1,0 +1,37 @@
+. "$SUBR_DIR/network"
+
+: ${PPPD:=pppd}
+
+_quotestring() {
+    echo "\"${1/\"/\\\"}\""
+}
+
+ppp_up() {
+    load_profile "$Profile"
+    [[ -z "$Peer" ]] && Peer="provider"
+    [[ -z "$PPPTimeout" ]] && PPPTimeout=30
+
+    ip link set dev "${Interface}" up
+    $PPPD call "$Peer" updetach child-timeout "$PPPTimeout" linkname "$Peer"
+
+    if [[ $? -ne 0 ]]; then
+        rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+        report_error "Couldn't make pppd connection."
+        return 1
+    fi
+}
+
+ppp_down() {
+    load_profile "$Profile"
+    PIDFILE="/var/run/ppp-$(basename $Peer).pid"
+
+    if [[ -e $PIDFILE ]]; then
+        PID=$(head -1 $PIDFILE)
+        [[ -n "$PID" ]] && kill "$PID"
+    fi
+}
+
+ppp_$1 "$2"
+exit $?
+
+# vim: ft=sh ts=4 et sw=4:

@@ -1,0 +1,4 @@
+CONNECTION='ppp'
+INTERFACE='ignore'
+PEER='mobile-noauth'
+PPP_TIMEOUT=30
