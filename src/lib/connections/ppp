@@ -22,7 +22,7 @@ ppp_up() {
     echo "linkname $(_quotestring "${Profile}")" >> "${cfg}"
 
     # Set device
-    if [ -n ${Device} ]; then
+    if [ -n "${Device}" ]; then
         echo "${Device}" >> "${cfg}"
     else
         echo "ttyUSB0" >> "${cfg}"
@@ -75,10 +75,10 @@ ppp_up() {
     echo "TIMEOUT 3" >> "${chat}"
 
     #echo "'OK' @/etc/ppp/chatscripts/pin" >> "${chat}"
-    if [ -n ${Pin} ]; then
-        echo "AT+CPIN=${Pin}" >> "${chat}"
+    if [ -n "${Pin}" ]; then
+        echo "'OK' 'AT+CPIN=${Pin}'" >> "${chat}"
     else
-        echo "AT" >> "${chat}"
+        echo "'OK' 'AT'" >> "${chat}"
     fi
 
     echo "'OK\d-AT-OK' 'ATI'" >> "${chat}"
@@ -90,19 +90,19 @@ ppp_up() {
     #echo "'OK' @/etc/ppp/chatscripts/mode" >> "${chat}"
     case "${Mode}" in
         3Gonly)
-            echo "AT\^SYSCFG=14,2,3fffffff,0,1" >> "${chat}"
+            echo "'OK' 'AT\^SYSCFG=14,2,3fffffff,0,1'" >> "${chat}"
             ;;
         3Gpref)
-            echo "AT\^SYSCFG=2,2,3fffffff,0,1" >> "${chat}"
+            echo "'OK' 'AT\^SYSCFG=2,2,3fffffff,0,1'" >> "${chat}"
             ;;
         GPRSonly)
-            echo "AT\^SYSCFG=13,1,3fffffff,0,0" >> "${chat}"
+            echo "'OK' 'AT\^SYSCFG=13,1,3fffffff,0,0'" >> "${chat}"
             ;;
         GPRSpref)
-            echo "AT\^SYSCFG=2,1,3fffffff,0,0" >> "${chat}"
+            echo "'OK' 'AT\^SYSCFG=2,1,3fffffff,0,0'" >> "${chat}"
             ;;
         *)
-            echo "AT" >> "${chat}"
+            echo "'OK' 'AT'" >> "${chat}"
             ;;
     esac
 
