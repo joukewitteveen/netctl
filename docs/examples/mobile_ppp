@@ -1,6 +1,6 @@
 Description='Example PPP mobile connection'
 Interface=ttyUSB0
-Connection=mobile-ppp
+Connection=mobile_ppp
 IdleTimeout=30
 
 # Debug pppd / chat output (separately from netctl)

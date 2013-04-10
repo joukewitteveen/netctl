@@ -10,14 +10,14 @@ _quotestring() {
     echo "\"${1/\"/\\\"}\""
 }
 
-mobile-ppp_up() {
+mobile_ppp_up() {
     local cfg
     local chat
 
-    mkdir -p "$STATE_DIR/mobile-ppp.${Interface}.${Profile}/"
-    chmod 700 "$STATE_DIR/mobile-ppp.${Interface}.${Profile}/"
-    cfg="$STATE_DIR/mobile-ppp.${Interface}.${Profile}/options"
-    chat="$STATE_DIR/mobile-ppp.${Interface}.${Profile}/modem.chat"
+    mkdir -p "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+    chmod 700 "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
+    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
     : > "${cfg}"
     chmod 600 "${cfg}"
 
@@ -120,17 +120,17 @@ EOF
     $PPPD file "${cfg}"
 
     if [[ $? -ne 0 ]]; then
-        rmdir "$STATE_DIR/mobile-ppp.${Interface}.${Profile}/"
+        rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
         return 1
     fi
 }
 
-mobile-ppp_down() {
+mobile_ppp_down() {
     local cfg
     local chat
-    cfg="$STATE_DIR/mobile-ppp.${Interface}.${Profile}/options"
-    chat="$STATE_DIR/mobile-ppp.${Interface}.${Profile}/modem.chat"
+    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
+    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
     PIDFILE="/var/run/ppp-${Profile}.pid"
 
     if [[ -e $PIDFILE ]]; then
@@ -140,7 +140,7 @@ mobile-ppp_down() {
 
     rm "${cfg}"
     rm "${chat}"
-    rmdir "$STATE_DIR/mobile-ppp.${Interface}.${Profile}/"
+    rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
 }
 
 
