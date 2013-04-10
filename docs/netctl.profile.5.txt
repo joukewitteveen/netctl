@@ -131,7 +131,7 @@ network. In particular, these connection types are +ethernet+,
     The name of the preferred DHCP client. Supported options are
     `dhcpcd' and `dhclient'. Defaults to `dhcpcd'.
 
-'DHCPOptions='::
+'DhcpcdOptions=', 'DhclientOptions=', 'DhclientOptions6='::
     Additional options to be passed to the DHCP client. Do not use this
     unless you know what you are doing.
 

@@ -17,10 +17,10 @@ case $action in
         if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
             source "$PROFILE_DIR/interfaces/$interface"
         fi
-        dhcpcd -qL -t "${TimeoutDHCP:-10}" $DHCPOptions -K "$interface"
+        dhcpcd -qL -t "${TimeoutDHCP:-10}" $DhcpcdOptions -K "$interface"
         exit $?
     fi
-    DHCPOptions+=" -K"
+    DhcpcdOptions+=" -K"
     ip_set || exit 1
     # JP: sandbox the eval
     if ! ( eval $ExecUpPost ); then
