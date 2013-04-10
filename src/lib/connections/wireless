@@ -78,4 +78,4 @@ wireless_down() {
 }
 
 
-# vim: ft=sh ts=4 et sw=4 tw=0:
+# vim: ft=sh ts=4 et sw=4:

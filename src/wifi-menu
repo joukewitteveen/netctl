@@ -254,3 +254,6 @@ case $RETURN in
         ;;
 esac
 exit $RETURN
+
+
+# vim: ft=sh ts=4 et sw=4:
