@@ -1,0 +1,34 @@
+Description='Example PPP mobile connection'
+Interface=ttyUSB0
+Connection=mobile_ppp
+IdleTimeout=30
+
+# Debug pppd / chat output (separately from netctl)
+#PPPDebug=true
+
+# Use default route provided by the peer (default: true)
+#DefaultRoute=true
+# Use DNS provided by the peer (default: true)
+#UsePeerDNS=true
+
+# Always keep a connection established
+ConnectionMode='persist'
+# Establish connection on demand
+#ConnectionMode='demand'
+#IdleTimeout=300
+
+# The user and password are not always required
+#User='example@yourprovider.com'
+#Password='very secret'
+
+# The access point name you are connecting to
+AccessPointName=apn
+
+# If your device has a PIN code, set it here. Defaults to None
+#Pin=None
+
+# Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
+# These only work for Huawei USB modems; all other devices should use None
+Mode=3Gpref
+
+# vim:ft=dosini
