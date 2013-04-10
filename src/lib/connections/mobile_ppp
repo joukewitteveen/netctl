@@ -1,0 +1,147 @@
+# Contributed by Robbie Smith <zoqaeski@gmail.com>
+# Based on Thomas Bächler’s <thomas@archlinux.org> pppoe script
+# Also see <https://wiki.archlinux.org/index.php/3G_and_GPRS_modems_with_pppd> for more information.
+
+: ${PPPD:=pppd}
+# Set the interface route
+: ${InterfaceRoot=dev/}
+
+_quotestring() {
+    echo "\"${1/\"/\\\"}\""
+}
+
+mobile_ppp_up() {
+    local cfg
+    local chat
+
+    mkdir -p "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+    chmod 700 "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
+    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
+    : > "${cfg}"
+    chmod 600 "${cfg}"
+
+    echo "linkname $(_quotestring "${Profile}")" >> "${cfg}"
+
+    cat >> "${cfg}" << EOF
+${Interface}
+921600
+lock
+crtscts
+modem
+passive
+novj
+holdoff 10
+maxfail 5
+EOF
+
+    # Debug pppd output separately from netcfg
+    if is_yes "${PPPDebug:-yes}"; then
+        echo "debug" >> "${cfg}"
+    fi
+
+    # Sets up route
+    if is_yes "${DefaultRoute:-yes}"; then
+        echo "defaultroute" >> "${cfg}"
+    else
+        echo "nodefaultroute" >> "${cfg}"
+    fi
+    if is_yes "${UsePeerDNS:-yes}"; then
+        echo "usepeerdns" >> "${cfg}"
+    fi
+
+    # Writes username and password
+    echo "noauth" >> "${cfg}"
+    echo "hide-password" >> ${cfg}
+    [[ -n ${User} ]] && echo "user $(_quotestring "${User}")" >> "${cfg}"
+    [[ -n ${Password} ]] && echo "password $(_quotestring "${Password}")" >> "${cfg}"
+
+    #echo "'OK' @/etc/ppp/chatscripts/pin" >> "${chat}"
+    if [ -n "${Pin}" ]; then
+        PinStr="'OK' 'AT+CPIN=${Pin}'"
+    else
+        PinStr="'OK' 'AT'"
+    fi
+    report_debug echo $PinStr
+
+    # Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
+    # Only works for Huawei modems
+    #echo "'OK' @/etc/ppp/chatscripts/mode" >> "${chat}"
+    case "${Mode}" in
+        3Gonly)
+            ModeStr="'OK' 'AT\^SYSCFG=14,2,3fffffff,0,1'"
+            ;;
+        3Gpref)
+            ModeStr="'OK' 'AT\^SYSCFG=2,2,3fffffff,0,1'"
+            ;;
+        GPRSonly)
+            ModeStr="'OK' 'AT\^SYSCFG=13,1,3fffffff,0,0'"
+            ;;
+        GPRSpref)
+            ModeStr="'OK' 'AT\^SYSCFG=2,1,3fffffff,0,0'"
+            ;;
+        *)
+            ModeStr="'OK' 'AT'"
+            ;;
+    esac
+
+    # Now that we’ve got the ppp configuration set up, write the chat script
+    cat >> "${chat}" << EOF
+ECHO ON
+ABORT 'BUSY'
+ABORT 'NO CARRIER'
+ABORT 'VOICE'
+ABORT 'NO DIALTONE'
+ABORT 'NO DIAL TONE'
+ABORT 'NO ANSWER'
+ABORT 'DELAYED'
+ABORT   '\nRINGING\r\n\r\nRINGING\r'
+REPORT CONNECT
+TIMEOUT 6
+'' 'ATQ0'
+'OK-AT-OK' 'ATZ'
+TIMEOUT 3
+${PinStr}
+'OK\d-AT-OK' 'ATI'
+'OK' 'ATZ'
+'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'
+${ModeStr}
+'OK-AT-OK' 'AT+CGDCONT=1,"IP","${AccessPointName}"'
+'OK' 'ATDT*99#'
+TIMEOUT 30
+CONNECT ''
+EOF
+
+    # Add the chat script line to the configuration
+    echo "connect \"/usr/sbin/chat -v -t15 -f ${chat}\"" >> "${cfg}"
+
+    ip link set dev "${Interface}" up
+    #$PPPD call "$Peer" updetach child-timeout "$PPPTimeout" linkname "$Peer"
+    $PPPD file "${cfg}"
+
+    if [[ $? -ne 0 ]]; then
+        rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+        report_error "Couldn't make pppd connection."
+        return 1
+    fi
+}
+
+mobile_ppp_down() {
+    local cfg
+    local chat
+    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
+    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
+    PIDFILE="/var/run/ppp-${Profile}.pid"
+
+    if [[ -e $PIDFILE ]]; then
+        read PID < "$PIDFILE"
+        [[ "$PID" ]] && kill "$PID"
+    fi
+
+    rm "${cfg}"
+    rm "${chat}"
+    rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+}
+
+
+# vim: ft=sh ts=4 et sw=4:
