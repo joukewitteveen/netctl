@@ -82,7 +82,7 @@ GENERAL OPTIONS
     fail, add ``|| true`' to the end of it.
 
 'ExecDownPre='::
-    A command that is executed after a connection is brought down.
+    A command that is executed before a connection is brought down.
     Similar precautions should be taken as with 'ExecUpPost'.
 
 
