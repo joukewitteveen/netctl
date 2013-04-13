@@ -114,13 +114,13 @@ network. In particular, these connection types are +ethernet+,
     An array of custom routes of the form +
     `**<address range>** via **<gateway>**'.
 
-'Address6=()' [requires 'IP6=static']::
+'Address6=()' [requires 'IP6=static' or 'IP6=stateless']::
     An array of IPv6 addresses. Prefix length may be specified via
     `1234:bcd::11/64' syntax. It is possible to specify modifiers, in
     particular, `1234:bcd::11/64 nodad' disables Duplicate Address
     Detection for the address.
 
-'Gateway6=' [requires 'IP6=static']::
+'Gateway6=' [requires 'IP6=static' or 'IP6=stateless']::
     An IPv6 routing gateway address.
 
 'Routes6='::

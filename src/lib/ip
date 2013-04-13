@@ -116,9 +116,11 @@ ip_set() {
       ;;
       stateless)
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=1"
-      ;;
+      ;;&
       static)
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
+      ;;&
+      stateless|static)
         if [[ -n $Address6 ]]; then
             for addr in "${Address6[@]}"; do
                 if ! do_debug ip -6 addr add $addr dev "$Interface"; then
@@ -147,7 +149,7 @@ ip_set() {
         fi
 
         # Set a custom gateway after DAD has finished
-        if [[ $IP6 == "static" && $Gateway6 ]]; then
+        if [[ $IP6 == @(stateless|static) && $Gateway6 ]]; then
             if ! do_debug ip -6 route replace default via "$Gateway6" dev "$Interface"; then
                 report_error "Could not set gateway '$Gateway6' on interface '$Interface'"
                 return 1
