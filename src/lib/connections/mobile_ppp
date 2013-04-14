@@ -58,7 +58,7 @@ EOF
 
     #echo "'OK' @/etc/ppp/chatscripts/pin" >> "${chat}"
     if [ -n "${Pin}" ]; then
-        PinStr="'OK' 'AT+CPIN=${Pin}'"
+        PinStr="'OK' 'AT+CPIN=\"${Pin}\"'"
     else
         PinStr="'OK' 'AT'"
     fi
@@ -101,6 +101,7 @@ TIMEOUT 6
 '' 'ATQ0'
 'OK-AT-OK' 'ATZ'
 TIMEOUT 3
+'OK' 'AT+CFUN=1'
 ${PinStr}
 'OK\d-AT-OK' 'ATI'
 'OK' 'ATZ'
