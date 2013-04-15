@@ -75,15 +75,23 @@ GENERAL OPTIONS
     to be a list of profiles that this profile requires. The meaning is
     the same as 'After' in *systemd.unit*(5).
 
-'ExecUpPost='::
-    A command that is executed after a connection is established. If the
+'ExecUpPre='::
+    A command that is executed before a connection is established. If the
     specified command returns anything other than 0 (success), *netctl*
     will abort and stop the profile. If the command should be allowed to
     fail, add ``|| true`' to the end of it.
 
+'ExecUpPost='::
+    A command that is executed after a connection is established.
+    Similar precautions should be taken as with 'ExecUpPre'.
+
 'ExecDownPre='::
     A command that is executed before a connection is brought down.
-    Similar precautions should be taken as with 'ExecUpPost'.
+    Similar precautions should be taken as with 'ExecUpPre'.
+
+'ExecDownPost='::
+    A command that is executed after a connection is brought down.
+    Similar precautions should be taken as with 'ExecUpPre'.
 
 
 IP OPTIONS

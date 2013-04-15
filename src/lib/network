@@ -56,11 +56,18 @@ case $1 in
         report_error "The interface of network profile '$Profile' is already up"
         exit 1
     fi
+    # sandbox the eval
+    if ! ( eval $ExecUpPre ); then
+        report_error "ExecUpPre failed for network profile '$Profile'"
+        # Failing ExecUpPre will take the connection down
+        "${Connection}_down"
+        exit 1
+    fi
     if ! "${Connection}_up"; then
         report_error "Failed to bring the network up for profile '$Profile'"
         exit 1
     fi
-    # JP: sandbox the eval
+    # sandbox the eval
     if ! ( eval $ExecUpPost ); then
         report_error "ExecUpPost failed for network profile '$Profile'"
         # Failing ExecUpPost will take the connection down
@@ -71,7 +78,7 @@ case $1 in
   ;;
   stop)
     report_notice "Stopping network profile '$Profile'..."
-    # JP: sandbox the eval
+    # sandbox the eval
     if ! ( eval $ExecDownPre ); then
         report_error "ExecDownPre failed for network profile '$Profile'"
         # Failing ExecDownPre will leave the profile active
@@ -84,6 +91,12 @@ case $1 in
     if is_interface "$Interface" && interface_is_up "$Interface" && \
        ! is_yes "${ForceConnect:-no}"; then
         report_error "The interface of network profile '$Profile' did not go down"
+        exit 1
+    fi
+    # sandbox the eval
+    if ! ( eval $ExecDownPost ); then
+        report_error "ExecDownPost failed for network profile '$Profile'"
+        # Failing ExecDownPost will leave the profile active
         exit 1
     fi
     report_notice "Stopped network profile '$Profile'"
