@@ -13,6 +13,7 @@ Optional:
 - wpa_actiond: for automatic connection
 - ifenslave: for bonding support
 - bridge-utils: for bridge support
+- avahi: for ip4ll support
 
 For documentation generation:
 - asciidoc
