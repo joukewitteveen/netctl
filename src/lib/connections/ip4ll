@@ -1,0 +1,22 @@
+
+
+ip4ll_up() {
+  if ! is_interface "$Interface"; then
+    report_error "Interface '$Interface' does not exist"
+    return 1
+  fi
+
+  avahi-autoipd --daemonize --wait "$Interface"
+}
+
+ip4ll_down() {
+  avahi-autoipd --kill "$Interface"
+  bring_interface_down "$Interface"
+}
+
+# ip4ll_status() {
+#   avahi-autoipd --check "$Interface"
+# }
+
+
+# vim: set ts=4 et sw=4 ft=sh :
