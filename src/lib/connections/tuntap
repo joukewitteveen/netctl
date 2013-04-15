@@ -10,7 +10,7 @@ tuntap_up() {
         return 1
     else
         ip tuntap add dev "$Interface" mode "$Mode" \
-            user "$User" group "$Group"
+            ${User:+user "$User"} ${Group:+group "$Group"}
     fi
     bring_interface_up "$Interface"
     IP=${IP-no} ip_set
