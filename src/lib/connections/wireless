@@ -1,7 +1,7 @@
 # Wireless connection support for netctl
 
-. "$SUBR_DIR/8021x"
 . "$SUBR_DIR/ip"
+. "$SUBR_DIR/wpa"
 . "$SUBR_DIR/rfkill"
 
 

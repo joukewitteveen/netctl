@@ -174,14 +174,14 @@ of the `ethernet' type:
     acceptable. Defaults to `++no++'.
 
 'Auth8021X='::
-    Set to `++yes++' to use 802.11x authentication.
+    Set to `++yes++' to use 802.1x authentication.
 
 'WPAConfigFile='::
     Path to a *wpa_supplicant* configuration file. Defaults to
     '/etc/wpa_supplicant.conf'.
 
 'WPADriver='::
-    The *wpa_supplicant* driver to use for 802.11x authentication.
+    The *wpa_supplicant* driver to use for 802.1x authentication.
     Defaults to `++wired++'.
 
 'TimeoutCarrier='::
@@ -189,7 +189,7 @@ of the `ethernet' type:
     `++5++'.
 
 'TimeoutWPA='::
-    Maximum time, in seconds, to wait for 802.11x authentication to
+    Maximum time, in seconds, to wait for 802.1x authentication to
     succeed. Defaults to `++15++'.
 
 
