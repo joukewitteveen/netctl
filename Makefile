@@ -1,8 +1,10 @@
 export VERSION = 0.8
 
-.PHONY: install install-docs docs tarball pkgbuild clean
+.PHONY: install tarball pkgbuild clean
 
-install: install-docs
+install:
+	# Documentation
+	$(MAKE) -C docs install
 	# Configuration files
 	install -d $(DESTDIR)/etc/netctl/{examples,hooks,interfaces}
 	install -m644 docs/examples/* $(DESTDIR)/etc/netctl/examples/
@@ -23,17 +25,9 @@ install: install-docs
 	install -d $(DESTDIR)/usr/lib/systemd/system
 	install -m644 services/*.service $(DESTDIR)/usr/lib/systemd/system/
 
-install-docs: docs
-	install -d $(DESTDIR)/usr/share/man/{man1,man5,man7}
-	install -m644 docs/*.1 $(DESTDIR)/usr/share/man/man1/
-	install -m644 docs/*.5 $(DESTDIR)/usr/share/man/man5/
-	install -m644 docs/*.7 $(DESTDIR)/usr/share/man/man7/
-
-docs:
-	$(MAKE) -B -C $@
-
 tarball: netctl-$(VERSION).tar.xz
-netctl-$(VERSION).tar.xz: | docs
+netctl-$(VERSION).tar.xz:
+	$(MAKE) -B -C docs
 	cp src/netctl{,.orig}
 	sed -i "s/NETCTL_VERSION=.*/NETCTL_VERSION=$(VERSION)/" src/netctl
 	git stash save -q
