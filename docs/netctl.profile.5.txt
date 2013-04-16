@@ -42,6 +42,8 @@ AVAILABLE CONNECTION TYPES
     available.
 +pppoe+::
     For PPPoE connections.
++mobile_ppp+::
+    For mobile broadband PPP connections that use a USB modem.
 +tunnel+::
     For tunnel interfaces.
 +tuntap+::
@@ -281,8 +283,87 @@ connections of the `bridge' type:
     Maximum age parameter. See *brctl*(8) for details.
 
 
+OPTIONS FOR `pppoe' CONNECTIONS
+-------------------------------
+The interface to dial peer-to-peer over ethernet is specified in
+'Interface'. The following options are understood for connections of
+the `pppoe' type:
+
+'User=' and 'Password='::
+    The username and password to connect with.
+
+'ConnectionMode='::
+    This option specifies how a connection should be established, and
+    may take either `persist' or `demand' as its argument.
+
+'IdleTimeout='::
+    This option specifies the idle time (in seconds) after which `pppd'
+    should disconnect. This option is only valid if 'ConnectionMode' is
+    set to `demand'.
+
+'DefaultRoute='::
+    Use the default route provided by the peer (defaults to
+    `true')
+
+'UsePeerDNS='::
+    Use the DNS provided by the peer (defaults to `true')
+
+'LCPEchoInterval=' and 'LCPEchoFailure='::
+    These options override default LCP parameters from
+    `/etc/ppp/options'.
+
+The following advanced options are also understood:
+
+'PPPoEService='::
+    This option specifies the PPPoE service name.
+
+'PPPoEAC='::
+    This option specifies the PPPoE access concentrator name.
+
+'PPPoESession='::
+    This option specifies an existing session to attach to, and is of
+    the form `sessid:macaddr'.
+
+'PPPoEMAC='::
+    Only connect to specified MAC address
+
+'PPPoEIP6='::
+    Enable IPv6 support
+
+
+OPTIONS FOR `mobile_ppp' CONNECTIONS
+------------------------------------
+The name of the USB serial device is specified in 'Interface'. The
+following options are understood for connections of the `mobile_ppp'
+type:
+
+'DefaultRoute='::
+    Use the default route provided by the peer (defaults to
+    `true')
+
+'UsePeerDNS='::
+    Use the DNS provided by the peer (defaults to `true')
+
+'User=' and 'Password='::
+    The username and password to connect with. These are unset by
+    default, as they are often not required.
+
+'AccessPointName='::
+    The access point (apn) to connect on. This is specific to your
+    ISP.
+
+'Pin='::
+    If your modem requires a PIN to unlock, use this option.
+
+'Mode='::
+    This option is used to specify the connection mode. Can be one of
+    `3Gpref', `3Gonly', `GPRSpref', `GPRSonly', `None'. This generates
+    AT commands specific to certain Huawei modems; all other devices
+    should use `None'.
+
+
 OPTIONS FOR `tunnel' CONNECTIONS
-----------------------------------
+--------------------------------
 The name of the tunnel interface is specified in 'Interface'. Next to
 the *ip options*, the following are understood for connections of the
 `tunnel' type:
@@ -298,7 +379,7 @@ the *ip options*, the following are understood for connections of the
 
 
 OPTIONS FOR `tuntap' CONNECTIONS
-----------------------------------
+--------------------------------
 The name of the tuntap interface is specified in 'Interface'. Next to
 the *ip options*, the following are understood for connections of the
 `tuntap' type:

@@ -1,7 +1,6 @@
 Description='Example PPP mobile connection'
 Interface=ttyUSB0
 Connection=mobile_ppp
-IdleTimeout=30
 
 # Debug pppd / chat output (separately from netctl)
 #PPPDebug=true
@@ -10,12 +9,6 @@ IdleTimeout=30
 #DefaultRoute=true
 # Use DNS provided by the peer (default: true)
 #UsePeerDNS=true
-
-# Always keep a connection established
-ConnectionMode='persist'
-# Establish connection on demand
-#ConnectionMode='demand'
-#IdleTimeout=300
 
 # The user and password are not always required
 #User='example@yourprovider.com'
