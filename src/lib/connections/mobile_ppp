@@ -3,11 +3,11 @@
 # Also see <https://wiki.archlinux.org/index.php/3G_and_GPRS_modems_with_pppd> for more information.
 
 : ${PPPD:=pppd}
-# Set the interface route
 : ${InterfaceRoot=dev/}
 
-_quotestring() {
-    echo "\"${1/\"/\\\"}\""
+quote_word() {
+    set -- "${@//\\/\\\\}"
+    printf '"%s"\n' "${@/\"/\\\"}"
 }
 
 mobile_ppp_up() {
@@ -18,10 +18,8 @@ mobile_ppp_up() {
     chmod 700 "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
     cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
     chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
-    : > "${cfg}"
+    echo "linkname $(quote_word "${Profile}")" > "${cfg}"
     chmod 600 "${cfg}"
-
-    echo "linkname $(_quotestring "${Profile}")" >> "${cfg}"
 
     cat >> "${cfg}" << EOF
 ${Interface}
@@ -53,8 +51,8 @@ EOF
     # Writes username and password
     echo "noauth" >> "${cfg}"
     echo "hide-password" >> ${cfg}
-    [[ -n ${User} ]] && echo "user $(_quotestring "${User}")" >> "${cfg}"
-    [[ -n ${Password} ]] && echo "password $(_quotestring "${Password}")" >> "${cfg}"
+    [[ -n ${User} ]] && echo "user $(quote_word "${User}")" >> "${cfg}"
+    [[ -n ${Password} ]] && echo "password $(quote_word "${Password}")" >> "${cfg}"
 
     #echo "'OK' @/etc/ppp/chatscripts/pin" >> "${chat}"
     if [ -n "${Pin}" ]; then
@@ -116,11 +114,7 @@ EOF
     # Add the chat script line to the configuration
     echo "connect \"/usr/sbin/chat -v -t15 -f ${chat}\"" >> "${cfg}"
 
-    ip link set dev "${Interface}" up
-    #$PPPD call "$Peer" updetach child-timeout "$PPPTimeout" linkname "$Peer"
-    $PPPD file "${cfg}"
-
-    if [[ $? -ne 0 ]]; then
+    if ! $PPPD file "${cfg}"; then
         rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
         return 1
@@ -128,19 +122,17 @@ EOF
 }
 
 mobile_ppp_down() {
-    local cfg
-    local chat
+    local cfg chat pidfile pid
     cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
     chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
-    PIDFILE="/var/run/ppp-${Profile}.pid"
+    pidfile="/var/run/ppp-${Profile}.pid"
 
-    if [[ -e $PIDFILE ]]; then
-        read PID < "$PIDFILE"
-        [[ "$PID" ]] && kill "$PID"
+    if [[ -e $pidfile ]]; then
+        read pid < "$pidfile"
+        [[ "$pid" ]] && kill "$pid"
     fi
 
-    rm "${cfg}"
-    rm "${chat}"
+    rm "${cfg}" "${chat}"
     rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
 }
 

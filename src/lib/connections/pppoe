@@ -2,17 +2,27 @@
 
 : ${PPPD:=pppd}
 
-_quotestring() {
-    echo "\"${1/\"/\\\"}\""
+quote_word() {
+    set -- "${@//\\/\\\\}"
+    printf '"%s"\n' "${@/\"/\\\"}"
 }
 
 pppoe_up() {
     local cfg
 
+    if ! is_interface "$Interface"; then
+        report_error "Interface '$Interface' does not exist"
+        return 1
+    fi
+    if ! bring_interface_up "$Interface"; then
+        report_error "Failed to bring interface '$Interface' up"
+        return 1
+    fi
+
     mkdir -p "$STATE_DIR/pppoe.${Interface}.${Profile}/"
     chmod 700 "$STATE_DIR/pppoe.${Interface}.${Profile}/"
     cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
-    : > "${cfg}"
+    echo "linkname $(quote_word "${Profile}")" > "${cfg}"
     chmod 600 "${cfg}"
 
     echo "plugin rp-pppoe.so" >> "${cfg}"
@@ -26,7 +36,6 @@ pppoe_up() {
     if is_yes "${UsePeerDNS:-yes}"; then
         echo "usepeerdns" >> "${cfg}"
     fi
-    echo "linkname $(_quotestring "${Profile}")" >> "${cfg}"
     echo "maxfail 5" >> "${cfg}"
     echo "updetach" >> "${cfg}"
     if [[ ${ConnectionMode} == demand ]]; then
@@ -35,20 +44,17 @@ pppoe_up() {
     else
         echo "persist" >> "${cfg}"
     fi
-    echo "user $(_quotestring "${User}")" >> "${cfg}"
-    echo "password $(_quotestring "${Password}")" >> "${cfg}"
+    echo "user $(quote_word "${User}")" >> "${cfg}"
+    echo "password $(quote_word "${Password}")" >> "${cfg}"
     [[ -n ${LCPEchoInterval} ]] && echo "lcp-echo-interval ${LCPEchoInterval}" >> "${cfg}"
     [[ -n ${LCPEchoFailure} ]] && echo "lcp-echo-failure ${LCPEchoFailure}" >> "${cfg}"
-    [[ -n ${PPPoEService} ]] && echo "rp_pppoe_service $(_quotestring "${PPPoEService}")" >> "${cfg}"
-    [[ -n ${PPPoEAC} ]] && echo "rp_pppoe_ac $(_quotestring "${PPPoEAC}")" >> "${cfg}"
-    [[ -n ${PPPoESession} ]] && echo "rp_pppoe_sess $(_quotestring "${PPPoESession}")" >> "${cfg}"
-    [[ -n ${PPPoEMAC} ]] && echo "pppoe-mac $(_quotestring "${PPPoEMAC}")" >> "${cfg}"
+    [[ -n ${PPPoEService} ]] && echo "rp_pppoe_service $(quote_word "${PPPoEService}")" >> "${cfg}"
+    [[ -n ${PPPoEAC} ]] && echo "rp_pppoe_ac $(quote_word "${PPPoEAC}")" >> "${cfg}"
+    [[ -n ${PPPoESession} ]] && echo "rp_pppoe_sess $(quote_word "${PPPoESession}")" >> "${cfg}"
+    [[ -n ${PPPoEMAC} ]] && echo "pppoe-mac $(quote_word "${PPPoEMAC}")" >> "${cfg}"
     [[ ${PPPoEIP6} == yes ]] && echo "+ipv6" >> "${cfg}"
 
-    ip link set dev "${Interface}" up
-    $PPPD file "${cfg}"
-
-    if [[ $? -ne 0 ]]; then
+    if ! $PPPD file "${cfg}"; then
         rm "${cfg}"
         rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
         report_error "Couldn't make pppd connection."
@@ -57,17 +63,19 @@ pppoe_up() {
 }
 
 pppoe_down() {
-    local cfg
+    local cfg pidfile pid
     cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
-    PIDFILE="/var/run/ppp-${Profile}.pid"
+    pidfile="/var/run/ppp-${Profile}.pid"
 
-    if [[ -e $PIDFILE ]]; then
-        read PID < "$PIDFILE"
-        [[ "$PID" ]] && kill "$PID"
+    if [[ -e $pidfile ]]; then
+        read pid < "$pidfile"
+        [[ "$pid" ]] && kill "$pid"
     fi
 
     rm "${cfg}"
     rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+
+    bring_interface_down "$Interface"
 }
 
 
