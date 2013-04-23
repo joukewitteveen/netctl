@@ -1,3 +1,8 @@
+netctl 1.0
+- Add support for mobile broadband (mobile_ppp) connections
+- Update documentation
+- Assorted minor fixes
+
 netctl 0.8
 - Fix escaping of unfortunate strings
 - Add support for configuration defaults to connection scripts

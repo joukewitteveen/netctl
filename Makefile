@@ -1,4 +1,4 @@
-export VERSION = 0.8
+export VERSION = 1.0
 
 .PHONY: install tarball pkgbuild clean
 
