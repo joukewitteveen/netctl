@@ -19,7 +19,6 @@ optdepends=('dialog: for the menu based wifi assistant'
             'bridge-utils: for bridge connections'
             'ppp: for pppoe connections'
            )
-conflicts=('netcfg')
 source=(ftp://ftp.archlinux.org/other/packages/netctl/netctl-${pkgver}.tar.xz{,.sig})
 arch=('any')
 md5sums=('%md5sum%'

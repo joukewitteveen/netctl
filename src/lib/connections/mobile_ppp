@@ -33,7 +33,7 @@ holdoff 10
 maxfail 5
 EOF
 
-    # Debug pppd output separately from netcfg
+    # Debug pppd output separately from netctl
     if is_yes "${PPPDebug:-yes}"; then
         echo "debug" >> "${cfg}"
     fi
