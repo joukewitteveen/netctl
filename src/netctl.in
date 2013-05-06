@@ -109,14 +109,15 @@ unit_enable() {
     echo ".include @systemdsystemunitdir@/netctl@.service" > "$unit"
     echo -e "\n[Unit]" >> "$unit"
     [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
-    if [[ -n ${BindsToInterfaces=$Interface} ]]; then
+    [[ -v BindsToInterfaces ]] || BindsToInterfaces=$Interface
+    if (( ${#BindsToInterfaces[@]} )); then
         : ${InterfaceRoot=sys/subsystem/net/devices/}
         printf "BindsTo=$(sd_escape "$InterfaceRoot")%s.device\n" \
                $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
         printf "After=$(sd_escape "$InterfaceRoot")%s.device\n" \
                $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
     fi
-    if [[ -n $After ]]; then
+    if (( ${#After[@]} )); then
         printf 'After="netctl@%s.service"\n' \
                $(sd_escape "${After[@]}") >> "$unit"
     fi

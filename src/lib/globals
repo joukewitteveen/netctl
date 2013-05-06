@@ -78,7 +78,7 @@ timeout_wait() {
     local timeout=$1
     (( timeout *= 5 ))
     shift
-    while ! eval "$*"; do
+    until eval "$*"; do
         (( timeout-- > 0 )) || return 1
         sleep 0.2
     done

@@ -51,14 +51,12 @@ ip_set() {
         esac
       ;;
       static)
-        if [[ $Address ]]; then
-            for addr in "${Address[@]}"; do
-                if ! do_debug ip addr add "$addr" brd + dev "$Interface"; then
-                    report_error "Could not add address '$addr' to interface '$Interface'"
-                    return 1
-                fi
-            done
-        fi
+        for addr in "${Address[@]}"; do
+            if ! do_debug ip addr add "$addr" brd + dev "$Interface"; then
+                report_error "Could not add address '$addr' to interface '$Interface'"
+                return 1
+            fi
+        done
         if [[ $Gateway ]]; then
             if ! do_debug ip route add default via "$Gateway" dev "$Interface"; then
                 report_error "Could not set gateway '$Gateway' on interface '$Interface'"
@@ -74,8 +72,8 @@ ip_set() {
       ;;
     esac
 
-    # Add static IP routes
-    if [[ $IP && $Routes ]]; then
+    if [[ $IP ]]; then
+        # Add static IP routes
         for route in "${Routes[@]}"; do
             if ! do_debug ip route add $route dev "$Interface"; then
                 report_error "Could not add route '$route' to interface '$Interface'"
@@ -121,13 +119,11 @@ ip_set() {
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
       ;;&
       stateless|static)
-        if [[ -n $Address6 ]]; then
-            for addr in "${Address6[@]}"; do
-                if ! do_debug ip -6 addr add $addr dev "$Interface"; then
-                    report_error "Could not add address '$addr' to interface '$Interface'"
-                fi
-            done
-        fi
+        for addr in "${Address6[@]}"; do
+            if ! do_debug ip -6 addr add $addr dev "$Interface"; then
+                report_error "Could not add address '$addr' to interface '$Interface'"
+            fi
+        done
       ;;
     esac
 
@@ -139,14 +135,12 @@ ip_set() {
         fi
 
         # Add static IPv6 routes
-        if [[ $Routes6 ]]; then
-            for route in "${Routes6[@]}"; do
-                if ! do_debug ip -6 route add $route dev "$Interface"; then
-                    report_error "Could not add route '$route' to interface '$Interface'"
-                    return 1
-                fi
-            done
-        fi
+        for route in "${Routes6[@]}"; do
+            if ! do_debug ip -6 route add $route dev "$Interface"; then
+                report_error "Could not add route '$route' to interface '$Interface'"
+                return 1
+            fi
+        done
 
         # Set a custom gateway after DAD has finished
         if [[ $IP6 == @(stateless|static) && $Gateway6 ]]; then
@@ -157,14 +151,12 @@ ip_set() {
         fi
     fi
 
-    if [[ $IPCustom ]]; then
-        for line in "${IPCustom[@]}"; do
-            if ! do_debug ip $line; then
-                report_error "Could not configure interface ($line)"
-                return 1
-            fi
-        done
-    fi
+    for line in "${IPCustom[@]}"; do
+        if ! do_debug ip $line; then
+            report_error "Could not configure interface ($line)"
+            return 1
+        fi
+    done
 
     if [[ $Hostname ]]; then
         if ! do_debug hostnamectl set-hostname "$Hostname"; then

@@ -2,7 +2,7 @@
 
 . "$SUBR_DIR/ip"
 
-: ${BindsToInterfaces=}
+declare -a BindsToInterfaces
 
 tunnel_up() {
     if is_interface "$Interface"; then

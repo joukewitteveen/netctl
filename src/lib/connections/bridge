@@ -3,7 +3,7 @@
 . "$SUBR_DIR/ip"
 
 : ${BRCTL:=brctl}
-: ${BindsToInterfaces=}
+declare -a BindsToInterfaces
 
 bridge_up() {
     if is_interface "$Interface"; then
