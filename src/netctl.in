@@ -121,6 +121,7 @@ unit_enable() {
         printf 'After="netctl@%s.service"\n' \
                $(sd_escape "${After[@]}") >> "$unit"
     fi
+    mkdir -p "@systemdsystemconfdir@/multi-user.target.wants"
     echo "ln -s '$unit' '${unit/system\//system/multi-user.target.wants/}'"
     ln -s "$unit" "${unit/system\//system/multi-user.target.wants/}"
     systemctl daemon-reload
