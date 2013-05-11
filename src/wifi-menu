@@ -143,11 +143,18 @@ connect_to_ssid()
         PROFILE=$(create_profile "$1")
         RETURN=$?
         (( RETURN == 0 )) || return $RETURN
-        SPAWNED_PROFILE=1
+        NEW_PROFILE=1
     fi
     clear
-    if ! netctl switch-to "$PROFILE"; then
-        if (( SPAWNED_PROFILE )); then
+    if systemctl is-active --quiet "netctl-auto@$INTERFACE.service"; then
+        if (( NEW_PROFILE )); then
+            systemctl restart netctl-auto@$INTERFACE.service
+            echo 'Profile created. Restarting netctl-auto service.'
+        else
+            echo 'Profile already created.'
+        fi
+    elif ! netctl switch-to "$PROFILE"; then
+        if (( NEW_PROFILE )); then
             msg="         CONNECTING FAILED
 
 Do you want to keep the generated profile ('$PROFILE')?"
