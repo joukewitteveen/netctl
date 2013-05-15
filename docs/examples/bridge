@@ -4,6 +4,6 @@ Connection=bridge
 BindsToInterfaces=(eth0 eth1 tap0)
 IP=dhcp
 ## sets forward delay time
-#FWDDelay=0
+#FwdDelay=0
 ## sets max age of hello message
 #MaxAge=10
