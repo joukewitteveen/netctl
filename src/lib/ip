@@ -175,7 +175,7 @@ ip_set() {
 }
 
 
-## Clean up the dynamic part of an IP configuration
+## Clean up the IP configuration
 # $Interface: interface name
 # $IP: type of IPv4 configuration
 # $IP6: type of IPv6 configuration
@@ -202,6 +202,9 @@ ip_unset() {
     fi
 
     [[ $DNS ]] && resolvconf -d "$Interface"
+    ip addr flush dev "$Interface" scope host &>/dev/null
+    ip addr flush dev "$Interface" scope site &>/dev/null
+    ip addr flush dev "$Interface" scope global &>/dev/null
 }
 
 
