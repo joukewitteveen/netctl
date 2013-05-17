@@ -109,7 +109,7 @@ load_profile() {
     if [[ -z $Interface ]]; then
         exit_error "Profile '$1' does not specify an interface"
     fi
-    if [[ ! -r "$CONN_DIR/${Connection:-/dev/null/nonexistent}" ]]; then
+    if [[ ! -r "${Connection:+$CONN_DIR/$Connection}" ]]; then
         exit_error "Profile '$1' does not specify a valid connection"
     fi
     if [[ -x "$PROFILE_DIR/interfaces/$Interface" ]]; then
