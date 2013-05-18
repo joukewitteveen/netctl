@@ -140,9 +140,7 @@ connect_to_ssid()
     local msg
     PROFILE=$(ssid_to_profile "$1")
     if [[ $? -ne 0 ]]; then
-        PROFILE=$(create_profile "$1")
-        RETURN=$?
-        (( RETURN == 0 )) || return $RETURN
+        PROFILE=$(create_profile "$1") || return $?
         NEW_PROFILE=1
     fi
     clear

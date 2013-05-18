@@ -48,8 +48,8 @@ list() {
     local indicators=( '*' ' ' )
     list_profiles | while read -r Profile; do
         sd_call "is-active --quiet" "$Profile" &> /dev/null
-        # Make the return variable boolean
-        [[ $? -eq 0 ]]; printf '%s %s\n' "${indicators[$?]}" "$Profile"
+        # Make the return value boolean
+        printf '%s %s\n' "${indicators[!! $?]}" "$Profile"
     done
 }
 
