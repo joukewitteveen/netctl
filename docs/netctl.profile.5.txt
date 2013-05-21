@@ -301,9 +301,12 @@ the `pppoe' type:
     should disconnect. This option is only valid if 'ConnectionMode' is
     set to `demand'.
 
+'MaxFail='::
+    The number of consecutive failed connection attempts to tolerate.
+    A value of 0 means no limit. Defaults to `++5++'.
+
 'DefaultRoute='::
-    Use the default route provided by the peer (defaults to
-    `true')
+    Use the default route provided by the peer (defaults to `true')
 
 'UsePeerDNS='::
     Use the DNS provided by the peer (defaults to `true')
@@ -337,9 +340,12 @@ The name of the USB serial device is specified in 'Interface'. The
 following options are understood for connections of the `mobile_ppp'
 type:
 
+'MaxFail='::
+    The number of consecutive failed connection attempts to tolerate.
+    A value of 0 means no limit. Defaults to `++5++'.
+
 'DefaultRoute='::
-    Use the default route provided by the peer (defaults to
-    `true')
+    Use the default route provided by the peer (defaults to `true')
 
 'UsePeerDNS='::
     Use the DNS provided by the peer (defaults to `true')
@@ -349,8 +355,7 @@ type:
     default, as they are often not required.
 
 'AccessPointName='::
-    The access point (apn) to connect on. This is specific to your
-    ISP.
+    The access point (apn) to connect on. This is specific to your ISP.
 
 'Pin='::
     If your modem requires a PIN to unlock, use this option.

@@ -36,7 +36,7 @@ pppoe_up() {
     if is_yes "${UsePeerDNS:-yes}"; then
         echo "usepeerdns" >> "${cfg}"
     fi
-    echo "maxfail 5" >> "${cfg}"
+    echo "maxfail ${MaxFail:-5}" >> "${cfg}"
     echo "updetach" >> "${cfg}"
     if [[ ${ConnectionMode} == demand ]]; then
         echo "demand" >> "${cfg}"
