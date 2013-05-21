@@ -1,3 +1,8 @@
+netctl 1.1
+- Add netctl-auto support to wifi-menu
+- Use pkg-config to obtain installation paths
+- Assorted fixes, including to array handling and calling dhcpcd for IPv4
+
 netctl 1.0
 - Add support for mobile broadband (mobile_ppp) connections
 - Update documentation
