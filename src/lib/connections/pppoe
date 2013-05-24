@@ -52,6 +52,7 @@ pppoe_up() {
     [[ -n ${PPPoEAC} ]] && echo "rp_pppoe_ac $(quote_word "${PPPoEAC}")" >> "${cfg}"
     [[ -n ${PPPoESession} ]] && echo "rp_pppoe_sess $(quote_word "${PPPoESession}")" >> "${cfg}"
     [[ -n ${PPPoEMAC} ]] && echo "pppoe-mac $(quote_word "${PPPoEMAC}")" >> "${cfg}"
+    [[ -n ${PPPoEUnit} ]] && echo "unit ${PPPoEUnit}" >> "${cfg}"
     [[ ${PPPoEIP6} == yes ]] && echo "+ipv6" >> "${cfg}"
 
     if ! $PPPD file "${cfg}"; then
