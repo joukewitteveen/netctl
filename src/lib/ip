@@ -10,6 +10,16 @@ resolvconf_add() {
     printf "%s\n" "$@" | resolvconf -a "$interface"
 }
 
+## Test if executable exists and print its name
+# $1: name of executable
+executable_exists() {
+    command -v "$1" >/dev/null 2>&1 && echo "$1"
+}
+
+## Print the default DHCP client or "false"
+default_dhcp_client() {
+    executable_exists "dhcpcd" || executable_exists "dhclient" || echo "false"
+}
 
 ## Set up an IP configuration
 # $Interface: interface name
@@ -25,7 +35,7 @@ ip_set() {
 
     case $IP in
       dhcp)
-        case ${DHCPClient:-dhcpcd} in
+        case ${DHCPClient:-"$(default_dhcp_client)"} in
           dhcpcd)
             rm -f "/run/dhcpcd-$Interface".{pid,cache}
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
@@ -43,6 +53,10 @@ ip_set() {
                 report_error "DHCP IP lease attempt failed on interface '$Interface'"
                 return 1
             fi
+          ;;
+          false)
+            report_error "No supported DHCP client found - install either dhcpcd or dhclient"
+            return 1
           ;;
           *)
             report_error "Unsupported DHCP client: '$DHCPClient'"
