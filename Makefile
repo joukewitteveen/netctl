@@ -37,12 +37,12 @@ install:
 tarball: netctl-$(VERSION).tar.xz
 netctl-$(VERSION).tar.xz:
 	$(MAKE) -B -C docs
-	cp src/netctl.in{,.orig}
-	sed -i "s|NETCTL_VERSION=.*|NETCTL_VERSION=$(VERSION)|" src/netctl.in
+	cp src/lib/globals{,.orig}
+	sed -i "s|NETCTL_VERSION=.*|NETCTL_VERSION=$(VERSION)|" src/lib/globals
 	git stash save -q
 	git archive -o netctl-$(VERSION).tar --prefix=netctl-$(VERSION)/ stash
 	git stash pop -q
-	mv src/netctl.in{.orig,}
+	mv src/lib/globals{.orig,}
 	tar --exclude-vcs --transform "s|^|netctl-$(VERSION)/|" --owner=root --group=root --mtime=./netctl-$(VERSION).tar -rf netctl-$(VERSION).tar docs/*.[1-8]
 	xz netctl-$(VERSION).tar
 	gpg --detach-sign $@

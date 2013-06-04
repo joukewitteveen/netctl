@@ -2,8 +2,6 @@
 
 . /usr/lib/network/globals
 
-NETCTL_VERSION=notpackaged
-
 
 usage() {
     cat << END
