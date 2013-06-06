@@ -1,3 +1,4 @@
+CONF_FILE="/etc/netctl/netctl.conf"
 PROFILE_DIR="/etc/netctl"
 SUBR_DIR="/usr/lib/network"
 CONN_DIR="$SUBR_DIR/connections"
@@ -99,12 +100,16 @@ list_profiles() {
 # $1: profile name
 load_profile() {
     local hook
+    if [[ ! -r "$CONF_FILE" ]]; then
+        exit_error "'$CONF_FILE' does not exist or is not readable"
+    fi
     if [[ ! -r "$PROFILE_DIR/$1" ]]; then
         exit_error "Profile '$1' does not exist or is not readable"
     fi
     while read -r hook; do
         source "$hook"
     done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
+    source "$CONF_FILE"
     source "$PROFILE_DIR/$1"
     if [[ -z $Interface ]]; then
         exit_error "Profile '$1' does not specify an interface"

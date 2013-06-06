@@ -17,7 +17,7 @@ case $action in
         if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
             source "$PROFILE_DIR/interfaces/$interface"
         fi
-        dhcpcd -qL -t "${TimeoutDHCP:-10}" $DhcpcdOptions -K "$interface"
+        dhcpcd -qL -t "${TimeoutDHCP}" $DhcpcdOptions -K "$interface"
         exit $?
     fi
     DhcpcdOptions+=" -K"
