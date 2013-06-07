@@ -25,12 +25,12 @@ ip_set() {
 
     case $IP in
       dhcp)
-        case ${DHCPClient:-dhcpcd} in
+        case ${DHCPClient} in
           dhcpcd)
             rm -f "/run/dhcpcd-$Interface".{pid,cache}
             # If using own dns, tell dhcpcd to NOT replace resolv.conf
             [[ $DNS ]] && DhcpcdOptions+=" -C resolv.conf"
-            do_debug dhcpcd -4qL -t "${TimeoutDHCP:-10}" $DhcpcdOptions "$Interface" 2>&1 | report_debug "$(cat)"
+            do_debug dhcpcd -4qL -t "${TimeoutDHCP}" $DhcpcdOptions "$Interface" 2>&1 | report_debug "$(cat)"
             # The first array value of PIPESTATUS is the exit status of dhcpcd
             if (( PIPESTATUS != 0 )); then
                 report_error "DHCP IP lease attempt failed on interface '$Interface'"
@@ -39,7 +39,7 @@ ip_set() {
           ;;
           dhclient)
             rm -f "/run/dhclient-${Interface}.pid"
-            if ! do_debug dhclient -4 -q -e "TIMEOUT=${TimeoutDHCP:-10}" -pf "/run/dhclient-$Interface.pid" $DhclientOptions "$Interface"; then
+            if ! do_debug dhclient -4 -q -e "TIMEOUT=${TimeoutDHCP}" -pf "/run/dhclient-$Interface.pid" $DhclientOptions "$Interface"; then
                 report_error "DHCP IP lease attempt failed on interface '$Interface'"
                 return 1
             fi
@@ -107,7 +107,7 @@ ip_set() {
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=1"
         [[ $IP6 == "dhcp-noaddr" ]] && DhclientOptions6+=" -S"
         rm -f "/run/dhclient6-${Interface}.pid"
-        if ! do_debug dhclient -6 -q -e "TIMEOUT=${TimeoutDHCP:-10}" -pf "/run/dhclient6-${Interface}.pid" $DhclientOptions6 "$Interface"; then
+        if ! do_debug dhclient -6 -q -e "TIMEOUT=${TimeoutDHCP}" -pf "/run/dhclient6-${Interface}.pid" $DhclientOptions6 "$Interface"; then
             report_error "DHCPv6 IP lease attempt failed on interface '$Interface'"
             return 1
         fi
@@ -181,7 +181,7 @@ ip_set() {
 # $IP6: type of IPv6 configuration
 ip_unset() {
     if [[ "$IP" == "dhcp" ]]; then
-        case ${DHCPClient:-dhcpcd} in
+        case ${DHCPClient} in
           dhcpcd)
             if [[ -f "/run/dhcpcd-$Interface.pid" ]]; then
                 do_debug dhcpcd -qk "$Interface" >/dev/null
