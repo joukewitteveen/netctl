@@ -20,11 +20,27 @@ much quoting as possible. For a few WPA-related variables, special
 quoting rules (see below) apply.
 
 The name of the profile is the name of the file. Profile names must not
-contain newlines and should not end in '.service' or '.conf'. Whenever a
-profile is read, all executable scripts in '/etc/netctl/hooks/' and any
-executable script in '/etc/netctl/interfaces/' with the name of the
-interface for the profile are sourced. For each connection type, there
-are example profile files in '/etc/netctl/examples/'.
+contain newlines and should not end in '.service' or '.conf'. 
+
+Whenever a profile is read, all executable scripts in 
+'/etc/netctl/hooks/' and any executable script in 
+'/etc/netctl/interfaces/' with the name of the interface for the profile
+are sourced. In case such scripts define netctl options, any conflicts
+are resolved in the following order of priority:
+
+    '/etc/netctl/interfaces/<interface>' (highest priority)
+    '/etc/netctl/<profile>'
+    '/etc/netctl/hooks/<hook>' (lowest priority)
+    
+Global default values for `DHCPClient' and `TimeoutDHCP', as well as 
+additional options to be passed to the DHCP client, may be specified
+in '/etc/netctl/hooks/dhcp.conf'. Specifying default values obviates
+the need for including such values in each profile. Any value specified
+in a profile will override a conflicting default value specified in
+'/etc/netctl/hooks/dhcp.conf'.
+
+For each connection type, there are example profile files in 
+'/etc/netctl/examples/'.
 
 
 AVAILABLE CONNECTION TYPES
