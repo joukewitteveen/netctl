@@ -14,6 +14,7 @@ install:
 	# Configuration files
 	install -d $(DESTDIR)/etc/netctl/{examples,hooks,interfaces}
 	install -m644 docs/examples/* $(DESTDIR)/etc/netctl/examples/
+	install -m755 conf/dhcp.conf $(DESTDIR)/etc/netctl/hooks/dhcp.conf
 	# Libs
 	install -d $(DESTDIR)/usr/lib/network/connections
 	install -m644 src/lib/{globals,ip,rfkill,wpa} $(DESTDIR)/usr/lib/network/
