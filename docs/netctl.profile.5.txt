@@ -87,6 +87,9 @@ GENERAL OPTIONS
     A command that is executed before a connection is brought down.
     Similar precautions should be taken as with 'ExecUpPost'.
 
+'ForceConnect='::
+    Set to `++yes++' to force connection even if the interface is up.
+
 
 IP OPTIONS
 ----------
