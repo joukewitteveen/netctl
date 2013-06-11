@@ -10,6 +10,17 @@ resolvconf_add() {
     printf "%s\n" "$@" | resolvconf -a "$interface"
 }
 
+add_static_routes() {
+    if [[ $IP ]]; then
+        # Add static IP routes
+        for route in "${Routes[@]}"; do
+            if ! do_debug ip route add $route dev "$Interface"; then
+                report_error "Could not add route '$route' to interface '$Interface'"
+                return 1
+            fi
+        done
+    fi
+}
 
 ## Set up an IP configuration
 # $Interface: interface name
@@ -49,6 +60,7 @@ ip_set() {
             return 1
           ;;
         esac
+        add_static_routes
       ;;
       static)
         for addr in "${Address[@]}"; do
@@ -57,6 +69,7 @@ ip_set() {
                 return 1
             fi
         done
+        add_static_routes
         if [[ $Gateway ]]; then
             if ! do_debug ip route add default via "$Gateway" dev "$Interface"; then
                 report_error "Could not set gateway '$Gateway' on interface '$Interface'"
@@ -71,16 +84,6 @@ ip_set() {
         return 1
       ;;
     esac
-
-    if [[ $IP ]]; then
-        # Add static IP routes
-        for route in "${Routes[@]}"; do
-            if ! do_debug ip route add $route dev "$Interface"; then
-                report_error "Could not add route '$route' to interface '$Interface'"
-                return 1
-            fi
-        done
-    fi
 
     # Load ipv6 module if necessary
     case "$IP6" in
