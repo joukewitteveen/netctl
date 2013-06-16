@@ -3,7 +3,7 @@
 . "$SUBR_DIR/ip"
 
 : ${IFENSLAVE:=ifenslave}
-declare -a BindsToInterfaces
+declare -ag BindsToInterfaces
 
 bond_up() {
     if is_interface "$Interface"; then

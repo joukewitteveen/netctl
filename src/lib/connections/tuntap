@@ -2,7 +2,7 @@
 
 . "$SUBR_DIR/ip"
 
-declare -a BindsToInterfaces
+declare -ag BindsToInterfaces
 
 tuntap_up() {
     if is_interface "$Interface"; then

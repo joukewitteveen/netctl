@@ -3,7 +3,7 @@
 . "$SUBR_DIR/ip"
 
 : ${BRCTL:=brctl}
-declare -a BindsToInterfaces
+declare -ag BindsToInterfaces
 
 bridge_up() {
     if is_interface "$Interface"; then
@@ -30,8 +30,8 @@ bridge_up() {
 
 bridge_down() {
     for member in "${BindsToInterfaces[@]}"; do
-      ip link set "$member" promisc off down
-      $BRCTL delif "$Interface" "$member"
+        ip link set "$member" promisc off down
+        $BRCTL delif "$Interface" "$member"
     done
 
     ip_unset
