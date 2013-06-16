@@ -23,6 +23,24 @@ ip_set() {
         return 1
     fi
 
+    # Load ipv6 module if necessary
+    case "$IP6" in
+      dhcp*|stateless|static)
+        [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
+        [[ $IP6 == "static" ]]
+        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=$?"
+      ;;
+      no)
+        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
+      ;;
+      "")  # undefined IP6 does not prevent RA's from being received -> nop
+      ;;
+      *)
+        report_error "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
+        return 1
+      ;;
+    esac
+
     case $IP in
       dhcp)
         case ${DHCPClient:-dhcpcd} in
@@ -57,12 +75,6 @@ ip_set() {
                 return 1
             fi
         done
-        if [[ $Gateway ]]; then
-            if ! do_debug ip route add default via "$Gateway" dev "$Interface"; then
-                report_error "Could not set gateway '$Gateway' on interface '$Interface'"
-                return 1
-            fi
-        fi
       ;;
       ""|no)
       ;;
@@ -80,23 +92,15 @@ ip_set() {
                 return 1
             fi
         done
-    fi
 
-    # Load ipv6 module if necessary
-    case "$IP6" in
-      dhcp*|stateless|static)
-        [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
-      ;;
-      no)
-        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
-      ;;
-      "")  # undefined IP6 does not prevent RA's from being received -> nop
-      ;;
-      *)
-        report_error "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
-        return 1
-      ;;
-    esac
+        # Set a custom gateway after static routes are added
+        if [[ $IP == "static" && $Gateway ]]; then
+            if ! do_debug ip route add default via "$Gateway" dev "$Interface"; then
+                report_error "Could not set gateway '$Gateway' on interface '$Interface'"
+                return 1
+            fi
+        fi
+    fi
 
     case "$IP6" in
       dhcp*)
@@ -104,7 +108,6 @@ ip_set() {
             report_error "You need to install dhclient to use DHCPv6"
             return 1
         fi
-        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=1"
         [[ $IP6 == "dhcp-noaddr" ]] && DhclientOptions6+=" -S"
         rm -f "/run/dhclient6-${Interface}.pid"
         if ! do_debug dhclient -6 -q -e "TIMEOUT=${TimeoutDHCP:-10}" -pf "/run/dhclient6-${Interface}.pid" $DhclientOptions6 "$Interface"; then
@@ -112,12 +115,6 @@ ip_set() {
             return 1
         fi
       ;;
-      stateless)
-        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=1"
-      ;;&
-      static)
-        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
-      ;;&
       stateless|static)
         for addr in "${Address6[@]}"; do
             if ! do_debug ip -6 addr add $addr dev "$Interface"; then
@@ -134,7 +131,7 @@ ip_set() {
             return 1
         fi
 
-        # Add static IPv6 routes
+        # Add static IPv6 routes after DAD has finished
         for route in "${Routes6[@]}"; do
             if ! do_debug ip -6 route add $route dev "$Interface"; then
                 report_error "Could not add route '$route' to interface '$Interface'"
@@ -142,7 +139,7 @@ ip_set() {
             fi
         done
 
-        # Set a custom gateway after DAD has finished
+        # Set a custom gateway after static routes are added
         if [[ $IP6 == @(stateless|static) && $Gateway6 ]]; then
             if ! do_debug ip -6 route replace default via "$Gateway6" dev "$Interface"; then
                 report_error "Could not set gateway '$Gateway6' on interface '$Interface'"
@@ -180,7 +177,7 @@ ip_set() {
 # $IP: type of IPv4 configuration
 # $IP6: type of IPv6 configuration
 ip_unset() {
-    if [[ "$IP" == "dhcp" ]]; then
+    if [[ $IP == "dhcp" ]]; then
         case ${DHCPClient:-dhcpcd} in
           dhcpcd)
             if [[ -f "/run/dhcpcd-$Interface.pid" ]]; then
@@ -195,7 +192,7 @@ ip_unset() {
           ;;
         esac
     fi
-    if [[ "$IP6" == dhcp* ]]; then
+    if [[ $IP6 == dhcp* ]]; then
         if [[ -f "/run/dhclient6-$Interface.pid" ]]; then
             do_debug dhclient -6 -q -x "$Interface" -pf "/run/dhclient6-$Interface.pid" >/dev/null
         fi
