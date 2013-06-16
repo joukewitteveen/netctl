@@ -23,8 +23,10 @@ The name of the profile is the name of the file. Profile names must not
 contain newlines and should not end in '.service' or '.conf'. Whenever a
 profile is read, all executable scripts in '/etc/netctl/hooks/' and any
 executable script in '/etc/netctl/interfaces/' with the name of the
-interface for the profile are sourced. For each connection type, there
-are example profile files in '/etc/netctl/examples/'.
+interface for the profile are sourced. Declarations in an interface
+script override declarations in a profile, which override declarations
+in hooks. For each connection type, there are example profile files in
+'/etc/netctl/examples/'.
 
 
 AVAILABLE CONNECTION TYPES
@@ -86,6 +88,10 @@ GENERAL OPTIONS
 'ExecDownPre='::
     A command that is executed before a connection is brought down.
     Similar precautions should be taken as with 'ExecUpPost'.
+
+'ForceConnect='::
+    Set to `++yes++' to force connecting even if the interface is up.
+    Do not use this unless you know what you are doing.
 
 
 IP OPTIONS
@@ -149,13 +155,16 @@ network. In particular, these connection types are +ethernet+,
     of the DNS nameservers.
 
 'DNSDomain='::
-    A `++domain++' line for '/etc/resolv.conf'.
+    A `++domain++' line for '/etc/resolv.conf', passed to
+    *resolvconf*(5).
 
 'DNSSearch='::
-    A `++search++' line for '/etc/resolv.conf'.
+    A `++search++' line for '/etc/resolv.conf', passed to
+    *resolvconf*(5).
 
 'DNSOptions=()'::
-    An array of `++options++' lines for '/etc/resolv.conf'.
+    An array of `++options++' lines for '/etc/resolv.conf', passed to
+    *resolvconf*(5).
 
 'TimeoutDHCP='::
     Maximum time, in seconds, to wait for DHCP to be successful.
@@ -454,4 +463,4 @@ A mnemonic is to think of the prefix ``\"`' as saying `non'-`quote'.
 
 SEE ALSO
 --------
-*netctl*(1)
+*netctl*(1), *resolvconf.conf*(5)
