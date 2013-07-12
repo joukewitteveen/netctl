@@ -51,8 +51,11 @@ case "$2" in
     fi
   ;;
   *)
-    echo "Wrong arguments" > /dev/stderr
+    echo "Wrong arguments" >&2
   ;;
 esac
 
 exit 1
+
+
+# vim: ft=sh ts=4 et sw=4:
