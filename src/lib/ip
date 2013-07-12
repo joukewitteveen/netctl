@@ -199,6 +199,8 @@ ip_unset() {
     fi
 
     [[ $DNS ]] && resolvconf -d "$Interface"
+    ip route flush dev "$Interface" &>/dev/null
+    ip -6 route flush dev "$Interface" &>/dev/null
     ip addr flush dev "$Interface" scope host &>/dev/null
     ip addr flush dev "$Interface" scope site &>/dev/null
     ip addr flush dev "$Interface" scope global &>/dev/null
