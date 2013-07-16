@@ -177,17 +177,19 @@ ip_set() {
 # $IP: type of IPv4 configuration
 # $IP6: type of IPv6 configuration
 ip_unset() {
+    local stop="-x"
     if [[ $IP == "dhcp" ]]; then
         case ${DHCPClient:-dhcpcd} in
           dhcpcd)
             if [[ -f "/run/dhcpcd-$Interface.pid" ]]; then
-                do_debug dhcpcd -qk "$Interface" >/dev/null
+                is_yes "${DHCPReleaseOnStop:-no}" && stop="-k"
+                do_debug dhcpcd -q $stop "$Interface" >/dev/null
             fi
           ;;
           dhclient)
             if [[ -f "/run/dhclient-$Interface.pid" ]]; then
-                # Alternatively, use -r instead of -x to also release the lease
-                do_debug dhclient -q -x "$Interface" -pf "/run/dhclient-$Interface.pid" >/dev/null
+                is_yes "${DHCPReleaseOnStop:-no}" && stop="-r"
+                do_debug dhclient -q $stop "$Interface" -pf "/run/dhclient-$Interface.pid" >/dev/null
             fi
           ;;
         esac
