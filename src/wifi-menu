@@ -111,8 +111,7 @@ create_profile()
         key=$(dialog $box "$msg" 10 40 --stdout) || return $?
         if [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
             if [[ "$OBSCURE" ]]; then
-                key=$(wpa_passphrase "$1" "$key" | grep -m 1 "^[[:space:]]*psk=")
-                key=${key#*psk=}
+                key=$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")
             else
                 key=$(printf "%q" "$key")
             fi
@@ -210,8 +209,7 @@ if [[ ! -d "/sys/class/net/$INTERFACE" ]]; then
 fi
 
 echo -n "Scanning for networks... "
-CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 "^ssid=")
-CONNECTION=${CONNECTION#ssid=}
+CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | sed -n "s/^ssid=//p")
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
 if [[ $? -eq 0 ]]; then
     trap 'rm -f "$NETWORKS"' EXIT

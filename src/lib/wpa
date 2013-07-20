@@ -12,8 +12,7 @@ wpa_call() {
     if [[ $WPA_CTRL_DIR ]]; then
         args+=("-p" "$WPA_CTRL_DIR")
     elif [[ $WPAConfigFile ]] && grep -q "^[[:space:]]*ctrl_interface=" "$WPAConfigFile"; then
-        WPA_CTRL_DIR=$(grep -m1 "^[[:space:]]*ctrl_interface=" "$WPAConfigFile")
-        WPA_CTRL_DIR=${WPA_CTRL_DIR#*ctrl_interface=}
+        WPA_CTRL_DIR=$(sed -n "0,/^[[:space:]]*ctrl_interface=/s///p" "$WPAConfigFile")
         if [[ $WPA_CTRL_DIR == DIR=* ]]; then
             WPA_CTRL_DIR=${WPA_CTRL_DIR:4}
             WPA_CTRL_DIR=${WPA_CTRL_DIR%% GROUP=*}

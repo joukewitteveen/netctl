@@ -17,7 +17,7 @@ wireless_up() {
     : ${Security:=none}
     : ${WPADriver:=nl80211,wext}
     : ${TimeoutWPA:=15}
-    
+
     if [[ $RFKill ]]; then
         enable_rf "$Interface" "$RFKill" || return 1
     fi
