@@ -1,0 +1,90 @@
+NETCTL-AUTO(1)
+==============
+
+NAME
+----
+netctl-auto - Control automatic selection of wireless netctl profiles
+
+
+SYNOPSIS
+--------
+*netctl-auto* {*COMMAND*} ...
+
+*netctl-auto* [--help | --version]
+
+
+DESCRIPTION
+-----------
+*netctl-auto* may be used to control the automatic network profile selection
+offered by the 'netctl-auto@.service' file. See *netctl.special*(7) for
+details about the service file.
+
+
+OPTIONS
+-------
+The following commands are understood:
+
+*list*::
+    List all profiles which are currently available for automatic selection.
+    Active profiles will be marked with a '*', disabled profiles will be
+    marked with a '!'.
+
+*current*::
+    Report currently active profiles.
+
+*switch-to [+PROFILE+]*::
+    Switch to the network profile specified on the command line. The
+    specified profile will be enabled if necessary, the state of all other
+    profiles is not changed. This command does not force *netctl-auto* to use
+    the specified profile. If a disconnect occurs, *netctl-auto* may select
+    an alternative profile.
+
+*enable [+PROFILE+]*::
+    Enable a previously disabled network profile for automatic selection.
+    Every time the *netctl-auto* service is started, all available profiles
+    are enabled by default.
+
+*disable [+PROFILE+]*::
+    Disable the specified profile for automatic selection. This will only
+    take effect until the *netctl-auto* service is stopped.
+    To permanently exclude a profile from automatic selection, use the
+    'ExcludeAuto=yes' option in the profile.
+
+*enable-all*::
+    Enable all profiles for automatic selection.
+
+*disable-all*::
+    Disable all profiles for automatic selection.
+
+*start [+INTERFACE+]*::
+    Start automatic profile selection on the specified interface. +
+    This command should not be invoked directly, use the following command
+    instead:
+---------------------------------------------
+    systemctl start netctl-auto@<interface>
+---------------------------------------------
+
+*stop [+INTERFACE+]*::
+    Stop automatic profile selection on the specified interface. This will
+    disconnect the currently active profile on the interface. +
+    This command should not be invoked directly, use the following command
+    instead:
+--------------------------------------------
+    systemctl stop netctl-auto@<interface>
+--------------------------------------------
+
+
+EXIT STATUS
+-----------
+On success 0 is returned, a non-zero failure code otherwise.
+
+
+ENVIRONMENT
+-----------
+'$NETCTL_DEBUG'::
+    If set to +"yes"+, debugging output is generated.
+
+
+SEE ALSO
+--------
+*netctl*(1), *netctl.profile*(5), *netctl.special*(7), *systemctl*(1)
