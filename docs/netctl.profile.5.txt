@@ -21,11 +21,10 @@ quoting rules (see below) apply.
 
 The name of the profile is the name of the file. Profile names must not
 contain newlines and should not end in '.service' or '.conf'. Whenever a
-profile is read, all executable scripts in '/etc/netctl/hooks/' and any
-executable script in '/etc/netctl/interfaces/' with the name of the
-interface for the profile are sourced. Declarations in an interface
-script override declarations in a profile, which override declarations
-in hooks. For each connection type, there are example profile files in
+profile is read, any executable script in '/etc/netctl/interfaces/' with
+the name of the interface for the profile is sourced. Declarations in
+an interface script override declarations in a profile. For each
+connection type, there are example profile files in
 '/etc/netctl/examples/'.
 
 

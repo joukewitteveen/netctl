@@ -13,6 +13,7 @@ install:
 	$(MAKE) -C docs install
 	# Configuration files
 	install -d $(DESTDIR)/etc/netctl/{examples,hooks,interfaces}
+	install -d $(DESTDIR)/etc/netctl/hooks/{connect,disconnect,lost,reestablished,failed}
 	install -m644 docs/examples/* $(DESTDIR)/etc/netctl/examples/
 	# Libs
 	install -d $(DESTDIR)/usr/lib/network/connections

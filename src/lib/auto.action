@@ -28,6 +28,7 @@ case $action in
         netctl-auto stop "$interface"
         exit 1
     fi
+    load_hooks "$@"
   ;;
   DISCONNECT)
     if [[ -z $profile ]]; then
@@ -38,14 +39,15 @@ case $action in
     if ! ( eval $ExecDownPre ); then
         exit 1
     fi
+    load_hooks "$@"
     ip_unset
   ;;
   LOST|REESTABLISHED)
-    # Not handled.
+    load_hooks "$@"
     exit 0
   ;;
-  *)
-    # ???
+  FAILED|*)
+    load_hooks "$@"
     exit 1
   ;;
 esac

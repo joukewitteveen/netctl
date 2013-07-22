@@ -1,0 +1,58 @@
+NETCTL.HOOK(5)
+=================
+
+NAME
+----
+netctl.hook - Hook options
+
+
+SYNOPSIS
+--------
+netctl.hook
+
+
+DESCRIPTION
+-----------
+Hooks for netctl live under the subdirectories of '/etc/netctl/hooks/'
+and are executable shell scripts. They are sourced in directory order
+upon completion of their respective actions emitted by wpa_actiond.
+
+They are sourced via a bash runtime.
+
+
+AVAILABLE HOOK ACTIONS
+----------------------
++CONNECT+::
+    These scripts are sourced *after* attaining a connection and *after*
+    any 'ExecUpPost=' for the given profile.
++DISCONNECT+::
+    These scripts are sourced *after* any 'ExecDownPre=' and *after*
+    disconnect.
++LOST+::
+    These scripts are sourced when a connection has been deemed lost.
++REESTABLISHED+::
+    These scripts are sourced when a connection has been reestablished.
++FAILED+::
+    These scripts are sourced when an attempt to connect has failed.
+
+
+HOOK PARAMETERS
+---------------
+'$1 -- Interface'::
+    The name of the hardware interface being used. (i.e. wlan0)
+
+'$2 -- SSID'::
+    The Service Set Identifier of the network. (i.e. 2WIRE207)
+
+'$3 -- Profile'::
+    The name of the netctl profile currently in use.
+    (i.e. wlan0-2WIRE207)
+
+'$4 -- Action'::
+    The all-uppercase wpa_actiond action being hooked to.
+    (i.e. CONNECT)
+
+
+SEE ALSO
+--------
+*netctl*(1)
