@@ -96,16 +96,25 @@ list_profiles() {
     find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
 }
 
+## Sources all hooks for particular event
+# $1: interface
+# $2: ssid
+# $3: profile
+# $4: action
+load_hooks() {
+    local action=${4,,}
+    [ ! -d "$PROFILE_DIR/hooks/$action" ] && return 0
+    while read -r hook; do
+        source "$hook" "$@"
+    done < <(find -L "$PROFILE_DIR/hooks/$action" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
+}
+
 ## Sources all hooks, a profile and any interface hook
 # $1: profile name
 load_profile() {
-    local hook
     if [[ ! -r "$PROFILE_DIR/$1" ]]; then
         exit_error "Profile '$1' does not exist or is not readable"
     fi
-    while read -r hook; do
-        source "$hook"
-    done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
     source "$PROFILE_DIR/$1"
     if [[ -z $Interface ]]; then
         exit_error "Profile '$1' does not specify an interface"
