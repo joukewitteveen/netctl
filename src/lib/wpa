@@ -166,6 +166,24 @@ wpa_quote() {
     fi
 }
 
+## Unquotes a string, i.e. returned from wpa_cli
+## Quoted:     "string"     -> string
+## Non-Quoted: string       -> string
+## Hex:        737472696e67 -> string
+wpa_unquote() {
+    local string="$1"
+    if [[ ${string:0:1} == '"' && ${string:(-1)} == '"' ]]; then
+        printf "%s" "${string:1:-1}"
+    elif [[ "$string" =~ ^([[:xdigit:]]{2})+$ ]]; then
+        while [[ -n "$string" ]]; do
+            printf "\x"${string:0:2}
+            string=${string:2}
+        done
+    else
+        printf "%s" "${string}"
+    fi
+}
+
 ## Create a configuration file for wpa_supplicant without any network blocks
 # $1: interface name
 wpa_make_config_file() {

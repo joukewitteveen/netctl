@@ -48,7 +48,9 @@ netctl-auto@<interface>.service::
     start a profile for a network it finds. It is targeted at wireless
     interfaces. Profile specific values for WPADriver are ignored, but
     it is possible to specify WPADriver in an interface hook
-    ('/etc/netctl/interfaces/<interface>').
+    ('/etc/netctl/interfaces/<interface>'). +
+    Use *netctl-auto*(1) instead of *netctl(1)* to control the automatic
+    profile selection when using this unit.
 
 netctl-ifplugd@<interface>.service::
     This unit starts ifplugd on the interface it is used for. It will
@@ -59,4 +61,4 @@ netctl-ifplugd@<interface>.service::
 
 SEE ALSO
 --------
-*netctl*(1), *netctl.profile*(5)
+*netctl*(1), *netctl-auto*(1), *netctl.profile*(5)
