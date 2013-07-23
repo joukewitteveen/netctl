@@ -44,11 +44,11 @@ list_wpa_profiles() {
                 flag="d"
             fi
 
-            local profile=$(wpa_call $interface get_network $id id_str)
+            local profile=$(wpa_call "$interface" get_network "$id" id_str)
             profile=$(wpa_unquote "$profile")
 
-            echo $interface $id $flag "$profile"
-        done < <(wpa_call $interface list_networks | tail -n+2)
+            echo "$interface" "$id" "$flag" "$profile"
+        done < <(wpa_call "$interface" list_networks | tail -n+2)
     done
 }
 
@@ -59,7 +59,7 @@ get_wpa_network_id() {
     local interface id flag profile
     while read -r interface id flag profile; do
         if [[ "$1" == "$profile" ]]; then
-            echo $interface $id
+            echo "$interface" "$id"
             return 0
         fi
     done < <(list_wpa_profiles)
@@ -72,7 +72,7 @@ get_wpa_network_id() {
 # $1: profile action: "enable", "disable", "enable-all" or "disable-all"
 # $2: profile name if action is "enable" or "disable"
 profile_enable_disable() {
-    local action=$1 profile="$2"
+    local action="$1" profile="$2"
     local id interfaces wpa_cmd
 
     if [ -n "$profile" ]; then
@@ -83,9 +83,9 @@ profile_enable_disable() {
 
     case $action in
       enable)
-        wpa_cmd=(enable_network $id);;
+        wpa_cmd=(enable_network "$id");;
       disable)
-        wpa_cmd=(disable_network $id);;
+        wpa_cmd=(disable_network "$id");;
       enable-all)
         wpa_cmd=(enable_network all);;
       disable-all)
@@ -96,9 +96,9 @@ profile_enable_disable() {
 
     local interface
     for interface in $interfaces; do
-        wpa_call $interface ${wpa_cmd[@]} >/dev/null
+        wpa_call "$interface" "${wpa_cmd[@]}" >/dev/null
         if [[ "${wpa_cmd[0]}" == "enable_network" ]]; then
-            wpa_call $interface reassociate >/dev/null
+            wpa_call "$interface" reassociate >/dev/null
         fi
     done
 }
@@ -114,17 +114,17 @@ switch_to() {
     timeout=$(. "$PROFILE_DIR/$profile" >/dev/null; echo ${TimeoutWPA:=15})
 
     # List of enabled networks
-    local enabled_networks=$(wpa_call $interface list_networks | tail -n+2 | \
-        cut -f 1,4 | fgrep -v '[DISABLED]' | cut -f 1 | tr "\n" ' ')
+    local enabled_networks=$(wpa_call "$interface" list_networks | tail -n+2 | \
+        cut -f 1,4 | fgrep -v "[DISABLED]" | cut -f 1 | tr "\n" ' ')
 
     reenable_networks() {
         for network in $enabled_networks; do
-            wpa_call $interface enable_network $network >/dev/null
+            wpa_call "$interface" enable_network "$network" >/dev/null
         done
 
-        if [[ $(wpa_get_state $interface) != "COMPLETED" ]]; then
-            if ! in_array $id $enabled_networks; then
-                wpa_call $interface disable_network $id >/dev/null
+        if [[ $(wpa_get_state "$interface") != "COMPLETED" ]]; then
+            if ! in_array "$id" $enabled_networks; then
+                wpa_call "$interface" disable_network "$id" >/dev/null
             fi
         fi
     }
@@ -133,8 +133,8 @@ switch_to() {
     trap "reenable_networks; exit 1" SIGINT SIGTERM
 
     # select_network will disable all other networks on that interface
-    wpa_call $interface select_network $id >/dev/null
-    if ! wpa_wait_until_state $timeout $interface "COMPLETED"; then
+    wpa_call "$interface" select_network "$id" >/dev/null
+    if ! wpa_wait_until_state "$timeout" "$interface" "COMPLETED"; then
         report_error "WPA association/authentication failed for interface '$interface'"
     fi
 
@@ -145,9 +145,9 @@ switch_to() {
 current() {
     local interface
     for interface in $(list_actiond_interfaces); do
-        local state=$(wpa_get_state $interface)
+        local state=$(wpa_get_state "$interface")
         if [[ "$state" == "COMPLETED" ]]; then
-            wpa_call $interface status | grep '^id_str=' | cut -d'=' -f2-
+            wpa_call "$interface" status | grep '^id_str=' | cut -d'=' -f2-
         fi
     done
 }
@@ -163,7 +163,7 @@ list() {
 ## Start and generate config file for the WPA supplicant, start wpa_actiond
 # $1: interface
 start() {
-    local interface=$1
+    local interface="$1"
     local pidfile="$STATE_DIR/wpa_actiond_$1.pid"
 
     if wpa_is_active "$interface"; then
@@ -214,7 +214,7 @@ start() {
 ## Stop wpa_supplicant and wpa_actiond
 # $1: interface
 stop() {
-    local interface=$1
+    local interface="$1"
     local pidfile="$STATE_DIR/wpa_actiond_$1.pid"
 
     [[ -e "$pidfile" ]] && kill "$(< "$pidfile")"
@@ -237,21 +237,21 @@ case $# in
       list|current)
         "$1";;
       enable-all|disable-all)
-        profile_enable_disable $1;;
+        profile_enable_disable "$1";;
       *)
         exit_error "$(usage)";;
     esac;;
   2)
     case $1 in
       enable|disable)
-        profile_enable_disable $1 "$2";;
+        profile_enable_disable "$1" "$2";;
       switch-to)
         switch_to "$2";;
       start|stop)
         ensure_root "$(basename "$0")"
         : ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
         : ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
-        $1 "$2";;
+        "$1" "$2";;
       *)
         exit_error "$(usage)";;
     esac;;
