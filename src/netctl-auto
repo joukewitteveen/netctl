@@ -1,8 +1,12 @@
 #! /bin/bash
+# Contributed by: Sebastian Wicki <gandro@gmx.net>
 
 . /usr/lib/network/globals
 . "$SUBR_DIR/wpa"
 . "$SUBR_DIR/rfkill"
+
+: ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
+: ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
 
 usage() {
     cat << END
@@ -115,7 +119,7 @@ switch_to() {
 
     # List of enabled networks
     local enabled_networks=$(wpa_call "$interface" list_networks | tail -n+2 | \
-        cut -f 1,4 | fgrep -v "[DISABLED]" | cut -f 1 | tr "\n" ' ')
+        cut -f 1,4 | grep -Fv "[DISABLED]" | cut -f 1 | tr "\n" ' ')
 
     reenable_networks() {
         for network in $enabled_networks; do
@@ -147,7 +151,7 @@ current() {
     for interface in $(list_actiond_interfaces); do
         local state=$(wpa_get_state "$interface")
         if [[ "$state" == "COMPLETED" ]]; then
-            wpa_call "$interface" status | grep '^id_str=' | cut -d'=' -f2-
+            wpa_call "$interface" status | sed -n 's/^id_str=//p'
         fi
     done
 }
@@ -249,8 +253,6 @@ case $# in
         switch_to "$2";;
       start|stop)
         ensure_root "$(basename "$0")"
-        : ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
-        : ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
         "$1" "$2";;
       *)
         exit_error "$(usage)";;
