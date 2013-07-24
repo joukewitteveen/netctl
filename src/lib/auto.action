@@ -3,37 +3,26 @@
 . /usr/lib/network/globals
 . "$SUBR_DIR/ip"
 
-interface="$1"
-ssid="$2"
-profile="$3"
-action="$4"
+export INTERFACE="$1"
+export SSID="$2"
+# Expose the profile name similar to ordinary netctl usage
+Profile="$3"
+export ACTION="$4"
 
-# Is it possible that we don't get a profile?!
-[[ "$profile" ]] && load_profile "$profile"
+load_profile "$Profile"
 
-case $action in
+case $ACTION in
   CONNECT)
-    if [[ -z $profile ]]; then
-        if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
-            source "$PROFILE_DIR/interfaces/$interface"
-        fi
-        dhcpcd -qL -t "${TimeoutDHCP:-10}" $DhcpcdOptions -K "$interface"
-        exit $?
-    fi
     DhcpcdOptions+=" -K"
     ip_set || exit 1
     # JP: sandbox the eval
     if ! ( eval $ExecUpPost ); then
         # Failing ExecUpPost will take the connection down
-        netctl-auto stop "$interface"
+        netctl-auto stop "$INTERFACE"
         exit 1
     fi
   ;;
   DISCONNECT)
-    if [[ -z $profile ]]; then
-        dhcpcd -k "$interface"
-        exit $?
-    fi
     # JP: sandbox the eval
     if ! ( eval $ExecDownPre ); then
         exit 1

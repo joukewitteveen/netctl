@@ -93,7 +93,7 @@ timeout_wait() {
 list_profiles() {
     # JP: follow aliases with -L, also skip profiles that end with '.conf' (so
     #     profile.conf can be the wpa.conf file for profile)
-    find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
+    find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
 }
 
 ## Sources all hooks, a profile and any interface hook
