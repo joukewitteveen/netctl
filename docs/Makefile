@@ -1,6 +1,6 @@
 # Makefile for netctl documentation
 
-MANPAGES = netctl.1 netctl.profile.5 netctl.special.7
+MANPAGES = netctl.1 netctl-auto.1 netctl.profile.5 netctl.special.7
 
 .PHONY: manpages install $(MANPAGES:=-install) clean
 manpages: $(MANPAGES)

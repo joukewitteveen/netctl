@@ -89,4 +89,4 @@ ENVIRONMENT
 
 SEE ALSO
 --------
-*netctl.profile*(5), *netctl.special*(7), *systemctl*(1)
+*netctl-auto*(1), *netctl.profile*(5), *netctl.special*(7), *systemctl*(1)
