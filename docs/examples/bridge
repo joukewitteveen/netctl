@@ -3,7 +3,5 @@ Interface=br0
 Connection=bridge
 BindsToInterfaces=(eth0 eth1 tap0)
 IP=dhcp
-## sets forward delay time
-#FwdDelay=0
-## sets max age of hello message
-#MaxAge=10
+## Ignore (R)STP and immediately activate the bridge
+#SkipForwardingDelay=yes

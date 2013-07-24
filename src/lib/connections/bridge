@@ -2,7 +2,6 @@
 
 . "$SUBR_DIR/ip"
 
-: ${BRCTL:=brctl}
 declare -ag BindsToInterfaces
 
 bridge_up() {
@@ -12,17 +11,17 @@ bridge_up() {
             return 1
         fi
     else
-        $BRCTL addbr "$Interface"
+        ip link add name "$Interface" type bridge
     fi
 
     for member in "${BindsToInterfaces[@]}"; do
-        ip link set "$member" promisc on up
-        ip addr flush dev "$member"
-        $BRCTL addif "$Interface" "$member"
+        ip link set dev "$member" promisc on up
+        ip addr flush dev "$member" scope host &>/dev/null
+        ip addr flush dev "$member" scope site &>/dev/null
+        ip addr flush dev "$member" scope global &>/dev/null
+        ip link set dev "member" master "$Interface"
+        is_yes "${SkipForwardingDelay:-no}" && bridge link set dev "$member" state 3
     done
-    # Set options
-    [[ "$FwdDelay" ]] && $BRCTL setfd "$Interface" "$FwdDelay"
-    [[ "$MaxAge" ]] && $BRCTL setmaxage "$Interface" "$MaxAge"
 
     bring_interface_up "$Interface"
     ip_set
@@ -31,12 +30,12 @@ bridge_up() {
 bridge_down() {
     for member in "${BindsToInterfaces[@]}"; do
         ip link set "$member" promisc off down
-        $BRCTL delif "$Interface" "$member"
+        ip link set dev "$member" nomaster
     done
 
     ip_unset
     bring_interface_down "$Interface"
-    $BRCTL delbr "$Interface"
+    ip link delete "$Interface" type bridge
 }
 
 

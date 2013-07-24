@@ -286,14 +286,12 @@ connections of the `bond' type.
 OPTIONS FOR `bridge' CONNECTIONS
 --------------------------------
 The interfaces of 'BindsToInterfaces' take part in the bridge named by
-'Interface'. Next to the *ip options*, the following are understood for
+'Interface'. Next to the *ip options*, the following is understood for
 connections of the `bridge' type:
 
-'FwdDelay='::
-    Forward delay of the bridge. See *brctl*(8) for details.
-
-'MaxAge='::
-    Maximum age parameter. See *brctl*(8) for details.
+'SkipForwardingDelay='::
+    Skip \(R)STP and immediately activate all bridge members. This can
+    be useful when DHCP is used on the bridge.
 
 
 OPTIONS FOR `pppoe' CONNECTIONS
