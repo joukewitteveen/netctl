@@ -19,7 +19,7 @@ bridge_up() {
         ip addr flush dev "$member" scope host &>/dev/null
         ip addr flush dev "$member" scope site &>/dev/null
         ip addr flush dev "$member" scope global &>/dev/null
-        ip link set dev "member" master "$Interface"
+        ip link set dev "$member" master "$Interface"
         is_yes "${SkipForwardingDelay:-no}" && bridge link set dev "$member" state 3
     done
 
