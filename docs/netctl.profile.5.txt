@@ -52,6 +52,8 @@ AVAILABLE CONNECTION TYPES
     For TUN/TAP interfaces.
 +vlan+::
     For VLANs on ethernet-like connections.
++openvpn+::
+    For openvpn.
 
 
 GENERAL OPTIONS
@@ -408,6 +410,16 @@ the *ip options*, the following are understood for connections of the
 
 'Group='::
     The owning group of the tun/tap interface.
+
+OPTIONS FOR `openvpn` CONNECTIONS
+---------------------------------
+Generally this connection type is comparable to ethernet.
+
+'Vpn'::
+    The name of the openvpn config file.
+
+'TimeoutVPN'::
+    Number of seconds to wait for the vpn device become available.
 
 
 OPTIONS FOR `vlan' CONNECTIONS
