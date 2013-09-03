@@ -2,6 +2,7 @@
 
 . /usr/lib/network/globals
 . "$SUBR_DIR/wpa"
+. "$SUBR_DIR/rfkill"
 
 
 usage()
@@ -208,10 +209,25 @@ if [[ ! -d "/sys/class/net/$INTERFACE" ]]; then
     exit_error "No such interface: $INTERFACE"
 fi
 
+if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
+    source "$PROFILE_DIR/interfaces/$INTERFACE"
+fi
+
+if [[ $RFKill ]] && ! rf_is_enabled "$INTERFACE" "$RFKill"; then
+    enable_rf "$INTERFACE" "$RFKill" || exit_error "Cannot enable rfkill"
+    RFKILL_WAS_ENABLED=1
+fi
+
 echo -n "Scanning for networks... "
 CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | sed -n "s/^ssid=//p")
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
-if [[ $? -eq 0 ]]; then
+SCAN_RESULT=$?
+
+if (( RFKILL_WAS_ENABLED )); then
+    disable_rf "$INTERFACE" "$RFKill"
+fi
+
+if [[ $SCAN_RESULT -eq 0 ]]; then
     trap 'rm -f "$NETWORKS"' EXIT
     echo "done"
     init_profiles "$INTERFACE"
@@ -256,6 +272,7 @@ case $RETURN in
         RETURN=7
         ;;
 esac
+
 exit $RETURN
 
 
