@@ -41,7 +41,7 @@ init_profiles()
         case $? in
             2)
                 GENERATED+=("$profile")
-                ;&
+                ;;
             1)
                 PROFILES[i]=$profile
                 ESSIDS[i]=$essid
