@@ -125,8 +125,9 @@ ip_set() {
     esac
 
     if [[ $IP6 ]]; then
-        # Wait for Duplicate Address Detection to finish
-        if ! timeout_wait "${TimeoutDAD:-3}" '[[ -z "$(ip -6 addr show dev "$Interface" tentative)" ]]'; then
+        # Wait for Duplicate Address Detection to finish, unless RFC4429 Optimistic DAD is enabled
+        if [ $(sysctl -n net.ipv6.conf.$interface_sysctl.optimistic_dad) != 1 ] &&
+           ! timeout_wait "${TimeoutDAD:-3}" '[[ -z "$(ip -6 addr show dev "$Interface" tentative)" ]]'; then
             report_error "Duplicate Address Detection is taking too long on interface '$Interface'"
             return 1
         fi
