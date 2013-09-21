@@ -26,6 +26,19 @@ get_rf_path() {
     return 1
 }
 
+## Determine whether the transmission is allowed (unblocked) at the moment
+# $1: interface name
+# $2: rfkill name
+rf_is_enabled() {
+    local interface=$1 rfkill=$2 path hard soft
+
+    path=$(get_rf_path "$interface" "$rfkill") || return 1
+    read hard < "$path/hard"
+    read soft < "$path/soft"
+
+    (( ! hard && ! soft ))
+}
+
 ## Unblock transmission through a wireless device
 # $1: interface name
 # $2: rfkill name
