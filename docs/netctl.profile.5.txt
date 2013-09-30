@@ -93,6 +93,9 @@ GENERAL OPTIONS
     Set to `++yes++' to force connecting even if the interface is up.
     Do not use this unless you know what you are doing.
 
+'ProvidesTarget='::
+    Set to `++no++' when the connection associated to the profile
+    shouldn't provide *network.target*. Useful for Dial-In connections.
 
 IP OPTIONS
 ----------
