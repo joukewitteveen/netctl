@@ -1,0 +1,81 @@
+# Openvpn connection support for netctl
+
+. "$SUBR_DIR/ip"
+
+
+openvpn_up() {
+    # start openvpn
+    systemctl restart openvpn@"$Vpn".service
+
+    sleep "$TimeoutVPN"
+
+    if ! is_interface "$Interface"; then
+        report_error "Interface '$Interface' does not exist"
+        return 1
+    fi
+
+    # Disable IPv6 before bringing the interface up to prevent SLAAC
+    if [[ $IP6 == "no" ]]; then
+        sysctl -q -w "net.ipv6.conf.${Interface/.//}.disable_ipv6=1"
+    fi
+
+    if ! bring_interface_up "$Interface"; then
+        report_error "Failed to bring interface '$Interface' up"
+        return 1
+    fi
+
+    if ! is_yes "${SkipNoCarrier:-no}"; then
+        # Some cards are plain slow to come up. Don't fail immediately.
+        if ! timeout_wait "${TimeoutCarrier:-5}" '(( $(< "/sys/class/net/$Interface/carrier") ))'; then
+            report_error "No connection on interface '$Interface'"
+            bring_interface_down "$Interface"
+            return 1
+        fi
+    fi
+
+
+    if is_yes "${Auth8021X:-no}"; then
+        . "$SUBR_DIR/wpa"
+        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+        : ${WPADriver:=wired}
+        : ${TimeoutWPA:=15}
+
+        if ! wpa_start "$Interface" "$WPADriver" "$WPAConfigFile"; then
+            report_error "The WPA supplicant did not start for interface '$Interface'"
+            bring_interface_down "$Interface"
+            return 1
+        fi
+
+        if ! wpa_wait_until_state "$TimeoutWPA" "$Interface" "ASSOCIATED"; then
+            wpa_stop "$Interface"
+            bring_interface_down "$Interface"
+            report_error "WPA Authentication/Association Failed"
+            return 1
+        fi
+    fi
+
+    if ! ip_set; then
+        stop_8021x
+        bring_interface_down "$Interface"
+        return 1
+    fi
+}
+
+openvpn_down() {
+    ip_unset
+    stop_8021x
+    bring_interface_down "$Interface"
+
+    systemctl stop openvpn@"$Vpn".service
+}
+
+# Stop wpa_supplicant if neccessary
+stop_8021x() {
+    if is_yes "${Auth8021X:-no}"; then
+        . "$SUBR_DIR/wpa"
+        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+        do_debug wpa_stop "$Interface"
+    fi
+}
+
+# vim: ft=sh ts=4 et sw=4:

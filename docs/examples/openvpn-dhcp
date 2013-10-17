@@ -1,0 +1,6 @@
+Description='Example vpn connection'
+TimeoutVPN=10
+Vpn=myvpn
+Interface=vpn
+IP=dhcp
+Connection=openvpn
