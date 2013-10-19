@@ -7,7 +7,7 @@
 usage()
 {
     cat << END
-Usage: wifi-menu [-h | --help] [-o | --obscure] [INTERFACE]
+Usage: wifi-menu [-h | --help] [-o | --obscure] [-n | --ask-name] [INTERFACE]
 
 Interactively connect to a wireless network on INTERFACE using netctl.
 If only one wireless interface is available, INTERFACE can be omitted.
@@ -16,6 +16,7 @@ Arguments:
   -h, --help     Show this help
   -o, --obscure  Show asterisks for the characters of the password
                  and store the password as a hexadecimal string
+  -n, --ask-name Ask for a profile name before creating it
 END
 }
 
@@ -98,6 +99,10 @@ create_profile()
 {
     local box flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
+    if [[ "$ASK_NAME" ]]; then
+        msg="Enter profile name"
+        PROFILE=$(dialog --inputbox "$msg" 10 40 "$PROFILE" --stdout) || return $?
+    fi
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
     flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
     if [[ "$flags" =~ WPA|WEP ]]; then
@@ -171,6 +176,10 @@ while [[ "$1" = -* ]]; do
             ;;
         -o|--obscure)
             OBSCURE=1
+            shift
+            ;;
+        -n|--ask-name)
+            ASK_NAME=1
             shift
             ;;
         -*)
