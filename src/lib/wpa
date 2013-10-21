@@ -198,7 +198,6 @@ wpa_make_config_file() {
         report_debug "Could not create the configuration file '$config_file'"
         return 1
     fi
-    chmod 600 "$config_file"
 
     echo "ctrl_interface=/run/wpa_supplicant" >> "$config_file"
     echo "ctrl_interface_group=${WPAGroup:-wheel}" >> "$config_file"
