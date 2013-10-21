@@ -8,10 +8,11 @@ tuntap_up() {
     if is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"
         return 1
-    else
-        ip tuntap add dev "$Interface" mode "$Mode" \
-            ${User:+user "$User"} ${Group:+group "$Group"}
     fi
+
+    ip tuntap add dev "$Interface" mode "$Mode" \
+        ${User:+user "$User"} ${Group:+group "$Group"}
+
     bring_interface_up "$Interface"
     IP=${IP-no} ip_set
 }

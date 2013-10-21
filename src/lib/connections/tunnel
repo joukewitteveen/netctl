@@ -8,13 +8,10 @@ tunnel_up() {
     if is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"
         return 1
-    else
-        ip tunnel add "$Interface" mode "$Mode" remote "$Remote"
     fi
 
-    if [[ -n "$Local" ]]; then
-        ip tunnel change "$Interface" local "$Local"
-    fi
+    ip tunnel add "$Interface" mode "$Mode" remote "$Remote" \
+        ${Local+local "$Local"}
 
     bring_interface_up "$Interface"
     ip_set
