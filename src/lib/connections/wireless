@@ -19,7 +19,7 @@ wireless_up() {
     : ${TimeoutWPA:=15}
 
     if [[ $RFKill ]]; then
-        enable_rf "$Interface" "$RFKill" || return 1
+        rf_enable "$Interface" "$RFKill" || return 1
     fi
 
     # Kill any lingering WPA supplicants
@@ -73,7 +73,7 @@ wireless_down() {
     wpa_stop "$Interface"
     bring_interface_down "$Interface" || return 1
     if [[ $RFKill ]]; then
-        disable_rf "$Interface" "$RFKill"
+        rf_disable "$Interface" "$RFKill"
     fi
 }
 

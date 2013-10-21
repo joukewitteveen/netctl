@@ -177,7 +177,7 @@ start() {
         source "$PROFILE_DIR/interfaces/$interface"
     fi
     if [[ $RFKill ]]; then
-        enable_rf "$interface" "$RFKill" || return 1
+        rf_enable "$interface" "$RFKill" || return 1
     fi
 
 
@@ -227,7 +227,7 @@ stop() {
     fi
     timeout_wait 1 '! wpa_is_active "$interface"' || wpa_stop "$interface"
     ip link set dev "$interface" down
-    [[ $RFKill ]] && disable_rf "$interface" "$RFKill"
+    [[ $RFKill ]] && rf_disable "$interface" "$RFKill"
     return 0
 }
 
