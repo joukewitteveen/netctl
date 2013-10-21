@@ -247,6 +247,7 @@ wpa_make_config_block() {
     [[ $AP ]] && echo "bssid=${AP,,}"
     is_yes "${Hidden:-no}" && echo "scan_ssid=1"
     is_yes "${AdHoc:-no}" && echo "mode=1"
+    [[ $ScanFrequencies ]] && echo "scan_freq=$ScanFrequencies"
     [[ $Priority ]] && echo "priority=$Priority"
 }
 

@@ -235,6 +235,10 @@ of the `wireless' type:
 'AdHoc='::
     Whether or not to use ad-hoc mode. Defaults to `++no++'.
 
+'ScanFrequencies='::
+    A space-separated list of frequencies in MHz to scan when searching
+    for the network. Defaults to all available frequencies.
+
 'Priority='::
     Priority group for the network. In case of automatic profile
     selection, the matched network with the highest priority will be
