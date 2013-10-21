@@ -172,7 +172,7 @@ network. In particular, these connection types are +ethernet+,
 
 'TimeoutDHCP='::
     Maximum time, in seconds, to wait for DHCP to be successful.
-    Defaults to `++10++'.
+    Defaults to `++30++'.
 
 'TimeoutDAD='::
     Maximum time, in seconds, to wait for IPv6's Duplicate Address
