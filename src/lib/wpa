@@ -219,11 +219,15 @@ wpa_make_config_block() {
       wep)
         echo "key_mgmt=NONE"
         echo "wep_tx_keyidx=0"
-        echo "wep_key0=$(wpa_quote "$Key")"
+        if (( ${#Key} % 2 == 0 )) && [[ "$key" = +([[:xdigit:]]) ]]; then
+            echo "wep_key0=$Key"
+        else
+            echo "wep_key0=$(wpa_quote "$Key")"
+        fi
       ;;
       wpa)
         echo "proto=RSN WPA"
-        if [[ "${#Key}" -eq 64 ]]; then
+        if [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
             echo "psk=$Key"
         else
             echo "psk=$(wpa_quote "$Key")"
