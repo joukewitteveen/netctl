@@ -15,7 +15,12 @@ report_notice() {
 }
 
 report_error() {
-    echo "$*"
+    local prefix="<3>" suffix=""
+    if [[ -t 2 ]]; then
+        prefix=$(tput bold; tput setaf 1)
+        suffix=$(tput sgr0)
+    fi
+    echo "$prefix$*$suffix" >&2
 }
 
 report_debug() {
@@ -23,7 +28,7 @@ report_debug() {
 }
 
 exit_error() {
-    report_error "$@" >&2
+    report_error "$@"
     exit 1
 }
 
