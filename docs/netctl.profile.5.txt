@@ -42,6 +42,8 @@ AVAILABLE CONNECTION TYPES
 +bridge+::
     Network bridging. This connection type requires *brctl* to be
     available.
++dummy+::
+    For dummy interfaces.
 +pppoe+::
     For PPPoE connections.
 +mobile_ppp+::
@@ -296,6 +298,12 @@ connections of the `bridge' type:
 'SkipForwardingDelay='::
     Skip \(R)STP and immediately activate all bridge members. This can
     be useful when DHCP is used on the bridge.
+
+
+OPTIONS FOR `dummy' CONNECTIONS
+-------------------------------
+The name of the dummy interface is sepcified in 'Interface'. Only the
+*ip options* are understood for connections of the `dummy' type.
 
 
 OPTIONS FOR `pppoe' CONNECTIONS

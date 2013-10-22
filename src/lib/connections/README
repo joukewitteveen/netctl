@@ -26,3 +26,6 @@ available. The readily sourced files are:
 
 Here, <profile> is the profile file specifying the desired network
 configuration.
+
+A simple example of a connection file is that of the dummy connection
+type.
