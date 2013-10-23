@@ -2,9 +2,6 @@ Description='Example PPP mobile connection'
 Interface=ttyUSB0
 Connection=mobile_ppp
 
-# Debug pppd / chat output (separately from netctl)
-#PPPDebug=true
-
 # Use default route provided by the peer (default: true)
 #DefaultRoute=true
 # Use DNS provided by the peer (default: true)

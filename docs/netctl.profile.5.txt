@@ -332,11 +332,17 @@ the `pppoe' type:
     Use the default route provided by the peer (defaults to `true')
 
 'UsePeerDNS='::
-    Use the DNS provided by the peer (defaults to `true')
+    Use the DNS provided by the peer (defaults to `true').
+
+'PPPUnit='::
+    Set the ppp unit number in the interface name (ppp0, ppp1, etc.).
 
 'LCPEchoInterval=' and 'LCPEchoFailure='::
     These options override default LCP parameters from
     `/etc/ppp/options'.
+
+'OptionsFile='::
+    A file to read additional pppd options from.
 
 The following advanced options are also understood:
 
@@ -388,6 +394,9 @@ type:
     `3Gpref', `3Gonly', `GPRSpref', `GPRSonly', `None'. This generates
     AT commands specific to certain Huawei modems; all other devices
     should use `None'.
+
+'OptionsFile='::
+    A file to read additional pppd options from.
 
 
 OPTIONS FOR `tunnel' CONNECTIONS

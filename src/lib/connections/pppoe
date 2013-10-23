@@ -8,7 +8,9 @@ quote_word() {
 }
 
 pppoe_up() {
-    local cfg
+    local options pidfile pppn
+    options="$STATE_DIR/pppoe.$Interface.$Profile/options"
+    pidfile="/var/run/ppp-$Profile.pid"
 
     if ! is_interface "$Interface"; then
         report_error "Interface '$Interface' does not exist"
@@ -19,61 +21,55 @@ pppoe_up() {
         return 1
     fi
 
-    mkdir -p "$STATE_DIR/pppoe.${Interface}.${Profile}/"
-    chmod 700 "$STATE_DIR/pppoe.${Interface}.${Profile}/"
-    cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
-    echo "linkname $(quote_word "${Profile}")" > "${cfg}"
-    chmod 600 "${cfg}"
+    mkdir -p "$(dirname "$options")"
+    cat >> "$options" << EOF
+linkname $(quote_word "$Profile")
+${PPPUnit:+unit $(quote_word "$PPPUnit")}
+updetach
+plugin rp-pppoe.so
+nic-$Interface
 
-    echo "plugin rp-pppoe.so" >> "${cfg}"
-    echo "nic-${Interface}" >> "${cfg}"
-    echo "noauth" >> "${cfg}"
-    if is_yes "${DefaultRoute:-yes}"; then
-        echo "defaultroute" >> "${cfg}"
-    else
-        echo "nodefaultroute" >> "${cfg}"
-    fi
-    if is_yes "${UsePeerDNS:-yes}"; then
-        echo "usepeerdns" >> "${cfg}"
-    fi
-    echo "maxfail ${MaxFail:-5}" >> "${cfg}"
-    echo "updetach" >> "${cfg}"
-    if [[ ${ConnectionMode} == demand ]]; then
-        echo "demand" >> "${cfg}"
-        echo "idle ${IdleTimeout}" >> "${cfg}"
-    else
-        echo "persist" >> "${cfg}"
-    fi
-    echo "user $(quote_word "${User}")" >> "${cfg}"
-    echo "password $(quote_word "${Password}")" >> "${cfg}"
-    [[ -n ${LCPEchoInterval} ]] && echo "lcp-echo-interval ${LCPEchoInterval}" >> "${cfg}"
-    [[ -n ${LCPEchoFailure} ]] && echo "lcp-echo-failure ${LCPEchoFailure}" >> "${cfg}"
-    [[ -n ${PPPoEService} ]] && echo "rp_pppoe_service $(quote_word "${PPPoEService}")" >> "${cfg}"
-    [[ -n ${PPPoEAC} ]] && echo "rp_pppoe_ac $(quote_word "${PPPoEAC}")" >> "${cfg}"
-    [[ -n ${PPPoESession} ]] && echo "rp_pppoe_sess $(quote_word "${PPPoESession}")" >> "${cfg}"
-    [[ -n ${PPPoEMAC} ]] && echo "pppoe-mac $(quote_word "${PPPoEMAC}")" >> "${cfg}"
-    [[ ${PPPoEIP6} == yes ]] && echo "+ipv6" >> "${cfg}"
+noauth
+$(is_yes "${DefaultRoute:-yes}" || printf no)defaultroute
+maxfail $(quote_word "${MaxFail:-5}")
+$(is_yes "${UsePeerDNS:-yes}" && printf usepeerdns)
+$(quote_word "${ConnectionMode:-persist}")
+$([[ $ConnectionMode == demand ]] && printf "idle %s" "$(quote_word "$IdleTimeout")")
+${LCPEchoInterval:+lcp-echo-interval $(quote_word "$LCPEchoInterval")}
+${LCPEchoFailure:+lcp-echo-failure $(quote_word "$LCPEchoFailure")}
+${PPPoEService:+rp_pppoe_service $(quote_word "$PPPoEService")}
+${PPPoEAC:+rp_pppoe_ac $(quote_word "$PPPoEAC")}
+${PPPoESession:+rp_pppoe_sess $(quote_word "$PPPoESession")}
+${PPPoEMAC:+pppoe-mac $(quote_word "$PPPoEMAC")}
+$(is_yes "${PPPoEIP6:-no}" && printf +ipv6)
+$(is_yes "${PPPoEIP6:-yes}" || printf noipv6)
 
-    if ! $PPPD file "${cfg}"; then
-        rm "${cfg}"
-        rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
-        report_error "Couldn't make pppd connection."
+user $(quote_word "$User")
+password $(quote_word "$Password")
+${OptionsFile:+file $(quote_word "$OptionsFile")}
+EOF
+
+    if ! $PPPD file "$options"; then
+        rm "$options"
+        rmdir "$(dirname "$options")"
+        report_error "Could not establish a ppp connection for profile '$Profile'."
         return 1
     fi
+
+    [[ -r $pidfile ]] || return 0
+    pppn=$(grep -l "$(< "$pidfile")" /var/run/ppp[[:digit:]]*.pid)
+    report_notice "PPP unit for profile '$Profile': ${pppn:9:-4}"
 }
 
 pppoe_down() {
-    local cfg pidfile pid
-    cfg="$STATE_DIR/pppoe.${Interface}.${Profile}/options"
-    pidfile="/var/run/ppp-${Profile}.pid"
+    local options pidfile
+    options="$STATE_DIR/pppoe.$Interface.$Profile/options"
+    pidfile="/var/run/ppp-$Profile.pid"
 
-    if [[ -e $pidfile ]]; then
-        read pid < "$pidfile"
-        [[ "$pid" ]] && kill "$pid"
-    fi
+    [[ -r $pidfile ]] && kill "$(< "$pidfile")"
 
-    rm "${cfg}"
-    rmdir "$STATE_DIR/pppoe.${Interface}.${Profile}/"
+    rm "$options"
+    rmdir "$(dirname "$options")"
 
     bring_interface_down "$Interface"
 }

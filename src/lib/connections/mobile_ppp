@@ -11,18 +11,14 @@ quote_word() {
 }
 
 mobile_ppp_up() {
-    local cfg
-    local chat
-
-    mkdir -p "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
-    chmod 700 "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
-    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
+    local options chat
+    options="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
     chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
-    echo "linkname $(quote_word "${Profile}")" > "${cfg}"
-    chmod 600 "${cfg}"
 
-    cat >> "${cfg}" << EOF
-${Interface}
+    mkdir -p "$(dirname "$options")"
+    cat >> "$options" << EOF
+linkname $(quote_word "$Profile")
+$(quote_word "$Interface")
 921600
 lock
 crtscts
@@ -30,61 +26,19 @@ modem
 passive
 novj
 holdoff 10
-maxfail ${MaxFail:-5}
+
+noauth
+$(is_yes "${DefaultRoute:-yes}" || printf no)defaultroute
+maxfail $(quote_word "${MaxFail:-5}")
+$(is_yes "${UsePeerDNS:-yes}" && printf usepeerdns)
+hide-password
+${User:+user $(quote_word "$User")}
+${Password:+password $(quote_word "$Password")}
+connect $(quote_word "/usr/sbin/chat -v -t15 -f $(quote_word "$chat")")
+${OptionsFile:+file $(quote_word "$OptionsFile")}
 EOF
 
-    # Debug pppd output separately from netctl
-    if is_yes "${PPPDebug:-yes}"; then
-        echo "debug" >> "${cfg}"
-    fi
-
-    # Sets up route
-    if is_yes "${DefaultRoute:-yes}"; then
-        echo "defaultroute" >> "${cfg}"
-    else
-        echo "nodefaultroute" >> "${cfg}"
-    fi
-    if is_yes "${UsePeerDNS:-yes}"; then
-        echo "usepeerdns" >> "${cfg}"
-    fi
-
-    # Writes username and password
-    echo "noauth" >> "${cfg}"
-    echo "hide-password" >> ${cfg}
-    [[ -n ${User} ]] && echo "user $(quote_word "${User}")" >> "${cfg}"
-    [[ -n ${Password} ]] && echo "password $(quote_word "${Password}")" >> "${cfg}"
-
-    #echo "'OK' @/etc/ppp/chatscripts/pin" >> "${chat}"
-    if [ -n "${Pin}" ]; then
-        PinStr="'OK' 'AT+CPIN=\"${Pin}\"'"
-    else
-        PinStr="'OK' 'AT'"
-    fi
-    report_debug echo $PinStr
-
-    # Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
-    # Only works for Huawei modems
-    #echo "'OK' @/etc/ppp/chatscripts/mode" >> "${chat}"
-    case "${Mode}" in
-        3Gonly)
-            ModeStr="'OK' 'AT\^SYSCFG=14,2,3fffffff,0,1'"
-            ;;
-        3Gpref)
-            ModeStr="'OK' 'AT\^SYSCFG=2,2,3fffffff,0,1'"
-            ;;
-        GPRSonly)
-            ModeStr="'OK' 'AT\^SYSCFG=13,1,3fffffff,0,0'"
-            ;;
-        GPRSpref)
-            ModeStr="'OK' 'AT\^SYSCFG=2,1,3fffffff,0,0'"
-            ;;
-        *)
-            ModeStr="'OK' 'AT'"
-            ;;
-    esac
-
-    # Now that we’ve got the ppp configuration set up, write the chat script
-    cat >> "${chat}" << EOF
+    cat >> "$chat" << EOF
 ECHO ON
 ABORT 'BUSY'
 ABORT 'NO CARRIER'
@@ -100,40 +54,40 @@ TIMEOUT 6
 'OK-AT-OK' 'ATZ'
 TIMEOUT 3
 'OK' 'AT+CFUN=1'
-${PinStr}
+'OK' 'AT${Pin:++CPIN=$(quote_word "$Pin")}'
 'OK\d-AT-OK' 'ATI'
 'OK' 'ATZ'
 'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'
-${ModeStr}
-'OK-AT-OK' 'AT+CGDCONT=1,"IP","${AccessPointName}"'
+'OK' 'AT$(case $Mode in
+  3Gonly) printf "\^SYSCFG=14,2,3fffffff,0,1";;
+  3Gpref) printf "\^SYSCFG=2,2,3fffffff,0,1";;
+  GPRSonly) printf "\^SYSCFG=13,1,3fffffff,0,0";;
+  GPRSpref) printf "\^SYSCFG=2,1,3fffffff,0,0";;
+esac)'
+'OK-AT-OK' 'AT+CGDCONT=1,"IP",$(quote_word "$AccessPointName")'
 'OK' 'ATDT*99#'
 TIMEOUT 30
 CONNECT ''
 EOF
 
-    # Add the chat script line to the configuration
-    echo "connect \"/usr/sbin/chat -v -t15 -f ${chat}\"" >> "${cfg}"
-
-    if ! $PPPD file "${cfg}"; then
-        rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
-        report_error "Couldn't make pppd connection."
+    if ! $PPPD file "$options"; then
+        rm "$options" "$chat"
+        rmdir "$(dirname "$options")"
+        report_error "Could not establish a ppp connection for profile '$Profile'."
         return 1
     fi
 }
 
 mobile_ppp_down() {
-    local cfg chat pidfile pid
-    cfg="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
-    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
-    pidfile="/var/run/ppp-${Profile}.pid"
+    local options chat pidfile
+    options="$STATE_DIR/mobile_ppp.$Interface.$Profile/options"
+    chat="$STATE_DIR/mobile_ppp.$Interface.$Profile/modem.chat"
+    pidfile="/var/run/ppp-$Profile.pid"
 
-    if [[ -e $pidfile ]]; then
-        read pid < "$pidfile"
-        [[ "$pid" ]] && kill "$pid"
-    fi
+    [[ -r $pidfile ]] && kill "$(< "$pidfile")"
 
-    rm "${cfg}" "${chat}"
-    rmdir "$STATE_DIR/mobile_ppp.${Interface}.${Profile}/"
+    rm "$options" "$chat"
+    rmdir "$(dirname "$options")"
 }
 
 
