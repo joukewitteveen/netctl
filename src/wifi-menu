@@ -7,7 +7,7 @@
 usage()
 {
     cat << END
-Usage: wifi-menu [-h | --help] [-o | --obscure] [-n | --ask-name] [INTERFACE]
+Usage: wifi-menu [-h | --help] [-o | --obscure] [INTERFACE]
 
 Interactively connect to a wireless network on INTERFACE using netctl.
 If only one wireless interface is available, INTERFACE can be omitted.
@@ -16,7 +16,6 @@ Arguments:
   -h, --help     Show this help
   -o, --obscure  Show asterisks for the characters of the password
                  and store the password as a hexadecimal string
-  -n, --ask-name Ask for a profile name before creating it
 END
 }
 
@@ -94,16 +93,37 @@ ssid_to_profile()
     return 1
 }
 
+# Asks the user for a profile name, defaulting to $1, and printing the name to
+# stdout -- returning 1 if canceled
+ask_profile_name()
+{
+    PROFILE="$1"
+    msg="Enter profile name"
+    PROFILE=$(dialog --inputbox "$msg" 8 60 "$PROFILE" --stdout) || return $?
+    if [[ -e "$PROFILE_DIR/$PROFILE" ]]; then
+        # Profile with this name already exists, confirm overwrite
+        if dialog --yesno "The profile '$PROFILE' already exists. Overwrite?" 8 60 --stdout; then
+            # Overwrite, return the profile name
+            echo $PROFILE
+            return 0
+        else
+            # Don't overwrite, ask for a different name
+            ask_profile_name $PROFILE
+            return $?
+        fi
+    else
+        echo $PROFILE
+        return 0
+    fi
+}
+
 # Creates a profile for ssid $1.
 create_profile()
 {
     local box flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
-    if [[ "$ASK_NAME" ]]; then
-        msg="Enter profile name"
-        PROFILE=$(dialog --inputbox "$msg" 10 40 "$PROFILE" --stdout) || return $?
-    fi
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
+    PROFILE=$(ask_profile_name "$PROFILE") || return 1
     flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
     if [[ "$flags" =~ WPA|WEP ]]; then
         security=${BASH_REMATCH[0],,}
@@ -176,10 +196,6 @@ while [[ "$1" = -* ]]; do
             ;;
         -o|--obscure)
             OBSCURE=1
-            shift
-            ;;
-        -n|--ask-name)
-            ASK_NAME=1
             shift
             ;;
         -*)
