@@ -93,12 +93,28 @@ ssid_to_profile()
     return 1
 }
 
+# Ask the user for the name of the new profile
+confirm_profile()
+{
+    local msg="Enter a name for the new profile\n"
+    PROFILE=$(dialog --inputbox "$msg" 10 50 "$PROFILE" --stdout) || return $?
+    if [[ $PROFILE = */* ]]; then
+        PROFILE=${PROFILE//\//_}
+        confirm_profile
+    elif [[ -e "$PROFILE_DIR/$PROFILE" ]]; then
+        msg="A profile by the name '$PROFILE' already exists.
+Do you want to overwrite it?"
+        dialog --yesno "$msg" 10 50 --stdout || confirm_profile
+    fi
+}
+
 # Creates a profile for ssid $1.
 create_profile()
 {
     local box flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
+    confirm_profile || return $?
     flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
     if [[ "$flags" =~ WPA|WEP ]]; then
         security=${BASH_REMATCH[0],,}
