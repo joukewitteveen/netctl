@@ -1,3 +1,10 @@
+netctl 1.4
+- Add support for dummy interfaces
+- Add support for limiting the wireless frequencies to scan
+- Add support for custom options files for PPP connections
+- Change umask to 077, and the default DHCP timeout to 30 seconds
+- Assorted fixes, including fixes to tunnel connections and WEP key handling
+
 netctl 1.3
 - Add real functionality to automatic profile handling (netctl-auto)
 - Switch to iproute2 for bridge connections
