@@ -128,6 +128,8 @@ create_profile()
         if [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
             if [[ "$OBSCURE" ]]; then
                 key='\"'$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")
+            elif [[ "$flags" =~ WEP && "$key" = +([[:xdigit:]]) ]] && ((${#key} % 2 == 0)); then
+                key='\"'$key
             else
                 key=$(printf "%q" "$key")
             fi
