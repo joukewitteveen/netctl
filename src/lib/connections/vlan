@@ -2,6 +2,10 @@
 
 . "$CONN_DIR/ethernet"
 
+macvlan_valid_mode() {
+    [[ "$1" =~ (bridge)|(passthru)|(private)|(vepa) ]] 
+}
+
 vlan_up() {
     if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
         report_error "No unique physical device for VLAN interface '$Interface' specified"
@@ -12,7 +16,31 @@ vlan_up() {
         return 1
     else
         bring_interface_up "$BindsToInterfaces"
-        ip link add link "$BindsToInterfaces" name "$Interface" type vlan id "$VLANID"
+        case "$Type" in
+            macvlan)
+                if [ -z "$Mode" ]; then
+                    report_error "Mode not set for MAC VLAN interface $Interface"
+                    return 1
+                else
+                    if macvlan_valid_mode "$Mode"; then
+                        if [ -z "$MACAddress" ]; then
+                            ip link add link "$BindsToInterface" name "$Interface" type macvlan mode "$Mode"
+                        else
+                            ip link add link "$BindsToInterdace" name "$Interface" address "$MACAddress" type macvlan mode "$Mode"
+                        fi
+                    else
+                        report_error "Invalid mode '$Mode' for MAC VLAN interface $Interface"
+                        return 1
+                    fi
+                fi
+            ;;
+            vlan)
+                ip link add link "$BindsToInterfaces" name "$Interface" type vlan id "$VLANID"
+            ;;
+            *)
+                ip link add link "$BindsToInterfaces" name "$Interface" type vlan id "$VLANID"
+            ;;
+        esac
     fi
 
     ethernet_up

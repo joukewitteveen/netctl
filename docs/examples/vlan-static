@@ -1,8 +1,14 @@
 Description='Virtual LAN 11 on interface eth0'
 Interface=eth0.11
 Connection=vlan
+Type="vlan"
 # The variable name is plural, but needs precisely one interface
 BindsToInterfaces=eth0
+# Optional static MAC address for macvlan type links, random if blank
+MACAddress=""
+# Mode for macvlan type links
+Mode="bridge"
+# ID for vlan type links
 VLANID=11
 IP=static
 Address="192.168.0.100/24"
