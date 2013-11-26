@@ -1,7 +1,13 @@
 Description='Virtual LAN 55 on interface eth0 using DHCP'
 Interface=eth0.55
 Connection=vlan
+Type="vlan"
 # The variable name is plural, but needs precisely one interface
 BindsToInterfaces=eth0
+# Optional static MAC address for macvlan type links, random if blank
+MACAddress=""
+# Mode for macvlan type links
+Mode="bridge"
+# ID for vlan type links
 VLANID=55
 IP=dhcp
