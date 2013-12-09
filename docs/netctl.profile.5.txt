@@ -413,6 +413,9 @@ the *ip options*, the following are understood for connections of the
 
 'Remote='::
     The address of the remote end of the tunnel.
+    
+'PoinToPoint='::
+    The address of the Peer-to-Peer end of the tunnel.
 
 
 OPTIONS FOR `tuntap' CONNECTIONS
