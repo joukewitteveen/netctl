@@ -54,6 +54,7 @@ ip_set() {
                 report_error "DHCP IP lease attempt failed on interface '$Interface'"
                 return 1
             fi
+            chmod 0644 "/run/dhcpcd-${Interface}.pid"
           ;;
           dhclient)
             rm -f "/run/dhclient-${Interface}.pid"
@@ -61,6 +62,7 @@ ip_set() {
                 report_error "DHCP IP lease attempt failed on interface '$Interface'"
                 return 1
             fi
+            chmod 0644 "/run/dhclient-${Interface}.pid"
           ;;
           *)
             report_error "Unsupported DHCP client: '$DHCPClient'"
@@ -114,6 +116,7 @@ ip_set() {
             report_error "DHCPv6 IP lease attempt failed on interface '$Interface'"
             return 1
         fi
+        chmod 0644 "/run/dhclient6-${Interface}.pid"
       ;;
       stateless|static)
         for addr in "${Address6[@]}"; do
