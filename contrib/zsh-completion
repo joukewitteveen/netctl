@@ -35,27 +35,34 @@ _netctl_commands() {
     _describe "netctl commands" _commands
 }
 
+_netctl-auto_commands() {
+    local -a _commands
+    _commands=(
+        'list:List available profiles'
+        'current:List currently active profiles'
+        'switch-to:Switch to a profile, enable it if necessary'
+        'enable:Enable a profile for automatic selection'
+        'disable:Disable a profile temporarily for automatic selection'
+        'enable-all:Enable all profiles for automatic selection'
+        'disable-all:Disable all profiles temporarily for automatic selection'
+      )
+    _describe "netctl-auto commands" _commands
+}
 
 case $service in
-  netctl)
+  netctl|netctl-auto)
     case $CURRENT in
       2)
         _arguments \
           '(- :)--version[display version information]' \
           '(- :)--help[display help message]' \
-          '(-)::netctl commands:_netctl_commands'
+          '(-)::netctl commands:_${service}_commands'
       ;;
       3)
         shift words
         [[ $words[1] != -* ]] &&
           curcontext="${curcontext%:*}-${words[1]}:" _netctl_command
       ;;
-    esac
-  ;;
-  netctl-auto)
-    case $CURRENT in
-      2) compadd start stop;;
-      3) compadd "${(f)$(_wireless_interfaces)}";;
     esac
   ;;
   wifi-menu)
