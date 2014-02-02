@@ -24,10 +24,11 @@ Commands:
 END
 }
 
-## Print a list of interfaces for which wpa_actiond is active
-list_actiond_interfaces() {
-    find "$STATE_DIR" -maxdepth 1 -type f -name 'wpa_actiond_*.pid' \
-        -exec basename -s ".pid" -a {} + | cut -d'_' -f3-
+## Print a list of interfaces for which netctl-auto is active
+list_netctl_auto_interfaces() {
+    systemctl --full --no-legend --no-pager \
+        --type=service --state=running list-units | \
+        sed -nr 's/^netctl-auto@([[:alnum:]]+).*/\1/p'
 }
 
 ## List all profiles available to the WPA supplicant
@@ -38,7 +39,7 @@ list_actiond_interfaces() {
 ##  PROFILE..   profile name, may contain spaces
 list_wpa_profiles() {
     local interface
-    for interface in $(list_actiond_interfaces); do
+    for interface in $(list_netctl_auto_interfaces); do
         local id ssid bssid flags
         while IFS=$'\t' read -r id ssid bssid flags; do
             local flag="e"
@@ -82,7 +83,7 @@ profile_enable_disable() {
     if [ -n "$profile" ]; then
         read -r interfaces id < <(get_wpa_network_id "$profile") || return 1
     else
-        interfaces=$(list_actiond_interfaces)
+        interfaces=$(list_netctl_auto_interfaces)
     fi
 
     case $action in
@@ -148,7 +149,7 @@ switch_to() {
 ## List currently active profiles
 current() {
     local interface
-    for interface in $(list_actiond_interfaces); do
+    for interface in $(list_netctl_auto_interfaces); do
         local state=$(wpa_get_state "$interface")
         if [[ "$state" == "COMPLETED" ]]; then
             wpa_call "$interface" status | sed -n 's/^id_str=//p'
