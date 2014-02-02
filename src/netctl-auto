@@ -253,6 +253,9 @@ case $# in
       switch-to)
         switch_to "$2";;
       start|stop)
+        if [[ -t 0 ]]; then
+            exit_error "Use 'systemctl $1 netctl-auto@$2' to $1 netctl-auto."
+        fi
         ensure_root "$(basename "$0")"
         "$1" "$2";;
       *)
