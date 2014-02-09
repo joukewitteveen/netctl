@@ -37,8 +37,7 @@ AVAILABLE CONNECTION TYPES
     For wireless connections. This connection type requires
     *wpa_supplicant* to be available.
 +bond+::
-    Network bonding. This connection type requires *ifenslave* to be
-    available.
+    Network bonding.
 +bridge+::
     Network bridging. This connection type requires *brctl* to be
     available.
