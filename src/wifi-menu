@@ -19,6 +19,16 @@ Arguments:
 END
 }
 
+# Prepares $1 for use in a special quoting context
+quote_safe()
+{
+    if [[ "$1" = \"* ]]; then
+        printf '""%s"' "$1"
+    else
+        printf "%s" "$1"
+    fi
+}
+
 # Fills PROFILES and ESSIDS with the profile names and essids of the profiles
 # for interface $1.
 init_profiles()
@@ -125,13 +135,21 @@ create_profile()
         [[ "$OBSCURE" ]] && box="--insecure --passwordbox" || box="--inputbox"
         msg="Enter $security security key for\n'$1'"
         key=$(dialog $box "$msg" 10 40 --stdout) || return $?
-        if [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
-            if [[ "$OBSCURE" ]]; then
-                key=$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")
+        if [[ "${BASH_REMATCH[0]}" = "WEP" ]]; then
+            if [[ "$key" = +([[:xdigit:]][[:xdigit:]]) ]]; then
+                key="\"$key"
             else
-                key=$(printf "%q" "$key")
+                key=$(quote_safe "$key")
             fi
-        elif ! [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
+        elif [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
+            if [[ "$OBSCURE" ]]; then
+                key="\"$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")"
+            else
+                key=$(quote_safe "$key")
+            fi
+        elif [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
+            key="\"$key"
+        else
             return 4
         fi
     fi
@@ -140,9 +158,9 @@ Description='Automatically generated profile by wifi-menu'
 Interface=$INTERFACE
 Connection=wireless
 Security=$security
-ESSID=$(printf "%q" "$1")
+ESSID=$(printf "%q" "$(quote_safe "$1")")
 IP=dhcp
-${key+Key=$key}
+${key+Key=$(printf "%q" "$key")}
 EOF
     printf "%s" "$PROFILE"
     return 0
