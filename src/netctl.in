@@ -24,6 +24,10 @@ Commands:
 END
 }
 
+sd_booted() {
+    [[ -d /run/systemd/system ]]
+}
+
 sd_escape() {
     local IFS=''
     # Prevent a recursion loop on backspaces
@@ -122,7 +126,6 @@ unit_enable() {
     mkdir -p "@systemdsystemconfdir@/multi-user.target.wants"
     echo "ln -s '$unit' '${unit/system\//system/multi-user.target.wants/}'"
     ln -s "$unit" "${unit/system\//system/multi-user.target.wants/}"
-    systemctl daemon-reload
 }
 
 unit_disable() {
@@ -135,7 +138,6 @@ unit_disable() {
         return 1
     fi
     do_debug rm "$unit"
-    systemctl daemon-reload
 }
 
 
@@ -165,11 +167,17 @@ case $# in
         switch_to "$2";;
       enable|disable)
         ensure_root "$(basename "$0")"
-        "unit_$1" "$2";;
+        "unit_$1" "$2"
+        if sd_booted; then
+            systemctl daemon-reload
+        fi;;
       reenable)
         ensure_root "$(basename "$0")"
         unit_disable "$2"
-        unit_enable "$2";;
+        unit_enable "$2"
+        if sd_booted; then
+            systemctl daemon-reload
+        fi;;
       *)
         exit_error "$(usage)";;
     esac;;
