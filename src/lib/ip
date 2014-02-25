@@ -1,6 +1,26 @@
 ## /usr/lib/network/globals needs to be sourced before this file
 
 
+## Interface a DHCP client
+# $1: DHCP client
+# $2: command
+# $3...: additional arguments
+dhcp_call() {
+    local client="$1" command="$2"
+    shift 2
+
+    if [[ ! -r "$SUBR_DIR/dhcp/$client" ]]; then
+        report_error "DHCP client '$client' is unsupported"
+        return 127
+    fi
+    if ! source "$SUBR_DIR/dhcp/$client"; then
+        report_error "DHCP client '$client' is not installed or not ready"
+        return 127
+    fi
+    "${client}_$command" "$@"
+}
+
+
 ## Add resolv.conf entries for an interface
 # $1: interface name
 # $2...: entries, one line per variable
@@ -43,30 +63,7 @@ ip_set() {
 
     case $IP in
       dhcp)
-        case ${DHCPClient:-dhcpcd} in
-          dhcpcd)
-            rm -f "/run/dhcpcd-$Interface".{pid,cache}
-            # If using own dns, tell dhcpcd to NOT replace resolv.conf
-            [[ $DNS ]] && DhcpcdOptions+=" -C resolv.conf"
-            do_debug dhcpcd -4qL -t "${TimeoutDHCP:-30}" $DhcpcdOptions "$Interface" |& report_debug "$(cat)"
-            # The first array value of PIPESTATUS is the exit status of dhcpcd
-            if (( PIPESTATUS != 0 )); then
-                report_error "DHCP IP lease attempt failed on interface '$Interface'"
-                return 1
-            fi
-          ;;
-          dhclient)
-            rm -f "/run/dhclient-${Interface}.pid"
-            if ! do_debug dhclient -4 -q -e "TIMEOUT=${TimeoutDHCP:-30}" -pf "/run/dhclient-$Interface.pid" $DhclientOptions "$Interface"; then
-                report_error "DHCP IP lease attempt failed on interface '$Interface'"
-                return 1
-            fi
-          ;;
-          *)
-            report_error "Unsupported DHCP client: '$DHCPClient'"
-            return 1
-          ;;
-        esac
+        dhcp_call "${DHCPClient:-dhcpcd}" start 4 || return
       ;;
       static)
         for addr in "${Address[@]}"; do
@@ -103,17 +100,8 @@ ip_set() {
     fi
 
     case "$IP6" in
-      dhcp*)
-        if ! type dhclient &>/dev/null; then
-            report_error "You need to install dhclient to use DHCPv6"
-            return 1
-        fi
-        [[ $IP6 == "dhcp-noaddr" ]] && DhclientOptions6+=" -S"
-        rm -f "/run/dhclient6-${Interface}.pid"
-        if ! do_debug dhclient -6 -q -e "TIMEOUT=${TimeoutDHCP:-30}" -pf "/run/dhclient6-${Interface}.pid" $DhclientOptions6 "$Interface"; then
-            report_error "DHCPv6 IP lease attempt failed on interface '$Interface'"
-            return 1
-        fi
+      dhcp|dhcp-noaddr)
+        dhcp_call "${DHCP6Client:-dhclient}" start 6 ${IP6:5} || return
       ;;
       stateless|static)
         for addr in "${Address6[@]}"; do
@@ -179,29 +167,8 @@ ip_set() {
 # $IP: type of IPv4 configuration
 # $IP6: type of IPv6 configuration
 ip_unset() {
-    local stop="-x"
-    if [[ $IP == "dhcp" ]]; then
-        case ${DHCPClient:-dhcpcd} in
-          dhcpcd)
-            if [[ -f "/run/dhcpcd-$Interface.pid" ]]; then
-                is_yes "${DHCPReleaseOnStop:-no}" && stop="-k"
-                do_debug dhcpcd -q $stop "$Interface" >/dev/null
-            fi
-          ;;
-          dhclient)
-            if [[ -f "/run/dhclient-$Interface.pid" ]]; then
-                is_yes "${DHCPReleaseOnStop:-no}" && stop="-r"
-                do_debug dhclient -q $stop "$Interface" -pf "/run/dhclient-$Interface.pid" >/dev/null
-            fi
-          ;;
-        esac
-    fi
-    if [[ $IP6 == dhcp* ]]; then
-        if [[ -f "/run/dhclient6-$Interface.pid" ]]; then
-            do_debug dhclient -6 -q -x "$Interface" -pf "/run/dhclient6-$Interface.pid" >/dev/null
-        fi
-    fi
-
+    [[ $IP == "dhcp" ]] && dhcp_call "${DHCPClient:-dhcpcd}" stop 4
+    [[ $IP6 == dhcp* ]] && dhcp_call "${DHCP6Client:-dhclient}" stop 6
     [[ $DNS ]] && resolvconf -d "$Interface"
     ip route flush dev "$Interface" &>/dev/null
     ip -6 route flush dev "$Interface" &>/dev/null

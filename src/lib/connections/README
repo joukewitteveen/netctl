@@ -10,7 +10,7 @@ for the aviancarrier connection type will be provided by the file:
 Files that implement support for a connection type should NOT be
 executable. Such files should contain valid Bash code, among which two
 functions, namely <connection_type>_up and <connection_type>_down. For
-the aviancarrier file this would be:
+the aviancarrier file these would be:
 
   aviancarrier_up
   aviancarrier_down

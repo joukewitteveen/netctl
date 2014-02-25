@@ -137,17 +137,19 @@ network. In particular, these connection types are +ethernet+,
     An array of custom routes of the form +
     `**<address range>** via **<gateway>**'.
 
-'DHCPClient=' [requires a DHCP setting]::
-    The name of the preferred DHCP client. Supported options are
-    `dhcpcd' and `dhclient'. Defaults to `dhcpcd'.
+'DHCPClient=' [requires 'IP=dhcp']::
+    The name of the DHCP client to use. Clients may accept additional
+    options through client-specific variables. By default, *netctl*
+    comes with support for `dhcpcd' and `dhclient'. Defaults to
+    `++dhcpcd++'.
+
+'DHCP6Client=' [requires 'IP6=dhcp' or 'IP6=dhcp-noaddr']::
+    The name of the DHCPv6 client to use. By default, only `dhclient'
+    is supported. Defaults to `++dhclient++'.
 
 'DHCPReleaseOnStop='::
     Set to `++yes++' to release the DHCP lease when the profile is
     stopped.
-
-'DhcpcdOptions=', 'DhclientOptions=', 'DhclientOptions6='::
-    Additional options to be passed to the DHCP client. Do not use this
-    unless you know what you are doing.
 
 'IPCustom=()'::
     An array of argument lines to pass to `ip`. This can be used to

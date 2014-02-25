@@ -1,0 +1,34 @@
+Support for dhcp clients is implemented by files in
+
+  /usr/lib/network/dhcp/
+
+The file name determines the name of the client for the profile, so
+support for a client named dhcpcd is provided by the file:
+
+  /usr/lib/network/connections/dhcpcd
+
+Files that implement support for a connection type should NOT be
+executable. Such files should contain valid Bash code, among which two
+functions, namely <client_name>_start and <client_name>_stop. For
+the client named dhcpcd these would be:
+
+  dhcpcd_start
+  dhcpcd_stop
+
+These functions are responsible for starting and stopping the dhcp
+client. When the functions are called, three bash files are already
+sourced, so all functions and variables in those files are available.
+The readily sourced files are:
+
+  /usr/lib/network/network
+  /usr/lib/network/globals
+  /etc/netctl/<profile>
+
+Here, <profile> is the profile file specifying the desired network
+configuration.
+
+When called, the start and stop functions get as their first argument
+the version of the IP protocol that the dhcp client is expected to use.
+In the case of starting the client for IPv6, an additional second
+argument 'noaddr' may be supplied, which indicates that the dhcp client
+should configure everything but an IP address.

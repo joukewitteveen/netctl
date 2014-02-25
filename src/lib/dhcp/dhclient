@@ -1,0 +1,27 @@
+type dhclient &> /dev/null || return
+
+dhclient_start() {
+    local options pidfile="/run/dhclient$1-$Interface.pid"
+    case $1 in
+      4) options=$DhclientOptions;;
+      6) options=$DhclientOptions6;;
+      *) return 1;;
+    esac
+    [[ $2 == "noaddr" ]] && options+=" -S"
+    rm -f "$pidfile"
+    if ! do_debug dhclient -$1 -q -e "TIMEOUT=${TimeoutDHCP:-30}" -pf "$pidfile" $options "$Interface"; then
+        report_error "DHCP IPv$1 lease attempt failed on interface '$Interface'"
+        return 1
+    fi
+}
+
+dhclient_stop() {
+    local stop="-x" pidfile="/run/dhclient$1-$Interface.pid"
+    if [[ -f $pidfile ]]; then
+        is_yes "${DHCPReleaseOnStop:-no}" && stop="-r"
+        do_debug dhclient -$1 -q $stop "$Interface" -pf "$pidfile" > /dev/null
+    fi
+}
+
+
+# vim: ft=sh ts=4 et sw=4:
