@@ -1,7 +1,6 @@
 NETCTL_VERSION="notpackaged"
 PROFILE_DIR="/etc/netctl"
 SUBR_DIR="/usr/lib/network"
-CONN_DIR="$SUBR_DIR/connections"
 STATE_DIR="/run/network"
 STATE_FILE="${NETCTL_STATE_FILE:-/var/lib/netctl/netctl.state}"
 
@@ -117,13 +116,13 @@ load_profile() {
     if [[ -z $Interface ]]; then
         exit_error "Profile '$1' does not specify an interface"
     fi
-    if [[ ! -r "${Connection:+$CONN_DIR/$Connection}" ]]; then
+    if [[ ! -r "${Connection:+$SUBR_DIR/connections/$Connection}" ]]; then
         exit_error "Profile '$1' does not specify a valid connection"
     fi
     if [[ -x "$PROFILE_DIR/interfaces/$Interface" ]]; then
         source "$PROFILE_DIR/interfaces/$Interface"
     fi
-    source "$CONN_DIR/$Connection"
+    source "$SUBR_DIR/connections/$Connection"
 }
 
 

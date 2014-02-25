@@ -1,6 +1,6 @@
 # Contributed by: Thomas S Hatch <thatch45@gmail.com>
 
-. "$CONN_DIR/ethernet"
+. "$SUBR_DIR/connections/ethernet"
 
 vlan_up() {
     if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
@@ -22,5 +22,6 @@ vlan_down() {
     ethernet_down
     ip link delete "$Interface"
 }
+
 
 # vim: ft=sh ts=4 et sw=4:
