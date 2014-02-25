@@ -67,6 +67,11 @@ wpa_start() {
     local interface=$1 driver=$2 configuration=$3
     local pidfile="/run/wpa_supplicant_$interface.pid"
 
+    if ! type wpa_supplicant &> /dev/null; then
+        report_error "You need to install 'wpa_supplicant'"
+        return 127
+    fi
+
     if [[ $configuration ]]; then
         configuration="-c$configuration"
     else
@@ -78,7 +83,7 @@ wpa_start() {
                             "$configuration" $WPAOptions
 
     # Wait up to one second for the pid file to appear
-    if ! timeout_wait 1 '[[ -f "$pidfile" ]]'; then
+    if ! timeout_wait 1 '[[ -f $pidfile ]]'; then
         # Remove the configuration file if it was generated
         configuration="$STATE_DIR/wpa_supplicant_$interface.conf"
         [[ -f $configuration && -O $configuration ]] && rm -f "$configuration"
@@ -145,7 +150,7 @@ wpa_supplicant_scan() {
     (( spawned_wpa == 1 )) && wpa_stop "$interface"
 
     # File of 0 length: no ssid's
-    if [[ ! -s "$essids" ]]; then
+    if [[ ! -s $essids ]]; then
         rm -f "$essids"
         return 1
     fi
@@ -172,11 +177,11 @@ wpa_quote() {
 ## Hex:        737472696e67 -> string
 wpa_unquote() {
     local string="$1"
-    if [[ ${string:0:1} == '"' && ${string:(-1)} == '"' ]]; then
+    if [[ $string == \"*\" ]]; then
         printf "%s" "${string:1:-1}"
-    elif [[ "$string" =~ ^([[:xdigit:]]{2})+$ ]]; then
-        while [[ -n "$string" ]]; do
-            printf "\x"${string:0:2}
+    elif [[ $string == +([[:xdigit:]][[:xdigit:]]) ]]; then
+        while [[ $string ]]; do
+            printf "\x${string:0:2}"
             string=${string:2}
         done
     else
@@ -218,7 +223,7 @@ wpa_make_config_block() {
       wep)
         echo "key_mgmt=NONE"
         echo "wep_tx_keyidx=0"
-        if (( ${#Key} % 2 == 0 )) && [[ "$Key" = +([[:xdigit:]]) ]]; then
+        if [[ $Key == +([[:xdigit:]][[:xdigit:]]) ]]; then
             echo "wep_key0=$Key"
         else
             echo "wep_key0=$(wpa_quote "$Key")"
@@ -226,7 +231,7 @@ wpa_make_config_block() {
       ;;
       wpa)
         echo "proto=RSN WPA"
-        if [[ "${#Key}" -eq 64 && "$Key" = +([[:xdigit:]]) ]]; then
+        if [[ "${#Key}" -eq 64 && $Key == +([[:xdigit:]]) ]]; then
             echo "psk=$Key"
         else
             echo "psk=$(wpa_quote "$Key")"

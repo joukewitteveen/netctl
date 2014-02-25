@@ -98,7 +98,7 @@ confirm_profile()
 {
     local msg="Enter a name for the new profile\n"
     PROFILE=$(dialog --inputbox "$msg" 10 50 "$PROFILE" --stdout) || return $?
-    if [[ $PROFILE = */* ]]; then
+    if [[ "$PROFILE" = */* ]]; then
         PROFILE=${PROFILE//\//_}
         confirm_profile
     elif [[ -e "$PROFILE_DIR/$PROFILE" ]]; then

@@ -10,7 +10,7 @@ bond_up() {
         report_error "Interface '$Interface' already exists"
         return 1
     else
-        ip link add dev "$Interface" type bond
+        ip link add name "$Interface" type bond
     fi
     bring_interface_up "$Interface"
 
