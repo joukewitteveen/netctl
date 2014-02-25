@@ -13,6 +13,7 @@ dhclient_start() {
         report_error "DHCP IPv$1 lease attempt failed on interface '$Interface'"
         return 1
     fi
+    chmod 644 "$pidfile"
 }
 
 dhclient_stop() {

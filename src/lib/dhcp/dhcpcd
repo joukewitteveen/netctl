@@ -14,6 +14,7 @@ dhcpcd_start() {
         report_error "DHCP IP lease attempt failed on interface '$Interface'"
         return 1
     fi
+    chmod 644 "/run/dhcpcd-$Interface.pid"
 }
 
 dhcpcd_stop() {
