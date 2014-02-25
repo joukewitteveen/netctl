@@ -2,6 +2,7 @@
 
 . /usr/lib/network/globals
 . "$SUBR_DIR/wpa"
+. "$SUBR_DIR/rfkill"
 
 
 usage()
@@ -236,16 +237,31 @@ if [[ -z "$INTERFACE" ]]; then
     INTERFACE=${INTERFACE:15:-10}
     report_debug "Using interface '$INTERFACE'"
 fi
+if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
+    source "$PROFILE_DIR/interfaces/$INTERFACE"
+fi
 
 cd /  # We do not want to spawn anything that can block unmounting
 if [[ ! -d "/sys/class/net/$INTERFACE" ]]; then
     exit_error "No such interface: $INTERFACE"
 fi
+if [[ "$RFKill" && "$(rf_status "$INTERFACE" "$RFKill")" ]]; then
+    if ! rf_enable "$INTERFACE" "$RFKill"; then
+        exit_error "Could not unblock transmission on interface '$INTERFACE'"
+    fi
+    RF_UNBLOCKED=1
+fi
 
 echo -n "Scanning for networks... "
 CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | sed -n "s/^ssid=//p")
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
-if [[ $? -eq 0 ]]; then
+RETURN=$?
+
+if (( RF_UNBLOCKED )); then
+    rf_disable "$INTERFACE" "$RFKill"
+fi
+
+if (( RETURN == 0 )); then
     trap 'rm -f "$NETWORKS"' EXIT
     echo "done"
     init_profiles "$INTERFACE"
