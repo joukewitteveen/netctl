@@ -180,15 +180,15 @@ network. In particular, these connection types are +ethernet+,
     Maximum time, in seconds, to wait for IPv6's Duplicate Address
     Detection to succeed. Defaults to `++3++'.
 
+'SkipDAD='::
+    Whether or not to bypass Duplicate Address Detection altogether.
+    Defaults to `++no++'.
+
 
 OPTIONS FOR `ethernet' CONNECTIONS
 ----------------------------------
 Next to the *ip options*, the following are understood for connections
 of the `ethernet' type:
-
-'SkipNoCarrier='::
-    Whether or not the absence of a carrier (plugged-in cable) is
-    acceptable. Defaults to `++no++'.
 
 'Auth8021X='::
     Set to `++yes++' to use 802.1x authentication.
@@ -208,6 +208,10 @@ of the `ethernet' type:
 'TimeoutWPA='::
     Maximum time, in seconds, to wait for 802.1x authentication to
     succeed. Defaults to `++15++'.
+
+'SkipNoCarrier='::
+    Whether or not the absence of a carrier (plugged-in cable) is
+    acceptable. Defaults to `++no++'.
 
 
 OPTIONS FOR `wireless' CONNECTIONS

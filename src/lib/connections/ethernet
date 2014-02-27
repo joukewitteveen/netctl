@@ -19,7 +19,9 @@ ethernet_up() {
         return 1
     fi
 
-    if ! is_yes "${SkipNoCarrier:-no}"; then
+    if is_yes "${SkipNoCarrier:-no}"; then
+        SkipDAD=yes
+    else
         # Some cards are plain slow to come up. Don't fail immediately.
         if ! timeout_wait "${TimeoutCarrier:-5}" '(( $(< "/sys/class/net/$Interface/carrier") ))'; then
             report_error "No connection found on interface '$Interface' (timeout)"

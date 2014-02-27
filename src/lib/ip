@@ -117,7 +117,7 @@ ip_set() {
       ;;
       stateless|static)
         for addr in "${Address6[@]}"; do
-            if ! do_debug ip -6 addr add $addr dev "$Interface"; then
+            if ! do_debug ip -6 addr add $addr $(is_yes "${SkipDAD:-no}" && printf nodad) dev "$Interface"; then
                 report_error "Could not add address '$addr' to interface '$Interface'"
             fi
         done
@@ -125,10 +125,12 @@ ip_set() {
     esac
 
     if [[ $IP6 ]]; then
-        # Wait for Duplicate Address Detection to finish
-        if ! timeout_wait "${TimeoutDAD:-3}" '[[ -z "$(ip -6 addr show dev "$Interface" tentative)" ]]'; then
-            report_error "Duplicate Address Detection is taking too long on interface '$Interface'"
-            return 1
+        if ! is_yes "${SkipDAD:-no}"; then
+            # Wait for Duplicate Address Detection to finish
+            if ! timeout_wait "${TimeoutDAD:-3}" '[[ -z "$(ip -6 addr show dev "$Interface" tentative)" ]]'; then
+                report_error "Duplicate Address Detection is taking too long on interface '$Interface'"
+                return 1
+            fi
         fi
 
         # Add static IPv6 routes after DAD has finished
