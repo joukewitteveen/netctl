@@ -127,11 +127,15 @@ create_profile()
         key=$(dialog $box "$msg" 10 40 --stdout) || return $?
         if [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
             if [[ "$OBSCURE" ]]; then
-                key=$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")
+                key='\"'$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")
+            elif [[ "$flags" =~ WEP && "$key" = +([[:xdigit:]]) ]] && ((${#key} % 2 == 0)); then
+                key='\"'$key
             else
                 key=$(printf "%q" "$key")
             fi
-        elif ! [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
+        elif [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
+            key='\"'$key
+        else
             return 4
         fi
     fi
