@@ -1,0 +1,28 @@
+. "$SUBR_DIR/connections/pppoe"
+
+ppp_compatible() {
+    if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
+        report_error "No unique port for PPP interface '$Interface' specified"
+        return 1
+    fi
+    if [[ ! $Interface =~ ppp([[:digit:]]+) ]]; then
+        report_error "Interface '$Interface' is not of the supported form 'ppp<n>'"
+        return 1
+    fi
+    PPPUnit=${BASH_REMATCH[1]}
+    echo "$BindsToInterfaces"
+}
+
+ppp_up() {
+    local interface
+    interface=$(ppp_compatible) || return 1
+
+    Interface=$interface pppoe_up
+}
+
+ppp_down() {
+    local interface
+    interface=$(ppp_compatible) || return 1
+
+    Interface=$interface pppoe_down
+}
