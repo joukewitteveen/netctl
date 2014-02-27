@@ -10,7 +10,7 @@ bond_up() {
         report_error "Interface '$Interface' already exists"
         return 1
     else
-        ip link add name "$Interface" type bond
+        interface_add bond "$Interface"
     fi
     bring_interface_up "$Interface"
 
@@ -28,8 +28,7 @@ bond_down() {
     done
 
     ip_unset
-    bring_interface_down "$Interface"
-    ip link delete "$Interface"
+    interface_delete "$Interface"
 }
 
 

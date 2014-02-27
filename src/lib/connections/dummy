@@ -10,16 +10,14 @@ dummy_up() {
         return 1
     fi
 
-    ip link add "$Interface" type dummy
-
+    interface_add dummy "$Interface"
     bring_interface_up "$Interface"
     ip_set
 }
 
 dummy_down() {
     ip_unset
-    bring_interface_down "$Interface"
-    ip link del "$Interface"
+    interface_delete "$Interface"
 }
 
 

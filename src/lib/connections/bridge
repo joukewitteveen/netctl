@@ -11,7 +11,7 @@ bridge_up() {
             return 1
         fi
     else
-        ip link add name "$Interface" type bridge
+        interface_add bridge "$Interface"
     fi
 
     for member in "${BindsToInterfaces[@]}"; do
@@ -34,8 +34,7 @@ bridge_down() {
     done
 
     ip_unset
-    bring_interface_down "$Interface"
-    ip link delete "$Interface" type bridge
+    interface_delete "$Interface"
 }
 
 

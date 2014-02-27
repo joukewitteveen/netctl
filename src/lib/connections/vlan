@@ -12,7 +12,7 @@ vlan_up() {
         return 1
     else
         bring_interface_up "$BindsToInterfaces"
-        ip link add link "$BindsToInterfaces" name "$Interface" type vlan id "$VLANID"
+        interface_add vlan "$Interface" "$BindsToInterfaces" id "$VLANID"
     fi
 
     ethernet_up
@@ -20,7 +20,7 @@ vlan_up() {
 
 vlan_down() {
     ethernet_down
-    ip link delete "$Interface"
+    interface_delete "$Interface"
 }
 
 

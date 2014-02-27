@@ -10,6 +10,27 @@ is_interface() {
     [[ -d "/sys/class/net/${1%%:?*}" ]]
 }
 
+## Add an interface
+# $1: interface type
+# $2: interface name
+# $3: interface link (optional)
+# $4...: additional arguments
+interface_add() {
+    local type="$1" name="$2" link="$3"
+    shift 3
+    ip link add ${link:+link "$link"} name "$name" type "$type" "$@"
+    if [[ -x "$PROFILE_DIR/interfaces/$name" ]]; then
+        source "$PROFILE_DIR/interfaces/$name"
+    fi
+}
+
+## Delete an interface
+# $1: interface name
+interface_delete() {
+    bring_interface_down "$1"
+    ip link delete "$1"
+}
+
 ## Check if an interface is up
 # $1: interface name
 interface_is_up() {
