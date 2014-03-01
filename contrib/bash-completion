@@ -39,8 +39,13 @@ _netctl_auto()
     local cur=${COMP_WORDS[COMP_CWORD]}
 
     case $COMP_CWORD in
-      1) COMPREPLY=( $(compgen -W "start stop" -- "$cur") );;
-      2) COMPREPLY=( $(compgen -W "$(_wireless_interfaces)" -- "$cur") );;
+      1)
+        COMPREPLY=( $(compgen -W "--help --version list current switch-to enable disable enable-all disable-all" -- "$cur") )
+      ;;
+      2)
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(switch-to|enable|disable) ]] &&
+          mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
+      ;;
     esac
 } &&
 complete -F _netctl_auto netctl-auto
