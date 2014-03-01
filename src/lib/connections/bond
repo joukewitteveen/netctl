@@ -1,8 +1,7 @@
-# Contributed by: Byron Williams <byron@112percent.com>
+# Contributed by: andy123 <ajs@online.de>
 
 . "$SUBR_DIR/ip"
 
-: ${IFENSLAVE:=ifenslave}
 declare -ag BindsToInterfaces
 
 bond_up() {
@@ -15,8 +14,7 @@ bond_up() {
     bring_interface_up "$Interface"
 
     for slave in "${BindsToInterfaces[@]}"; do
-        bring_interface_up "$slave"
-        $IFENSLAVE "$Interface" "$slave"
+        ip link set dev "$slave" master "$Interface"
     done
 
     ip_set
@@ -24,7 +22,7 @@ bond_up() {
 
 bond_down() {
     for slave in "${BindsToInterfaces[@]}"; do
-        $IFENSLAVE "$Interface" -d "$slave"
+        ip link set dev "$slave" nomaster
     done
 
     ip_unset

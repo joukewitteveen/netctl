@@ -11,7 +11,6 @@ Optional:
 - dialog: for the interactive assistant
 - ifplugd: for automatic connection
 - wpa_actiond: for automatic connection
-- ifenslave: for bonding support
 - bridge-utils: for bridge support
 
 For documentation generation:
