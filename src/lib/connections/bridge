@@ -29,7 +29,7 @@ bridge_up() {
 
 bridge_down() {
     for member in "${BindsToInterfaces[@]}"; do
-        ip link set "$member" promisc off down
+        ip link set dev "$member" promisc off down
         ip link set dev "$member" nomaster
     done
 

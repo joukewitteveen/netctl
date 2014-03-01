@@ -18,7 +18,7 @@ is_interface() {
 interface_add() {
     local type="$1" name="$2" link="$3"
     shift 3
-    ip link add ${link:+link "$link"} name "$name" type "$type" "$@"
+    ip link add ${link:+link "$link"} name "$name" type "$type" "$@" || return
     if [[ -x "$PROFILE_DIR/interfaces/$name" ]]; then
         source "$PROFILE_DIR/interfaces/$name"
     fi

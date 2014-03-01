@@ -39,8 +39,7 @@ AVAILABLE CONNECTION TYPES
 +bond+::
     For bonded interfaces.
 +bridge+::
-    Network bridging. This connection type requires *brctl* to be
-    available.
+    For bridge interfaces.
 +dummy+::
     For dummy interfaces.
 +ppp+::
@@ -455,7 +454,8 @@ single network interface.
 
 All options for connections of the `ethernet' type are understood for
 connections of the `vlan' type. Additionally, connections of the `vlan'
-type can set a vlan identifier using 'VLANID='. See *ip*(8) for details.
+type must set a vlan identifier using 'VLANID='. See *ip*(8) for
+details.
 
 
 SPECIAL QUOTING RULES

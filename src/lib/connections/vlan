@@ -10,6 +10,9 @@ vlan_up() {
     if is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"
         return 1
+    elif [[ $VLANID != +([[:digit:]]) ]]; then
+        report_error "Invalid VLAN identifier: '$VLANID'"
+        return 1
     else
         bring_interface_up "$BindsToInterfaces"
         interface_add vlan "$Interface" "$BindsToInterfaces" id "$VLANID"
