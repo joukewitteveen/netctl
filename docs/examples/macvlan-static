@@ -1,0 +1,16 @@
+Description='Virtual LAN with random MAC on interface eth0'
+Interface=mac0
+Connection=macvlan
+# The variable name is plural, but needs precisely one interface
+BindsToInterfaces=eth0
+# MACVAN Mode
+Mode="bridge"
+# Optional static MAC Address for MACVLAN interface
+MACAddress=""
+IP=static
+Address="192.168.0.100/24"
+Gateway="192.168.0.1"
+DNS=("192.168.0.2")
+Hostname="myhost"
+DNSDomain="mydomain.com"
+DNSSearch="mydomain.com"

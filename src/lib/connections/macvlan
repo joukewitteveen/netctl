@@ -1,0 +1,43 @@
+# Contributed by: Walter F Dworak <preparationh67@gmail.com>
+
+. "$CONN_DIR/ethernet"
+
+macvlan_valid_mode() {
+    [[ "$1" =~ (bridge)|(passthru)|(private)|(vepa) ]]
+}
+
+macvlan_up() {
+    if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
+        report_error "No unique physical device for MACVLAN interface '$Interface' specified"
+        return 1
+    fi
+    if is_interface "$Interface"; then
+        report_error "Interface '$Interface' already exists"
+        return 1
+    else
+        bring_interface_up "$BindsToInterfaces"
+        if [ -z "$Mode" ]; then
+            report_error "Mode not set for MACVLAN interface $Interface"
+            return 1
+        else
+            if macvlan_valid_mode "$Mode"; then
+                if [ -z "$MACAddress" ]; then
+                    ip link add link "$BindsToInterface" name "$Interface" type macvlan mode "$Mode"
+                else
+                    ip link add link "$BindsToInterdace" name "$Interface" address "$MACAddress" type macvlan mode "$Mode"
+                fi
+            else
+                report_error "Invalid mode '$Mode' for MACVLAN interface $Interface"
+                return 1
+            fi
+        fi
+    fi
+    ethernet_up
+}
+
+macvlan_down() {
+    ethernet_down
+    ip link delete "$Interface"
+}
+
+# vim: ft=sh ts=4 et sw=4:

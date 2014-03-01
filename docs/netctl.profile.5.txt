@@ -54,6 +54,8 @@ AVAILABLE CONNECTION TYPES
     For TUN/TAP interfaces.
 +vlan+::
     For VLANs on ethernet-like connections.
++macvlan+::
+    For MACVLANs on ethernet-like connections.
 
 
 GENERAL OPTIONS
@@ -445,6 +447,25 @@ single network interface.
 All options for connections of the `ethernet' type are understood for
 connections of the `vlan' type. Additionally, connections of the `vlan'
 type can set a vlan identifier using 'VLANID='. See *ip*(8) for details.
+
+
+OPTIONS FOR `macvlan' CONNECTIONS
+------------------------------
+The name of the macvlan interface is specified in 'Interface'. The
+underlying physical interface is specified in 'BindsToInterfaces'.
+Hence, for macvlan profiles, 'BindsToInterfaces' contains the name of a
+single network interface.
+
+All options for connections of the `ethernet' type are understood for
+connections of the `macvlan' type. Next to the *ip options*, the 
+following are understood for connections of the `macvlan' type:'
+
+'MACAddress='::
+    Optional static MAC address for `macvlan' type links.
+
+'Mode='::
+    Either `bridge', `vepa', `private', or `passthru'. See *ip*(8)
+    for details.
 
 
 SPECIAL QUOTING RULES
