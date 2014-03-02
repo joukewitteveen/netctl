@@ -93,6 +93,10 @@ GENERAL OPTIONS
     A command that is executed before a connection is brought down.
     Similar precautions should be taken as with 'ExecUpPost'.
 
+'TimeoutUp'::
+    Maximum time, in seconds, to wait for an interface to get up.
+    Defaults to `++5++'.
+
 'ForceConnect='::
     Set to `++yes++' to force connecting even if the interface is up.
     Do not use this unless you know what you are doing.
