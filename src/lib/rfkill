@@ -40,33 +40,43 @@ rf_status() {
     fi
 }
 
-## Unblock transmission through a wireless device
-# $1: interface name
-# $2: rfkill name
-rf_enable() {
-    case $(rf_status "$@") in
-      hard)
-        report_error "Transmission is hard-blocked on interface '$interface'"
-        return 1
-      ;;
-      soft)
-        report_debug "$FUNCNAME: echo 0 > '$path/soft'"
-        echo 0 > "$path/soft"
-        timeout_wait 1 '(( ! $(< "$path/soft") ))'
-      ;;
-    esac
+## Set the soft blocking status of an rfkill device
+# $1: blocking status
+# $2: interface name
+# $3: rfkill name
+rf_set() {
+    local block=$1 path
+    shift
+    path=$(rf_get_path "$@") || return 1
+
+    report_debug "${FUNCNAME[1]}: echo '$block' > '$path/soft'"
+    echo "$block" > "$path/soft"
+    timeout_wait 1 '(( $(< "$path/soft") == block ))'
 }
 
 ## Block transmission through a wireless device
 # $1: interface name
 # $2: rfkill name
 rf_disable() {
-    local path
-    path=$(rf_get_path "$@") || return 1
+    rf_set 1 "$@"
+}
 
-    report_debug "$FUNCNAME: echo 1 > '$path/soft'"
-    echo 1 > "$path/soft"
-    timeout_wait 1 '(( $(< "$path/soft") ))'
+## Unblock transmission through a wireless device
+# $1: interface name
+# $2: rfkill name
+rf_enable() {
+    local status
+    status=$(rf_status "$@") || return 1
+
+    case $status in
+      hard)
+        report_error "Transmission is hard-blocked on interface '$interface'"
+        return 1
+      ;;
+      soft)
+        rf_set 0 "$@"
+      ;;
+    esac
 }
 
 
