@@ -1,3 +1,9 @@
+netctl 1.5
+- Add support for macvlan interfaces
+- Add option to skip Duplicate Address Detection
+- Add support for hooks for dynamic interfaces
+- Assorted fixes and improvements
+
 netctl 1.4
 - Add support for dummy interfaces
 - Add support for limiting the wireless frequencies to scan
