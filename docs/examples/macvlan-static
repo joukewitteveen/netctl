@@ -3,7 +3,7 @@ Interface=mac0
 Connection=macvlan
 # The variable name is plural, but needs precisely one interface
 BindsToInterfaces=eth0
-# MACVAN Mode
+# MACVLAN Mode
 Mode="bridge"
 # Optional static MAC Address for MACVLAN interface
 MACAddress=""
