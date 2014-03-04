@@ -1,6 +1,6 @@
 # Contributed by: Walter F Dworak <preparationh67@gmail.com>
 
-. "$CONN_DIR/ethernet"
+. "$SUBR_DIR/connections/ethernet"
 
 macvlan_up() {
     if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
