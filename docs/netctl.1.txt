@@ -66,7 +66,7 @@ The following commands are understood:
 *disable [+PROFILE+]*::
     Disable the systemd unit for the profile specified. This will remove
     the file created by `*enable*' even if it was customized, so be
-    carefull.
+    careful.
 
 *reenable [+PROFILE+]*::
     Reenable the systemd unit for the profile specified. This is
