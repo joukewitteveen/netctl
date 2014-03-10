@@ -65,7 +65,7 @@ TIMEOUT 3
   GPRSpref) printf "\^SYSCFG=2,1,3fffffff,0,0";;
 esac)'
 'OK-AT-OK' 'AT+CGDCONT=1,"IP",$(quote_word "$AccessPointName")'
-'OK' 'ATDT*99#'
+'OK' 'ATDT${PhoneNumber:-*99#}'
 TIMEOUT 30
 CONNECT ''
 EOF

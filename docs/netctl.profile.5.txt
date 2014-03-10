@@ -389,16 +389,6 @@ The name of the USB serial device is specified in 'Interface'. The
 following options are understood for connections of the `mobile_ppp'
 type:
 
-'MaxFail='::
-    The number of consecutive failed connection attempts to tolerate.
-    A value of 0 means no limit. Defaults to `++5++'.
-
-'DefaultRoute='::
-    Use the default route provided by the peer (defaults to `true')
-
-'UsePeerDNS='::
-    Use the DNS provided by the peer (defaults to `true')
-
 'User=' and 'Password='::
     The username and password to connect with. These are unset by
     default, as they are often not required.
@@ -407,13 +397,26 @@ type:
     The access point (apn) to connect on. This is specific to your ISP.
 
 'Pin='::
-    If your modem requires a PIN to unlock, use this option.
+    If your modem requires a PIN to unlock, set it here.
+
+'PhoneNumber'::
+    The number to dial. Defaults to `++&ast;99&num;++'.
 
 'Mode='::
     This option is used to specify the connection mode. Can be one of
     `3Gpref', `3Gonly', `GPRSpref', `GPRSonly', `None'. This generates
     AT commands specific to certain Huawei modems; all other devices
     should use `None'.
+
+'MaxFail='::
+    The number of consecutive failed connection attempts to tolerate.
+    A value of 0 means no limit. Defaults to `++5++'.
+
+'DefaultRoute='::
+    Use the default route provided by the peer. Defaults to `++true++'.
+
+'UsePeerDNS='::
+    Use the DNS provided by the peer. Defaults to `++true++'.
 
 'OptionsFile='::
     A file to read additional pppd options from.
