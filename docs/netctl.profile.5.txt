@@ -314,7 +314,7 @@ connections of the `bridge' type:
 
 OPTIONS FOR `dummy' CONNECTIONS
 -------------------------------
-The name of the dummy interface is sepcified in 'Interface'. Only the
+The name of the dummy interface is specified in 'Interface'. Only the
 *ip options* are understood for connections of the `dummy' type.
 
 
