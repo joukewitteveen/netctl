@@ -1,3 +1,6 @@
+netctl 1.6
+- Fixes for bugs introduced in 1.5
+
 netctl 1.5
 - Add support for macvlan interfaces
 - Add option to skip Duplicate Address Detection
