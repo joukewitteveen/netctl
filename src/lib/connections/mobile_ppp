@@ -84,7 +84,7 @@ mobile_ppp_down() {
     chat="$STATE_DIR/mobile_ppp.$Interface.$Profile/modem.chat"
     pidfile="/var/run/ppp-$Profile.pid"
 
-    [[ -r $pidfile ]] && kill "$(< "$pidfile")"
+    [[ -r $pidfile ]] && kill "$(head -1 $pidfile)"
 
     rm "$options" "$chat"
     rmdir "$(dirname "$options")"
