@@ -253,6 +253,10 @@ of the `wireless' type:
     A space-separated list of frequencies in MHz to scan when searching
     for the network. Defaults to all available frequencies.
 
+'Frequency='::
+    A frequency in MHz to use in ad-hoc mode when a new IBSS is created
+    (i.e. the network is not already present).
+
 'Priority='::
     Priority group for the network. In case of automatic profile
     selection, the matched network with the highest priority will be
