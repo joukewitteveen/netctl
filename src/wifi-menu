@@ -35,7 +35,7 @@ quote_safe()
 init_profiles()
 {
     local i=0 essid profile
-    while read profile; do
+    while read -r profile; do
         essid=$(
             unset INTERFACE ESSID
             source "$PROFILE_DIR/$profile" > /dev/null
@@ -66,7 +66,7 @@ init_profiles()
 init_entries()
 {
     local i=0 flags signal ssid
-    while IFS=$'\t' read signal flags ssid; do
+    while IFS=$'\t' read -r signal flags ssid; do
         ENTRIES[i++]="--"  # $ssid might look like an option to dialog.
         ENTRIES[i++]=$ssid
         if in_array "$ssid" "${ESSIDS[@]}"; then

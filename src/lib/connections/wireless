@@ -32,7 +32,6 @@ wireless_up() {
         config_file=$(wpa_make_config_file "$Interface")
         if [[ -z $config_file ]]; then
             report_error "Could not create a wpa config file for interface '$Interface'"
-            bring_interface_down "$Interface"
             return 1
         fi
         printf "%s\n" "network={" "$(wpa_make_config_block)" "}" >> "$config_file"
