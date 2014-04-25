@@ -111,7 +111,10 @@ unit_enable() {
     echo ".include @systemdsystemunitdir@/netctl@.service" > "$unit"
     echo -e "\n[Unit]" >> "$unit"
     [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
-    [[ -v BindsToInterfaces ]] || BindsToInterfaces=$Interface
+    # in Bash, it's a bit awkward to check if a potentially empty
+    # array is (not) declared:
+    declare -p BindsToInterfaces >/dev/null 2>&1 || \
+        BindsToInterfaces=$Interface
     if (( ${#BindsToInterfaces[@]} )); then
         : ${InterfaceRoot=sys/subsystem/net/devices/}
         printf "BindsTo=$(sd_escape "$InterfaceRoot")%s.device\n" \
