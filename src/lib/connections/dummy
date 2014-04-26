@@ -2,7 +2,8 @@
 
 . "$SUBR_DIR/ip"
 
-declare -ag BindsToInterfaces
+# Make sure BindsToInterfaces is set
+BindsToInterfaces=("${BindsToInterfaces[@]}")
 
 dummy_up() {
     if is_interface "$Interface"; then

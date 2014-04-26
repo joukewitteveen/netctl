@@ -111,7 +111,7 @@ unit_enable() {
     echo ".include @systemdsystemunitdir@/netctl@.service" > "$unit"
     echo -e "\n[Unit]" >> "$unit"
     [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
-    [[ -v BindsToInterfaces ]] || BindsToInterfaces=$Interface
+    declare -p BindsToInterfaces &> /dev/null || BindsToInterfaces=$Interface
     if (( ${#BindsToInterfaces[@]} )); then
         : ${InterfaceRoot=sys/subsystem/net/devices/}
         printf "BindsTo=$(sd_escape "$InterfaceRoot")%s.device\n" \
