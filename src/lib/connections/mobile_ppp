@@ -79,12 +79,15 @@ EOF
 }
 
 mobile_ppp_down() {
-    local options chat pidfile
+    local options chat pidfile pid
     options="$STATE_DIR/mobile_ppp.$Interface.$Profile/options"
     chat="$STATE_DIR/mobile_ppp.$Interface.$Profile/modem.chat"
     pidfile="/var/run/ppp-$Profile.pid"
 
-    [[ -r $pidfile ]] && kill "$(< "$pidfile")"
+    if [[ -r $pidfile ]]; then
+        read pid < "$pidfile"
+        (( pid )) && kill "$pid"
+    fi
 
     rm "$options" "$chat"
     rmdir "$(dirname "$options")"

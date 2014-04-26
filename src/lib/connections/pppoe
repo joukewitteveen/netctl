@@ -8,9 +8,7 @@ quote_word() {
 }
 
 pppoe_up() {
-    local options pidfile pppn
-    options="$STATE_DIR/pppoe.$Interface.$Profile/options"
-    pidfile="/var/run/ppp-$Profile.pid"
+    local options="$STATE_DIR/pppoe.$Interface.$Profile/options"
 
     if ! is_interface "$Interface"; then
         report_error "Interface '$Interface' does not exist"
@@ -55,18 +53,17 @@ EOF
         report_error "Could not establish a ppp connection for profile '$Profile'."
         return 1
     fi
-
-    [[ -r $pidfile ]] || return 0
-    pppn=$(grep -l "$(< "$pidfile")" /var/run/ppp[[:digit:]]*.pid)
-    report_notice "PPP unit for profile '$Profile': ${pppn:9:-4}"
 }
 
 pppoe_down() {
-    local options pidfile
+    local options pidfile pid
     options="$STATE_DIR/pppoe.$Interface.$Profile/options"
     pidfile="/var/run/ppp-$Profile.pid"
 
-    [[ -r $pidfile ]] && kill "$(< "$pidfile")"
+    if [[ -r $pidfile ]]; then
+        read pid < "$pidfile"
+        (( pid )) && kill "$pid"
+    fi
 
     rm "$options"
     rmdir "$(dirname "$options")"
