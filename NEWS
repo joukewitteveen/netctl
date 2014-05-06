@@ -1,3 +1,9 @@
+netctl 1.7
+- Fixes for compatibility with Bash 4.3
+- Fix killing of pppd
+- Add is-enabled subcommand to netctl
+- Add Frequency parameter to WPA configuration
+
 netctl 1.6
 - Fixes for bugs introduced in 1.5
 
