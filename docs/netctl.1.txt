@@ -68,6 +68,10 @@ The following commands are understood:
     the file created by `*enable*' even if it was customized, so be
     careful.
 
+*is-enabled [+PROFILE+]*::
+    Check whether the systemd unit for the specified profile is enabled.
+    Prints the current enable status.
+
 *reenable [+PROFILE+]*::
     Reenable the systemd unit for the profile specified. This is
     effectively a combination of `*disable*' and `*enable*'.
