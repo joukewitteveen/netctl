@@ -109,6 +109,7 @@ unit_enable() {
         return 1
     fi
     load_profile "$1"
+    do_readable touch "$unit"
     echo ".include @systemdsystemunitdir@/netctl@.service" > "$unit"
     echo -e "\n[Unit]" >> "$unit"
     [[ -n $Description ]] && echo "Description=$Description" >> "$unit"

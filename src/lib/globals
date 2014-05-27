@@ -4,8 +4,6 @@ SUBR_DIR="/usr/lib/network"
 STATE_DIR="/run/network"
 STATE_FILE="${NETCTL_STATE_FILE:-/var/lib/netctl/netctl.state}"
 
-umask 077
-
 
 ### Logging/Error reporting
 
@@ -72,6 +70,16 @@ do_debug() {
     "$@"
 }
 
+## Evaluate with a permissive umask
+do_readable() {
+    local result
+    umask 022
+    "$@"
+    result=$?
+    umask 077
+    return $result
+}
+
 ## Exit if we are not effectively root
 # $1: program name (optional)
 ensure_root() {
@@ -124,6 +132,10 @@ load_profile() {
     fi
     source "$SUBR_DIR/connections/$Connection"
 }
+
+
+# Set a restrictive umask
+do_readable :
 
 
 # vim: ft=sh ts=4 et sw=4:

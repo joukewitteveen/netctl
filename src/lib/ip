@@ -27,7 +27,7 @@ dhcp_call() {
 resolvconf_add() {
     local interface="$1"
     shift
-    printf "%s\n" "$@" | resolvconf -a "$interface"
+    printf "%s\n" "$@" | do_readable resolvconf -a "$interface"
 }
 
 

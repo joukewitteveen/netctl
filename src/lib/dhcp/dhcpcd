@@ -5,16 +5,14 @@ dhcpcd_start() {
         report_error "Using 'dhcpcd' for IPv6 is currently not possible in netctl"
         return 1
     fi
-    rm -f "/run/dhcpcd-$Interface".{pid,cache}
     # If using own dns, tell dhcpcd to NOT replace resolv.conf
     [[ $DNS ]] && DhcpcdOptions+=" -C resolv.conf"
-    do_debug dhcpcd -4qL -t "${TimeoutDHCP:-30}" $DhcpcdOptions "$Interface" |& report_debug "$(cat)"
+    do_debug do_readable dhcpcd -4qL -t "${TimeoutDHCP:-30}" $DhcpcdOptions "$Interface" |& report_debug "$(cat)"
     # The first array value of PIPESTATUS is the exit status of dhcpcd
     if (( PIPESTATUS != 0 )); then
         report_error "DHCP IP lease attempt failed on interface '$Interface'"
         return 1
     fi
-    chmod 644 "/run/dhcpcd-$Interface.pid"
 }
 
 dhcpcd_stop() {
