@@ -4,7 +4,7 @@ Connection=macvlan
 # The variable name is plural, but needs precisely one interface
 BindsToInterfaces=eth0
 # MACVLAN Mode
-Mode="bride"
+Mode="bridge"
 # Optional static MAC Address for MACVLAN interface
 MACAddress="12:34:56:78:9a:bc"
 IP=dhcp

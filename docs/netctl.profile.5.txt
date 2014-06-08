@@ -353,7 +353,7 @@ the `pppoe' type:
     A value of 0 means no limit. Defaults to `++5++'.
 
 'DefaultRoute='::
-    Use the default route provided by the peer (defaults to `true')
+    Use the default route provided by the peer (defaults to `true').
 
 'UsePeerDNS='::
     Use the DNS provided by the peer (defaults to `true').
