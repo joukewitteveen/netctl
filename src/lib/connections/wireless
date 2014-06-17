@@ -38,7 +38,7 @@ wireless_up() {
     fi
 
     # Start the WPA supplicant
-    if ! do_debug wpa_start "$Interface" "$WPADriver" "$config_file"; then
+    if ! wpa_start "$Interface" "$WPADriver" "$config_file"; then
         report_error "The WPA supplicant did not start for interface '$Interface'"
         bring_interface_down "$Interface"
         return 1
