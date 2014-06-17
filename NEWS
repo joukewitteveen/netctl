@@ -1,3 +1,7 @@
+netctl 1.8
+- Support for IPv6 with dhcpcd 6.4.0
+- Fixes to modes of created files
+
 netctl 1.7
 - Fixes for compatibility with Bash 4.3
 - Fix killing of pppd
