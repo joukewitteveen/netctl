@@ -11,8 +11,8 @@ tuntap_up() {
         return 1
     fi
 
-    ip tuntap add dev "$Interface" mode "$Mode" \
-        ${User:+user "$User"} ${Group:+group "$Group"}
+    do_debug ip tuntap add dev "$Interface" mode "$Mode" \
+        ${User:+user "$User"} ${Group:+group "$Group"} || return
 
     bring_interface_up "$Interface"
     IP=${IP-no} ip_set
@@ -21,7 +21,7 @@ tuntap_up() {
 tuntap_down() {
     ip_unset
     bring_interface_down "$Interface"
-    ip tuntap del dev "$Interface" mode "$Mode"
+    ip tuntap delete dev "$Interface" mode "$Mode"
 }
 
 

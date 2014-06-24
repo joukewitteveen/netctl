@@ -6,13 +6,15 @@
 BindsToInterfaces=("${BindsToInterfaces[@]}")
 
 tunnel_up() {
+    local family="-4"
     if is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"
         return 1
     fi
 
-    ip tunnel add "$Interface" mode "$Mode" remote "$Remote" \
-        ${Local+local "$Local"}
+    [[ $Mode == *ip6* || $Mode == "any" ]] && family="-6"
+    do_debug ip "$family" tunnel add "$Interface" mode "$Mode" \
+        remote "$Remote" ${Local+local "$Local"} || return
 
     bring_interface_up "$Interface"
     ip_set
@@ -21,7 +23,7 @@ tunnel_up() {
 tunnel_down() {
     ip_unset
     bring_interface_down "$Interface"
-    ip tunnel del "$Interface"
+    ip tunnel delete "$Interface"
 }
 
 
