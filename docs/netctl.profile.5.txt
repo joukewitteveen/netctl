@@ -150,8 +150,8 @@ network. In particular, these connection types are +ethernet+,
     `++dhcpcd++'.
 
 'DHCP6Client=' [requires 'IP6=dhcp' or 'IP6=dhcp-noaddr']::
-    The name of the DHCPv6 client to use. By default, only `dhclient'
-    is supported. Defaults to `++dhclient++'.
+    The name of the DHCPv6 client to use. By default, `dhcpcd' and
+    `dhclient' are supported. Defaults to `++dhclient++'.
 
 'DHCPReleaseOnStop='::
     Set to `++yes++' to release the DHCP lease when the profile is
