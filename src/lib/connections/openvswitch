@@ -1,0 +1,39 @@
+# Contributed by: Jonathan Hudson <jh+arch@daria.co.uk>
+
+. "$SUBR_DIR/ip"
+
+
+OVSCTL="/usr/bin/ovs-vsctl"
+declare -a BindsToInterfaces
+
+openvswitch_up() {
+    if ! $OVSCTL br-exists "$INTERFACE"; then
+        $OVSCTL add-br "$INTERFACE"
+    fi
+
+    for ovs_client in "${BindsToInterfaces[@]}"; do
+      ip link set "$ovs_client" promisc on up
+      ip addr flush dev "$ovs_client"
+      if ! $OVSCTL list-ports "$Interface" | grep -q "$ovs_client"; then
+        $OVSCTL add-port "$Interface" "$ovs_client"
+      fi
+    done
+
+    bring_interface_up "$Interface"
+    ip_set
+    return 0
+}
+
+openvswitch_down() {
+    for ovs_client in "${BindsToInterfaces[@]}"; do
+      ip link set "$ovs_client" promisc off down
+      if $OVSCTL list-ports "$Interface" | grep -q "$ovs_client"; then
+        $OVSCTL del-port "$Interface" "$ovs_client"
+      fi
+    done
+    ip_unset
+    bring_interface_down "$Interface"
+    return 0
+}
+
+# vim: set ts=4 et sw=4:
