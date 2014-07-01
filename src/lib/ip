@@ -51,7 +51,7 @@ ip_set() {
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=$?"
       ;;
       no)
-        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
+        [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$interface_sysctl.disable_ipv6=1"
       ;;
       "")  # undefined IP6 does not prevent RA's from being received -> nop
       ;;
