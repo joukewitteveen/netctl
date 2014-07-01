@@ -512,7 +512,7 @@ or "fake-bridge" according to ovs terminology, fake-bridges are required to
     An optional array of numeric Trunk values to be assigned to underlying interface supporting a parent bridge.
 
 'OvsFakeBridge='::
-    Set to yes ++yes++ to inform netctl the profile defines an OVS fake-bridge. ++Requires Tag++  
+    Set to yes ++yes++ to inform netctl the profile defines an OVS fake-bridge. ++Requires Tag and ForceConnect=yes++  
 
 
 SPECIAL QUOTING RULES
