@@ -56,6 +56,8 @@ AVAILABLE CONNECTION TYPES
     For VLANs on ethernet-like connections.
 +macvlan+::
     For MACVLANs on ethernet-like connections.
++openvswitch+::
+    For basic Open vSwitch bridges configurations
 
 
 GENERAL OPTIONS
@@ -488,6 +490,29 @@ following are understood for connections of the `macvlan' type:
 
 'MACAddress='::
     Optional static MAC address for the `macvlan' type link.
+
+
+OPTIONS FOR `openvswitch' CONNECTIONS
+-------------------------------------
+The name of the openvswitch bridge is specified in 'Interface'. The
+underlying physical interface is specified in 'BindsToInterfaces'.
+Hence, for openvswitch profiles, 'BindsToInterfaces' contains the name of the undelying network interfaces or parent bridge.
+
+It is important to notice that while Open vSwitch support nesting of bridges,
+or "fake-bridge" according to ovs terminology, fake-bridges are required to
+ have one VLAN *Tag* associate with them.
+
+'VlanMode='::
+    Either `trunk', `access', `native-tagged', or `native-untagged'. 
+
+'Tag='::
+    VLAN Tag assigned to bridge or fake-bridge (++required on fake bridges++)
+
+'Trunks=()'::
+    An optional array of numeric Trunk values to be assigned to underlying interface supporting a parent bridge.
+
+'OvsFakeBridge='::
+    Set to yes ++yes++ to inform netctl the profile defines an OVS fake-bridge. ++Requires Tag++  
 
 
 SPECIAL QUOTING RULES
