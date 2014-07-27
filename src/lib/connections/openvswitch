@@ -1,0 +1,39 @@
+# Contributed by: Jonathan Hudson <jh+arch@daria.co.uk>
+
+. "$SUBR_DIR/ip"
+
+: ${OVSCTL:=ovs-vsctl}
+
+# Make sure BindsToInterfaces is set
+BindsToInterfaces=("${BindsToInterfaces[@]}")
+
+openvswitch_up() {
+    systemctl start ovs-vswitchd.service
+    if ! $OVSCTL br-exists "$Interface" && ! $OVSCTL add-br "$Interface"; then
+        report_error "Could not create a bridge named '$Interface'"
+        return 1
+    fi
+
+    for port in "${BindsToInterfaces[@]}"; do
+        ip link set dev "$port" promisc on up
+        ip addr flush dev "$port" scope host &>/dev/null
+        ip addr flush dev "$port" scope site &>/dev/null
+        ip addr flush dev "$port" scope global &>/dev/null
+        $OVSCTL --may-exist add-port "$Interface" "$port"
+    done
+
+    bring_interface_up "$Interface"
+    ip_set
+}
+
+openvswitch_down() {
+    for port in "${BindsToInterfaces[@]}"; do
+        ip link set dev "$port" promisc off down
+    done
+
+    ip_unset
+    $OVSCTL del-br "$Interface"
+}
+
+
+# vim: ft=sh ts=4 et sw=4:

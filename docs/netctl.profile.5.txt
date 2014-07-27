@@ -48,6 +48,8 @@ AVAILABLE CONNECTION TYPES
     For PPPoE connections.
 +mobile_ppp+::
     For mobile broadband PPP connections that use a USB modem.
++openvswitch+::
+    For Open vSwitch bridge interfaces.
 +tunnel+::
     For tunnel interfaces.
 +tuntap+::
@@ -424,6 +426,13 @@ type:
 
 'OptionsFile='::
     A file to read additional pppd options from.
+
+
+OPTIONS FOR `openvswitch' CONNECTIONS
+-------------------------------------
+The interfaces of 'BindsToInterfaces' take part in the bridge named by
+'Interface'. Only the *ip options* are understood for connections of
+the `openvswitch' type.
 
 
 OPTIONS FOR `tunnel' CONNECTIONS

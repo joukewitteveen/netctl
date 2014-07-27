@@ -1,0 +1,5 @@
+Description="Example Open vSwitch connection"
+Interface=ovs-br0
+Connection=openvswitch
+BindsToInterfaces=(eth0 eth1)
+IP=dhcp
