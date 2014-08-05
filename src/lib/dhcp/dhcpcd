@@ -13,9 +13,7 @@ dhcpcd_start() {
     fi
     # If using own dns, tell dhcpcd to NOT replace resolv.conf
     [[ $DNS ]] && options+=" -C resolv.conf"
-    do_debug do_readable dhcpcd -$1 -q -t "${TimeoutDHCP:-30}" $options "$Interface"
-    # The first array value of PIPESTATUS is the exit status of dhcpcd
-    if (( PIPESTATUS != 0 )); then
+    if ! do_debug do_readable dhcpcd -$1 -q -t "${TimeoutDHCP:-30}" $options "$Interface"; then
         report_error "DHCP IPv$1 lease attempt failed on interface '$Interface'"
         return 1
     fi

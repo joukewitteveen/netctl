@@ -1,5 +1,5 @@
-Description='Bond Interface'
-Interface='bond0'
+Description="A bonded interface"
+Interface=bond0
 Connection=bond
 BindsToInterfaces=(eth0 eth2)
 IP=static

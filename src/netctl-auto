@@ -80,7 +80,7 @@ profile_enable_disable() {
     local action="$1" profile="$2"
     local id interfaces wpa_cmd
 
-    if [ -n "$profile" ]; then
+    if [[ -n "$profile" ]]; then
         read -r interfaces id < <(get_wpa_network_id "$profile") || return 1
     else
         interfaces=$(list_netctl_auto_interfaces)
