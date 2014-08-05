@@ -1,3 +1,7 @@
+netctl 1.9
+- Add support for openvswitch interfaces
+- Improved IPv6 support
+
 netctl 1.8
 - Support for IPv6 with dhcpcd 6.4.0
 - Fixes to modes of created files
