@@ -121,6 +121,9 @@ unit_enable() {
         printf "After=$(sd_escape "$InterfaceRoot")%s.device\n" \
                $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
     fi
+    if is_yes ${ProvidesNetwork:-yes}; then
+        printf 'Before=network.target\n' >> "$unit"
+    fi
     if (( ${#After[@]} )); then
         printf 'After="netctl@%s.service"\n' \
                $(sd_escape "${After[@]}") >> "$unit"
