@@ -194,6 +194,24 @@ network. In particular, these connection types are +ethernet+,
     Whether or not to bypass Duplicate Address Detection altogether.
     Defaults to `++no++'.
 
+'Tests=()'::
+    An array of IP addresses (and optionally, MAC addresses) to test
+    the existence of for automatic profile selection.
+    Format is `192.0.2.1' to test for any MAC address, or
+    `192.0.2.2|00:00:5E:00:53:12' to test for a particular MAC address.
+    Any successful tests mark the profile as successful, as does having
+    no tests defined at all.
+    Currently only supports IPv4!
+
+'ExcludeAuto='::
+    Whether or not to exclude this profile from automatic profile
+    selection. Defaults to `++no++'.
+
+'Priority='::
+    Priority group for the network. In case of automatic profile
+    selection, the matched network with the highest priority will be
+    selected. Defaults to `++0++'.
+
 
 OPTIONS FOR `ethernet' CONNECTIONS
 ----------------------------------
@@ -259,11 +277,6 @@ of the `wireless' type:
     A frequency in MHz to use in ad-hoc mode when a new IBSS is created
     (i.e. the network is not already present).
 
-'Priority='::
-    Priority group for the network. In case of automatic profile
-    selection, the matched network with the highest priority will be
-    selected. Defaults to `++0++'.
-
 'WPAConfigSection=()' [mandatory for 'Security=wpa-configsection']::
     Array of lines that form a network block for *wpa_supplicant*. All
     of the above options will be ignored.
@@ -294,10 +307,6 @@ of the `wireless' type:
     in '/sys/class/rfkill/rfkillX/name'. It is also possible to set this
     variable to `++auto++'. In that case an *rfkill* device that is
     associated with the network interface is used.
-
-'ExcludeAuto='::
-    Whether or not to exclude this profile from automatic profile
-    selection. Defaults to `++no++'.
 
 
 OPTIONS FOR `bond' CONNECTIONS

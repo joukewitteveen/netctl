@@ -3,51 +3,49 @@
 # ifplugd.action script for netctl
 
 . /usr/lib/network/globals
+. "$SUBR_DIR/test"
 
 PROFILE_FILE="$STATE_DIR/ifplugd_$1.profile"
 
 case "$2" in
   up)
-    # Look for a dhcp based profile to try first
-    # dhcp can actually outright fail, whereas
-    # it's difficult to tell if static succeeded
-    # Also check profile is same iface and is right connection
     echo "up"
-    declare -a preferred_profiles
-    declare -a dhcp_profiles
-    declare -a static_profiles
+    priority=0
     while read -r profile; do
-        (
-          echo "Reading profile '$profile'"
+        echo "Reading profile '$profile'"
+        new_priority=$(
           source "$PROFILE_DIR/$profile"
-          [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
-          is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
-          [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
-          exit 3 # static profile
+          [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || exit 1
+          is_yes "${ExcludeAuto:-no}" && exit 1
+          : ${Priority:=0}
+
+          if test_profile; then
+              echo "$Priority"
+              exit 0
+          fi
+          exit 1
         )
-        case $? in
-          1) preferred_profiles+=("$profile");;
-          2) dhcp_profiles+=("$profile");;
-          3) static_profiles+=("$profile");;
-        esac
+        if (( $? == 0 )); then
+            if [[ -z $selected ]] || (( new_priority >= priority )); then
+                selected=$profile
+                priority=$new_priority
+            fi
+        fi
     done < <(list_profiles)
-    if [[ ${#preferred_profiles[@]} > 1 ]]; then
-        echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
-    fi
-    for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
-        if ForceConnect=yes "$SUBR_DIR/network" start "$profile"; then
+    if [[ $selected ]]; then
+        if ForceConnect=yes "$SUBR_DIR/network" start "$selected"; then
             mkdir -p "$(dirname "$PROFILE_FILE")"
-            printf "%s" "$profile" > "$PROFILE_FILE"
+            printf "%s" "$selected" > "$PROFILE_FILE"
             exit 0
         fi
-    done
+    fi
   ;;
   down)
     if [[ -e "$PROFILE_FILE" ]]; then
-        if ForceConnect=yes "$SUBR_DIR/network" stop "$(< "$PROFILE_FILE")"; then
-            rm -f "$PROFILE_FILE"
-            exit 0
-        fi
+        profile=$(< "$PROFILE_FILE")
+        "$SUBR_DIR/network" stop "$profile"
+        rm -f "$PROFILE_FILE"
+        exit 0
     fi
   ;;
   *)
