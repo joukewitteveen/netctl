@@ -16,7 +16,7 @@ install:
 	install -m644 docs/examples/* $(DESTDIR)/etc/netctl/examples/
 	# Libs
 	install -d $(DESTDIR)/usr/lib/network/{connections,dhcp}
-	install -m644 src/lib/{globals,ip,rfkill,wpa} $(DESTDIR)/usr/lib/network/
+	install -m644 src/lib/{globals,ip,rfkill,wpa,test} $(DESTDIR)/usr/lib/network/
 	install -m644 src/lib/connections/* $(DESTDIR)/usr/lib/network/connections/
 	install -m644 src/lib/dhcp/* $(DESTDIR)/usr/lib/network/dhcp/
 	install -m755 src/lib/{auto.action,network} $(DESTDIR)/usr/lib/network/

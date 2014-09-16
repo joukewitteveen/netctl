@@ -11,6 +11,7 @@ Optional:
 - dialog: for the interactive assistant
 - ifplugd: for automatic connection
 - wpa_actiond: for automatic connection
+- arptest: for automatic connection testing
 
 For documentation generation:
 - asciidoc

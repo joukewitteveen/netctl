@@ -1,0 +1,50 @@
+## /usr/lib/network/globals needs to be sourced before this file
+
+
+## Run profile tests, success if any succeed
+# $Interface: interface name
+# $IP: set if IPv4 used
+# $IP6: set if IPv6 used
+# $Tests: array of addresses to test
+test_profile() {
+    local macaddr ipaddr test testcmd cmdargs
+
+    # No tests is automatic success
+    if [[ -z $Tests ]]; then
+        return 0
+    fi
+
+    if [[ $IP ]]; then
+        testcmd=arptest
+    elif [[ $IP6 ]]; then
+        #testcmd=ndptest
+        report_error "Testing on IPv6 not supported"
+        return 1
+    else
+        report_error "No IP type defined for testing"
+        return 1
+    fi
+
+    for test in "${Tests[@]}"; do
+        IFS="|" read -r ipaddr macaddr <<< "$test"
+        if [[ -z $ipaddr ]]; then
+            report_error "Unable to parse test '$test'"
+            return 1
+        fi
+
+        # 0.1 second timeout
+        cmdargs=( -w 0.1 )
+        if [[ $macaddr ]]; then
+            cmdargs+=( -m "$macaddr" )
+        fi
+        cmdargs+=( "$Interface" "$ipaddr" )
+
+        # Run test, exit if successful
+        if $testcmd "${cmdargs[@]}" >/dev/null; then
+            return 0
+        fi
+    done
+
+    # No test succeeded
+    return 1
+}
