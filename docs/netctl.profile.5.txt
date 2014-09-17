@@ -194,6 +194,15 @@ network. In particular, these connection types are +ethernet+,
     Whether or not to bypass Duplicate Address Detection altogether.
     Defaults to `++no++'.
 
+'ExcludeAuto='::
+    Whether or not to exclude this profile from automatic profile
+    selection. Defaults to `++no++'.
+
+'Priority='::
+    Priority group for the network. In case of automatic profile
+    selection, the matched network with the highest priority will be
+    selected. Defaults to `++0++'.
+
 
 OPTIONS FOR `ethernet' CONNECTIONS
 ----------------------------------
@@ -259,11 +268,6 @@ of the `wireless' type:
     A frequency in MHz to use in ad-hoc mode when a new IBSS is created
     (i.e. the network is not already present).
 
-'Priority='::
-    Priority group for the network. In case of automatic profile
-    selection, the matched network with the highest priority will be
-    selected. Defaults to `++0++'.
-
 'WPAConfigSection=()' [mandatory for 'Security=wpa-configsection']::
     Array of lines that form a network block for *wpa_supplicant*. All
     of the above options will be ignored.
@@ -294,10 +298,6 @@ of the `wireless' type:
     in '/sys/class/rfkill/rfkillX/name'. It is also possible to set this
     variable to `++auto++'. In that case an *rfkill* device that is
     associated with the network interface is used.
-
-'ExcludeAuto='::
-    Whether or not to exclude this profile from automatic profile
-    selection. Defaults to `++no++'.
 
 
 OPTIONS FOR `bond' CONNECTIONS
