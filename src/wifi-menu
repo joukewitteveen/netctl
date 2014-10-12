@@ -182,9 +182,8 @@ connect_to_ssid()
         report_notice "Interface '$INTERFACE' is controlled by netctl-auto"
         if (( NEW_PROFILE )); then
             do_debug systemctl restart "netctl-auto@$INTERFACE.service"
-        else
-            report_error "A profile already exists for SSID '$1'"
         fi
+        do_debug netctl-auto switch-to $PROFILE
     elif ! netctl switch-to "$PROFILE"; then
         if (( NEW_PROFILE )); then
             msg="         CONNECTING FAILED
