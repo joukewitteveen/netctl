@@ -20,7 +20,7 @@ dhcpcd_start() {
 }
 
 dhcpcd_stop() {
-    local stop="-x"
+    local stop="-k"
     if [[ -f "/run/dhcpcd-$Interface-$1.pid" ]]; then
         is_yes "${DHCPReleaseOnStop:-no}" && stop="-k"
         do_debug dhcpcd -$1 -q $stop "$Interface" > /dev/null
