@@ -45,7 +45,7 @@ ip_set() {
 
     # Load ipv6 module if necessary
     case "$IP6" in
-      dhcp*|stateless|static)
+      dhcp|dhcp-noaddr|stateless|static)
         [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.disable_ipv6=0"
         [[ $IP6 == "static" ]]
@@ -100,26 +100,26 @@ ip_set() {
         fi
     fi
 
-    case "$IP6" in
-      dhcp|dhcp-noaddr)
-        dhcp_call "${DHCP6Client:-dhclient}" start 6 ${IP6:5} || return
-      ;;
-      stateless|static)
-        for addr in "${Address6[@]}"; do
-            if ! do_debug ip -6 addr add $addr $(is_yes "${SkipDAD:-no}" && printf nodad) dev "$Interface"; then
-                report_error "Could not add address '$addr' to interface '$Interface'"
-            fi
-        done
-      ;;
-    esac
-
     if [[ $IP6 ]]; then
+        if [[ $IP6 == @(stateless|static) ]]; then
+            for addr in "${Address6[@]}"; do
+                if ! do_debug ip -6 addr add $addr $(is_yes "${SkipDAD:-no}" && printf nodad) dev "$Interface"; then
+                    report_error "Could not add address '$addr' to interface '$Interface'"
+                fi
+            done
+        fi
+
         if ! is_yes "${SkipDAD:-no}"; then
             # Wait for Duplicate Address Detection to finish
             if ! timeout_wait "${TimeoutDAD:-3}" '[[ -z "$(ip -6 addr show dev "$Interface" tentative)" ]]'; then
                 report_error "Duplicate Address Detection is taking too long on interface '$Interface'"
                 return 1
             fi
+        fi
+
+        # Start a DHCPv6 client after DAD has finished for the link-local address
+        if [[ $IP6 == @(dhcp|dhcp-noaddr) ]]; then
+            dhcp_call "${DHCP6Client:-dhclient}" start 6 ${IP6:5} || return
         fi
 
         # Add static IPv6 routes after DAD has finished
