@@ -192,13 +192,10 @@ start() {
         report_debug "Examining profile '$profile'"
         (
           source "$PROFILE_DIR/$profile"
-          [[ $Interface == "$interface" ]] || continue
-          is_yes "${ExcludeAuto:-no}" && exit 1
-          [[ $Connection != "wireless" ]] && exit 1
-          : ${Security:=none}
-          # Exclude wpa-config, the wpa_conf is 'complete' and doesn't fit in this scheme
-          [[ $Security == "wpa-config" ]] && exit 1
-
+          [[ $Interface == "$interface" && $Connection == "wireless" ]] || exit
+          is_yes "${ExcludeAuto:-no}" && exit
+          # Set default and exclude wpa-config as it does not fit this scheme
+          [[ ${Security:=none} != "wpa-config" ]] || exit
           printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$wpa_conf"
           report_notice "Included profile '$profile'"
         )

@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash
 #
 # ifplugd.action script for netctl
 
@@ -8,39 +8,29 @@ PROFILE_FILE="$STATE_DIR/ifplugd_$1.profile"
 
 case "$2" in
   up)
-    # Look for a dhcp based profile to try first
-    # dhcp can actually outright fail, whereas
-    # it's difficult to tell if static succeeded
-    # Also check profile is same iface and is right connection
-    echo "up"
-    declare -a preferred_profiles
-    declare -a dhcp_profiles
-    declare -a static_profiles
     while read -r profile; do
-        (
-          echo "Reading profile '$profile'"
-          source "$PROFILE_DIR/$profile"
-          [[ "$Interface" == "$1" && "$Connection" == "ethernet" ]] || continue
-          is_yes "${AutoWired:-no}" && exit 1 # user preferred AUTO profile
-          [[ "$IP" == "dhcp" ]] && exit 2 # dhcp profile
-          exit 3 # static profile
-        )
-        case $? in
-          1) preferred_profiles+=("$profile");;
-          2) dhcp_profiles+=("$profile");;
-          3) static_profiles+=("$profile");;
-        esac
-    done < <(list_profiles)
-    if [[ ${#preferred_profiles[@]} > 1 ]]; then
-        echo "AutoWired flag for '$1' set in more than one profile (${preferred_profiles[*]})"
-    fi
-    for profile in "${preferred_profiles[@]}" "${dhcp_profiles[@]}" "${static_profiles[@]}"; do
         if ForceConnect=yes "$SUBR_DIR/network" start "$profile"; then
             mkdir -p "$(dirname "$PROFILE_FILE")"
             printf "%s" "$profile" > "$PROFILE_FILE"
             exit 0
         fi
-    done
+    done < <(list_profiles | while read -r profile; do
+        report_debug "Examining profile '$profile'"
+        (
+          source "$PROFILE_DIR/$profile" > /dev/null
+          [[ $Interface == "$1" && $Connection == "ethernet" ]] || exit
+          # Prioritize dhcp based profiles as they can outright fail, whereas
+          # it is difficult to tell if a profile with a static address fails
+          if [[ $IP == "dhcp" || $IP6 == dhcp* ]]; then
+              : ${ExcludeAuto:=no}
+              : ${Priority:=1}
+          fi
+          is_yes "${ExcludeAuto:-yes}" && exit
+          printf "%i\t%s\n" "${Priority:-0}" "$profile"
+          report_debug "Included profile '$profile'"
+        )
+    done | sort -nrs -k 1,1 | cut -f 2-)
+    report_error "Could not start any suitable profile"
   ;;
   down)
     if [[ -e "$PROFILE_FILE" ]]; then

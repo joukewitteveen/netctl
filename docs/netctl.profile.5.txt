@@ -103,6 +103,11 @@ GENERAL OPTIONS
     Set to `++yes++' to force connecting even if the interface is up.
     Do not use this unless you know what you are doing.
 
+'ExcludeAuto='::
+    Whether or not to exclude this profile from automatic profile
+    selection. Defaults to `++no++' for wireless and DHCP enabled
+    connections and to `++yes++' otherwise.
+
 
 IP OPTIONS
 ----------
@@ -223,6 +228,12 @@ of the `ethernet' type:
     Whether or not the absence of a carrier (plugged-in cable) is
     acceptable. Defaults to `++no++'.
 
+'Priority='::
+    Priority level of the profile. In case of automatic profile
+    selection, profiles are tried in decreasing order of priority.
+    Defaults to `++1++' in DHCP enabled profiles and to `++0++'
+    otherwise.
+
 
 OPTIONS FOR `wireless' CONNECTIONS
 ----------------------------------
@@ -294,10 +305,6 @@ of the `wireless' type:
     in '/sys/class/rfkill/rfkillX/name'. It is also possible to set this
     variable to `++auto++'. In that case an *rfkill* device that is
     associated with the network interface is used.
-
-'ExcludeAuto='::
-    Whether or not to exclude this profile from automatic profile
-    selection. Defaults to `++no++'.
 
 
 OPTIONS FOR `bond' CONNECTIONS
