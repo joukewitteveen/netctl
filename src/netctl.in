@@ -20,8 +20,9 @@ Commands:
   status [PROFILE]      Show runtime status of a profile
   enable [PROFILE]      Enable the systemd unit for a profile
   disable [PROFILE]     Disable the systemd unit for a profile
-  is-enabled [PROFILE]  Check whether a profile is enabled
   reenable [PROFILE]    Reenable the systemd unit for a profile
+  is-enabled [PROFILE]  Check whether a profile is enabled
+  edit [PROFILE]        Edit a profile
 END
 }
 
@@ -180,6 +181,8 @@ case $# in
         if sd_booted; then
             systemctl daemon-reload
         fi;;
+      edit)
+        exec ${EDITOR:-nano} "$PROFILE_DIR/$2";;
       *)
         exit_error "$(usage)";;
     esac;;
