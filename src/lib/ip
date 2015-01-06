@@ -82,7 +82,7 @@ ip_set() {
       ;;
     esac
 
-    if [[ $IP ]]; then
+    if [[ $IP != @(|no) ]]; then
         # Add static IP routes
         for route in "${Routes[@]}"; do
             if ! do_debug ip route add $route dev "$Interface"; then
@@ -100,7 +100,7 @@ ip_set() {
         fi
     fi
 
-    if [[ $IP6 ]]; then
+    if [[ $IP6 != @(|no) ]]; then
         if [[ $IP6 == @(stateless|static) ]]; then
             for addr in "${Address6[@]}"; do
                 if ! do_debug ip -6 addr add $addr $(is_yes "${SkipDAD:-no}" && printf nodad) dev "$Interface"; then
