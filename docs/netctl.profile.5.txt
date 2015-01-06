@@ -303,8 +303,12 @@ of the `wireless' type:
 OPTIONS FOR `bond' CONNECTIONS
 ------------------------------
 The interfaces of 'BindsToInterfaces' are bound together in the
-interface named by 'Interface'. All *ip options* are understood for
-connections of the `bond' type.
+interface named by 'Interface'. Next to the *ip options*, the following
+is understood for connections of the `bond' type:
+
+'Mode='::
+    The bonding policy. See the kernel documentation on bonding for
+    details.
 
 
 OPTIONS FOR `bridge' CONNECTIONS

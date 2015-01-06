@@ -4,3 +4,4 @@ Connection=bond
 BindsToInterfaces=(eth0 eth2)
 IP=static
 Address="10.0.0.1/8"
+#Mode=balance-rr

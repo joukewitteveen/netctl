@@ -9,11 +9,10 @@ bond_up() {
     if is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"
         return 1
-    else
-        interface_add bond "$Interface"
     fi
-    bring_interface_up "$Interface"
 
+    interface_add bond "$Interface" "" ${Mode:+mode "$Mode"}
+    bring_interface_up "$Interface"
     for slave in "${BindsToInterfaces[@]}"; do
         ip link set dev "$slave" master "$Interface"
     done
