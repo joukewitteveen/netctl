@@ -1,0 +1,11 @@
+Description='Example for a GRE tunnel'
+Interface=tungre0
+Connection=tunnel
+Mode='gre'
+# Key='1234'
+Remote='123.123.123.123'
+Local='192.168.1.1'
+
+## Example IP configuration
+IP=static
+Address='192.168.2.1/30'

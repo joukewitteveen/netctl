@@ -444,6 +444,11 @@ the *ip options*, the following are understood for connections of the
 'Mode='::
     The tunnel type (e.g. `sit'). See *ip*(8) for available modes.
 
+'Key='::
+    (Only for GRE tunnel)
+    The tunnel key, corresponding to the key option of `ip tunnel`.
+    Unset by default.
+
 'Local='::
     The address of the local end of the tunnel.
 
