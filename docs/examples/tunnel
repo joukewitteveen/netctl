@@ -1,9 +1,12 @@
-Description='An example ipv6 tunnel with Hurricane Electric'
-Interface=he-ipv6
+Description='Example tunnel connection'
+Interface=tun-ipv6
 Connection=tunnel
-Mode='sit'
+Mode=sit
 Remote='216.66.80.26'
 #Local='172.16.0.1'
+
+## Optional key in case of Mode=gre
+#Key=1234
 
 IP6=static
 Address6='2001:470:1f08:d87::2/64'

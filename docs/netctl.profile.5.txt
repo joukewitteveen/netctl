@@ -461,6 +461,9 @@ the *ip options*, the following are understood for connections of the
 'Remote='::
     The address of the remote end of the tunnel.
 
+'Key=' [requires 'Mode=gre']::
+    A key identifying an individual traffic flow within a tunnel.
+
 
 OPTIONS FOR `tuntap' CONNECTIONS
 --------------------------------

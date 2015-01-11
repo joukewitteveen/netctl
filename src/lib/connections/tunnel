@@ -14,7 +14,7 @@ tunnel_up() {
 
     [[ $Mode == *ip6* || $Mode == "any" ]] && family="-6"
     do_debug ip "$family" tunnel add "$Interface" mode "$Mode" \
-        remote "$Remote" ${Local+local "$Local"} || return
+        remote "$Remote" ${Local:+local "$Local"} ${Key:+key "$Key"} || return
 
     bring_interface_up "$Interface"
     ip_set
