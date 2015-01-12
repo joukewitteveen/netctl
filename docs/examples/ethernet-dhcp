@@ -2,7 +2,10 @@ Description='A basic dhcp ethernet connection'
 Interface=eth0
 Connection=ethernet
 IP=dhcp
+#DHCPClient=dhcpcd
+#DHCPReleaseOnStop=no
 ## for DHCPv6
 #IP6=dhcp
+#DHCP6Client=dhclient
 ## for IPv6 autoconfiguration
 #IP6=stateless

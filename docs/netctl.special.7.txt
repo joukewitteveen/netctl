@@ -46,8 +46,8 @@ netctl-sleep.service::
 netctl-auto@<interface>.service::
     This unit issues a scan on the interface it is used for and tries to
     start a profile for a network it finds. It is targeted at wireless
-    interfaces. Profile specific values for WPADriver are ignored, but
-    it is possible to specify WPADriver in an interface hook
+    interfaces. Profile specific values for 'WPADriver' are ignored, but
+    it is possible to specify 'WPADriver=' in an interface hook
     ('/etc/netctl/interfaces/<interface>'). +
     Use *netctl-auto*(1) instead of *netctl(1)* to control the automatic
     profile selection when using this unit.

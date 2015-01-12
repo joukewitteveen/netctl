@@ -1,8 +1,8 @@
 Description='A simple WPA encrypted wireless connection'
 Interface=wlan0
 Connection=wireless
-Security=wpa
 
+Security=wpa
 IP=dhcp
 
 ESSID='MyNetwork'
@@ -12,3 +12,5 @@ ESSID='MyNetwork'
 Key='WirelessKey'
 # Uncomment this if your ssid is hidden
 #Hidden=yes
+# Set a priority for automatic profile selection
+#Priority=10

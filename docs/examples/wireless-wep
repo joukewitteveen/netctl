@@ -1,12 +1,17 @@
 Description='A simple WEP encrypted wireless connection'
 Interface=wlan0
 Connection=wireless
+
 Security=wep
-ESSID='MyNetwork'
-# Prepend \" to hexadecimal keys
-Key=\"1234567890abcdef
 IP=dhcp
+
+ESSID='MyNetwork'
+# Prepend \" to hexadecimal keys, but not to string keys
+Key=\"1234567890abcdef
+#Key='WirelessKey'
 # Uncomment this if your ssid is hidden
 #Hidden=yes
-# Uncomment if you are using an ad-hoc connection
+# Uncomment this if you are using an ad-hoc connection
 #AdHoc=yes
+# Set a priority for automatic profile selection
+#Priority=10

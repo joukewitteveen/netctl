@@ -14,11 +14,9 @@ Connection=mobile_ppp
 # The access point name you are connecting to
 AccessPointName=apn
 
-# If your device has a PIN code, set it here. Defaults to None
+# If your device has a PIN code, set it here. Defaults to 'None'
 #Pin=None
 
 # Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
 # These only work for Huawei USB modems; all other devices should use None
 Mode=3Gpref
-
-# vim:ft=dosini

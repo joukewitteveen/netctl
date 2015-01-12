@@ -7,7 +7,6 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=-/usr/bin/netctl restore
 ExecStop=/usr/bin/netctl store
-KillMode=none
 
 [Install]
 WantedBy=multi-user.target

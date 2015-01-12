@@ -108,6 +108,9 @@ GENERAL OPTIONS
     selection. Defaults to `++no++' for wireless and DHCP enabled
     connections and to `++yes++' otherwise.
 
+'NETCTL_DEBUG='::
+    Set to `++yes++' to generate debugging output.
+
 
 IP OPTIONS
 ----------
@@ -133,7 +136,7 @@ network. In particular, these connection types are +ethernet+,
 'Gateway=' [requires 'IP=static']::
     An IP routing gateway address.
 
-'Routes='::
+'Routes=()'::
     An array of custom routes of the form +
     `**<address range>** via **<gateway>**'.
 
@@ -146,7 +149,7 @@ network. In particular, these connection types are +ethernet+,
 'Gateway6=' [requires 'IP6=static' or 'IP6=stateless']::
     An IPv6 routing gateway address.
 
-'Routes6='::
+'Routes6=()'::
     An array of custom routes of the form +
     `**<address range>** via **<gateway>**'.
 

@@ -1,9 +1,0 @@
-Description='A simple WEP encrypted wireless connection'
-Interface=wlan0
-Connection=wireless
-Security=wep
-ESSID='MyNetwork'
-Key='Wireless Key'
-IP=dhcp
-# Uncomment this if your ssid is hidden
-#Hidden=yes
