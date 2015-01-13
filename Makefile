@@ -1,4 +1,4 @@
-export VERSION = 1.9
+export VERSION = 1.10
 
 PKG_CONFIG ?= pkg-config
 

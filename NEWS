@@ -1,3 +1,8 @@
+netctl 1.10
+- Improved support for automatic selection of wired profiles
+- Add edit subcommand to netctl
+- Assorted minor fixes
+
 netctl 1.9
 - Add support for openvswitch interfaces
 - Improved IPv6 support
