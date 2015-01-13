@@ -23,6 +23,7 @@ source=(ftp://ftp.archlinux.org/other/packages/netctl/netctl-${pkgver}.tar.xz{,.
 arch=('any')
 md5sums=('@md5sum@'
          '@md5sum.sig@')
+validpgpkeys=('CFA6AF15E5C74149FC1D8C086D1655C14CE1C13E')  # Florian Pritz
 
 package() {
   cd "$srcdir/netctl-${pkgver}"
