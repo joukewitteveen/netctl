@@ -2,7 +2,7 @@
 Description=Automatic wireless network connection using netctl profiles
 Documentation=man:netctl.special(7)
 BindsTo=sys-subsystem-net-devices-%i.device
-After=sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device network-pre.target
 Before=network.target
 Wants=network.target
 

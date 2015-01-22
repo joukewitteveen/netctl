@@ -1,6 +1,7 @@
 [Unit]
 Description=Networking for netctl profile %I
 Documentation=man:netctl.profile(5)
+After=network-pre.target
 Before=network.target netctl.service
 Wants=network.target
 
