@@ -80,7 +80,7 @@ wpa_start() {
     fi
 
     do_debug wpa_supplicant -B -P "$pidfile" -i "$interface" -D "$driver" \
-                            "$configuration" $WPAOptions
+                            "$configuration" $WPAOptions > /dev/null
 
     # Wait up to one second for the pid file to appear
     if ! timeout_wait 1 '[[ -f $pidfile ]]'; then
