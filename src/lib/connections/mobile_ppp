@@ -51,13 +51,13 @@ ABORT   '\nRINGING\r\n\r\nRINGING\r'
 REPORT CONNECT
 TIMEOUT 6
 '' 'ATQ0'
-'OK-AT-OK' 'ATZ'
+'OK-AT-OK' '${Init1:-ATZ}'
 TIMEOUT 3
 'OK' 'AT+CFUN=1'
 'OK' 'AT${Pin:++CPIN=$(quote_word "$Pin")}'
 'OK\d-AT-OK' 'ATI'
-'OK' 'ATZ'
-'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'
+'OK' '${Init1:-ATZ}'
+'OK' '${Init2:-ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0}'
 'OK' 'AT$(case $Mode in
   3Gonly) printf "\^SYSCFG=14,2,3fffffff,0,1";;
   3Gpref) printf "\^SYSCFG=2,2,3fffffff,0,1";;
