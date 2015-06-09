@@ -20,3 +20,7 @@ AccessPointName=apn
 # Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
 # These only work for Huawei USB modems; all other devices should use None
 Mode=3Gpref
+
+# Chat send strings
+# Init1=ATZ
+# Init2=ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0
