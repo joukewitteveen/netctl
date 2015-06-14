@@ -71,15 +71,15 @@ init_entries()
         ENTRIES[i++]=$ssid
         if in_array "$ssid" "${ESSIDS[@]}"; then
             if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
-                ENTRIES[i]="+"  # Automatically generated
+                ENTRIES[i]="."  # Automatically generated
             else
-                ENTRIES[i]="*"  # Handmade
+                ENTRIES[i]="+"  # Handmade
             fi
         else
-            ENTRIES[i]="-"  # Not present
+            ENTRIES[i]=" "  # Not present
         fi
         if [[ "$ssid" = "$CONNECTION" ]]; then
-            ENTRIES[i]="!"  # Currently connected
+            ENTRIES[i]="*"  # Currently connected
         fi
         if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
             ENTRIES[i]+=":${BASH_REMATCH[0],,}"
@@ -267,10 +267,9 @@ if (( RETURN == 0 )); then
     init_entries "$NETWORKS"
     MSG="Select the network you wish to use
 Flags description:
- * - handmade profile present
- + - automatically generated profile present
- - - no profile present
- ! - active connection present"
+ * - active connection present
+ + - handmade profile present
+ . - automatically generated profile present"
     CHOICE=$(dialog --column-separator : --menu "$MSG" 24 50 12 \
                  "${ENTRIES[@]}" --stdout)
     RETURN=$?
