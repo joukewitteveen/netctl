@@ -79,8 +79,8 @@ wpa_start() {
         configuration="-C$WPA_CTRL_DIR"
     fi
 
-    do_debug wpa_supplicant -B -P "$pidfile" -i "$interface" -D "$driver" \
-                            "$configuration" $WPAOptions
+    do_debug wpa_supplicant -q -B -P "$pidfile" -i "$interface" -D "$driver" \
+                            "$configuration" $WPAOptions >&2
 
     # Wait up to one second for the pid file to appear
     if ! timeout_wait 1 '[[ -f $pidfile ]]'; then
