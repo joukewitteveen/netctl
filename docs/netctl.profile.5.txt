@@ -428,6 +428,16 @@ type:
     AT commands specific to certain Huawei modems; all other devices
     should use `None'.
 
+'Init='::
+    An initialization string sent to the modem before dialing. This
+    string is sent after sending ``ATZ''. Defaults to
+    `++ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0++'.
+
+'ChatScript='::
+    Path to a chat file. If specified, no chat script will be generated
+    and all of the above options except 'User' and 'Password' will be
+    ignored.
+
 'MaxFail='::
     The number of consecutive failed connection attempts to tolerate.
     A value of 0 means no limit. Defaults to `++5++'.

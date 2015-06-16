@@ -11,34 +11,11 @@ quote_word() {
 }
 
 mobile_ppp_up() {
-    local options chat
-    options="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/options"
-    chat="$STATE_DIR/mobile_ppp.${Interface}.${Profile}/modem.chat"
-
-    mkdir -p "$(dirname "$options")"
-    cat >> "$options" << EOF
-linkname $(quote_word "$Profile")
-$(quote_word "$Interface")
-921600
-lock
-crtscts
-modem
-passive
-novj
-holdoff 10
-
-noauth
-$(is_yes "${DefaultRoute:-yes}" || printf no)defaultroute
-maxfail $(quote_word "${MaxFail:-5}")
-$(is_yes "${UsePeerDNS:-yes}" && printf usepeerdns)
-hide-password
-${User:+user $(quote_word "$User")}
-${Password:+password $(quote_word "$Password")}
-connect $(quote_word "/usr/sbin/chat -v -t15 -f $(quote_word "$chat")")
-${OptionsFile:+file $(quote_word "$OptionsFile")}
-EOF
-
-    cat >> "$chat" << EOF
+    local options_dir="$STATE_DIR/mobile_ppp.$Interface.$Profile"
+    mkdir -p "$options_dir"
+    if [[ -z $ChatScript ]]; then
+        ChatScript="$options_dir/modem.chat"
+        cat >> "$ChatScript" << EOF
 ECHO ON
 ABORT 'BUSY'
 ABORT 'NO CARRIER'
@@ -57,7 +34,7 @@ TIMEOUT 3
 'OK' 'AT${Pin:++CPIN=$(quote_word "$Pin")}'
 'OK\d-AT-OK' 'ATI'
 'OK' 'ATZ'
-'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'
+'OK' '${Init:-ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0}'
 'OK' 'AT$(case $Mode in
   3Gonly) printf "\^SYSCFG=14,2,3fffffff,0,1";;
   3Gpref) printf "\^SYSCFG=2,2,3fffffff,0,1";;
@@ -69,19 +46,40 @@ ${AccessPointName:+'OK-AT-OK' 'AT+CGDCONT=1,$(quote_word "IP"),$(quote_word "$Ac
 TIMEOUT 30
 CONNECT ''
 EOF
+    fi
 
-    if ! $PPPD file "$options"; then
-        rm "$options" "$chat"
-        rmdir "$(dirname "$options")"
+    cat >> "$options_dir/options" << EOF
+linkname $(quote_word "$Profile")
+$(quote_word "$Interface")
+921600
+lock
+crtscts
+modem
+passive
+novj
+holdoff 10
+
+noauth
+$(is_yes "${DefaultRoute:-yes}" || printf no)defaultroute
+maxfail $(quote_word "${MaxFail:-5}")
+$(is_yes "${UsePeerDNS:-yes}" && printf usepeerdns)
+hide-password
+${User:+user $(quote_word "$User")}
+${Password:+password $(quote_word "$Password")}
+connect $(quote_word "/usr/sbin/chat -v -t15 -f $(quote_word "$ChatScript")")
+${OptionsFile:+file $(quote_word "$OptionsFile")}
+EOF
+
+    if ! $PPPD file "$options_dir/options"; then
+        rm -r "$options_dir"
         report_error "Could not establish a ppp connection for profile '$Profile'."
         return 1
     fi
 }
 
 mobile_ppp_down() {
-    local options chat pidfile pid
-    options="$STATE_DIR/mobile_ppp.$Interface.$Profile/options"
-    chat="$STATE_DIR/mobile_ppp.$Interface.$Profile/modem.chat"
+    local options_dir pidfile pid
+    options_dir="$STATE_DIR/mobile_ppp.$Interface.$Profile"
     pidfile="/var/run/ppp-$Profile.pid"
 
     if [[ -r $pidfile ]]; then
@@ -89,8 +87,7 @@ mobile_ppp_down() {
         (( pid )) && kill "$pid"
     fi
 
-    rm "$options" "$chat"
-    rmdir "$(dirname "$options")"
+    rm -r "$options_dir"
 }
 
 
