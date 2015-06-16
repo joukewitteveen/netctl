@@ -7,3 +7,4 @@ IPCustom=('addr add dev eth0 192.168.1.23/24 brd +' 'route add default via 192.1
 DNS=('192.168.1.1')
 # Set a priority for automatic profile selection
 #Priority=10
+#ExcludeAuto=no

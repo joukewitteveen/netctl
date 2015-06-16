@@ -342,8 +342,8 @@ OPTIONS FOR `ppp' CONNECTIONS
 -----------------------------
 This connection type is identical to the `pppoe' type below, with the
 ethernet interface specified in 'BindsToInterfaces'. The value of
-'Interface' must be of the form `ppp<++n++>', where ++n++ is passed on as
-the value of 'PPPUnit'.
+'Interface' must be of the form `ppp<++n++>', where ++n++ is passed on
+to 'PPPUnit'.
 
 
 OPTIONS FOR `pppoe' CONNECTIONS
