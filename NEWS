@@ -1,3 +1,8 @@
+netctl 1.11
+- Fix wifi scanning for compatibility with wpa_supplicant 2.4
+- Fixes and improvements to mobile_ppp
+- Minor functional and cosmetic improvements
+
 netctl 1.10
 - Improved support for automatic selection of wired profiles
 - Add edit subcommand to netctl
