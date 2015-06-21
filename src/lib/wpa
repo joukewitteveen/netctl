@@ -247,7 +247,11 @@ wpa_make_config_block() {
       ;;
     esac
 
-    echo "ssid=$(wpa_quote "$ESSID")"
+    if [[ $ESSID == \"* ]]; then
+        echo "ssid=${ESSID:1}"
+    else
+        echo "ssid=$(echo -n "$ESSID" | hexdump -ve '/1 "%02x"')"
+    fi
     [[ $AP ]] && echo "bssid=${AP,,}"
     is_yes "${Hidden:-no}" && echo "scan_ssid=1"
     is_yes "${AdHoc:-no}" && echo "mode=1"
