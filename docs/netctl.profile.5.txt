@@ -211,8 +211,17 @@ of the `ethernet' type:
 'Auth8021X='::
     Set to `++yes++' to use 802.1x authentication.
 
+'Security='::
+    One of `wpa-configsection', or `wpa-config' to be used for 802.1x
+    authentication. Defaults to `++wpa-config++'.
+
+'WPAConfigSection=()' [mandatory for 'Security=wpa-configsection']::
+    Array of lines that form a network block for *wpa_supplicant* when
+    'Auth8021X=yes'.
+
 'WPAConfigFile='::
-    Path to a *wpa_supplicant* configuration file. Defaults to
+    Path to a *wpa_supplicant* configuration file. Used only for
+    'Security=wpa-config' when 'Auth8021X=yes'. Defaults to
     '/etc/wpa_supplicant.conf'.
 
 'WPADriver='::

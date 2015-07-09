@@ -256,5 +256,24 @@ wpa_make_config_block() {
     [[ $Priority ]] && echo "priority=$Priority"
 }
 
+## Either create a configuration file for wpa_supplicant including the network
+## blocks or get the one specified by the user
+# $1: interface name
+# $Security: type of security
+wpa_get_full_config_file() {
+    if [[ $Security == "wpa-config" ]]; then
+        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+        config_file=$WPAConfigFile
+    else
+        config_file=$(wpa_make_config_file "$1")
+        if [[ -z $config_file ]]; then
+            report_error "Could not create a wpa config file for interface '$1'"
+            return 1
+        fi
+        printf "%s\n" "network={" "$(wpa_make_config_block)" "}" >> "$config_file"
+    fi
+    echo "$config_file"
+}
+
 
 # vim: ft=sh ts=4 et sw=4:

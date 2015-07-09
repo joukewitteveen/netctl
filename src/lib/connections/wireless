@@ -25,16 +25,9 @@ wireless_up() {
     # Kill any lingering WPA supplicants
     WPAConfigFile= wpa_stop "$Interface" &> /dev/null
 
-    if [[ $Security == "wpa-config" ]]; then
-        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
-        config_file=$WPAConfigFile
-    else
-        config_file=$(wpa_make_config_file "$Interface")
-        if [[ -z $config_file ]]; then
-            report_error "Could not create a wpa config file for interface '$Interface'"
-            return 1
-        fi
-        printf "%s\n" "network={" "$(wpa_make_config_block)" "}" >> "$config_file"
+    config_file=$(wpa_get_full_config_file "$Interface")
+    if [[ $? -ne 0 ]]; then
+        return 1
     fi
 
     # Start the WPA supplicant

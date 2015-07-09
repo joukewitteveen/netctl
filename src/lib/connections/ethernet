@@ -33,11 +33,16 @@ ethernet_up() {
 
     if is_yes "${Auth8021X:-no}"; then
         . "$SUBR_DIR/wpa"
-        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
         : ${WPADriver:=wired}
         : ${TimeoutWPA:=15}
+        : ${Security:=wpa-config}
 
-        if ! wpa_start "$Interface" "$WPADriver" "$WPAConfigFile"; then
+        config_file=$(wpa_get_full_config_file "$Interface")
+        if [[ $? -ne 0 ]]; then
+            return 1
+        fi
+
+        if ! wpa_start "$Interface" "$WPADriver" "$config_file"; then
             report_error "The WPA supplicant did not start for interface '$Interface'"
             bring_interface_down "$Interface"
             return 1
@@ -68,7 +73,9 @@ ethernet_down() {
 stop_8021x() {
     if is_yes "${Auth8021X:-no}"; then
         . "$SUBR_DIR/wpa"
-        : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+        if [[ $Security == "wpa-config" ]]; then
+            : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+        fi
         do_debug wpa_stop "$Interface"
     fi
 }
