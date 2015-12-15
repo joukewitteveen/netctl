@@ -187,6 +187,9 @@ start() {
         exit_error "Could not create the configuration file for interface '$interface'"
     fi
 
+    # Disable p2p to prevent wpa_supplicant from creating another control interface.
+    echo "p2p_disabled=1" >> "$wpa_conf"
+        
     local profile
     list_profiles | while read -r profile; do
         report_debug "Examining profile '$profile'"
