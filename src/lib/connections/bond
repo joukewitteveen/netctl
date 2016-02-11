@@ -22,8 +22,10 @@ bond_up() {
         ip link set dev "$slave" master "$Interface"
     done
  
+    #detect sysfs if directory present assume sysfs
     if [ -d /sys/class/net ]
      then
+     #iterate though possible multi-value parameters and assign value to this bond instance on match
      for var in arp_ip_target
       do
       list="$var[@]"
@@ -33,7 +35,7 @@ bond_up() {
        done
       done
 
-     #all single value options execpt for mode
+     #iterate though possible single value parameters and assign value to this bond instance on match
      for var in active_slave ad_actor_key ad_aggregator ad_num_ports ad_partner_key ad_partner_mac ad_select all_slaves_active arp_interval arp_validate downdelay fail_over_mac lacp_rate lp_interval mii_status miimon min_links num_grat_arp num_unsol_na packets_per_slave primary primary_reselect queue_id resend_igmp slaves tlb_dynamic_lb updelay use_carrier xmit_hash_policy
       do
       val=${!var}
