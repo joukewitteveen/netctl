@@ -1,4 +1,5 @@
 # Contributed by: andy123 <ajs@online.de>
+# modified by: gpomega <gerald@palmerhouse.net>
 
 . "$SUBR_DIR/ip"
 
@@ -12,10 +13,36 @@ bond_up() {
     fi
 
     interface_add bond "$Interface" "" ${Mode:+mode "$Mode"}
+    if [ -n "$Mode" ]
+     then
+     echo "$Mode" >/sys/class/net/$Interface/bonding/mode
+     fi
     bring_interface_up "$Interface"
     for slave in "${BindsToInterfaces[@]}"; do
         ip link set dev "$slave" master "$Interface"
     done
+ 
+    if [ -d /sys/class/net ]
+     then
+     for var in arp_ip_target
+      do
+      list="$var[@]"
+      for member in ${!list}
+       do
+       echo +$member>/sys/class/net/$Interface/bonding/$var
+       done
+      done
+
+     #all single value options execpt for mode
+     for var in active_slave ad_actor_key ad_aggregator ad_num_ports ad_partner_key ad_partner_mac ad_select all_slaves_active arp_interval arp_validate downdelay fail_over_mac lacp_rate lp_interval mii_status miimon min_links num_grat_arp num_unsol_na packets_per_slave primary primary_reselect queue_id resend_igmp slaves tlb_dynamic_lb updelay use_carrier xmit_hash_policy
+      do
+      val=${!var}
+      if [ -n "$val" ]
+       then
+       echo "$val" >/sys/class/net/$Interface/bonding/$var
+       fi
+      done
+     fi
 
     ip_set
 }
