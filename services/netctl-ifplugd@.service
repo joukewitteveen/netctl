@@ -5,7 +5,7 @@ BindsTo=sys-subsystem-net-devices-%i.device
 After=sys-subsystem-net-devices-%i.device network-pre.target
 
 [Service]
-ExecStart=/usr/bin/ifplugd -i %I -r /etc/ifplugd/netctl.action -bfIns
+ExecStart=/usr/bin/ifplugd -i %i -r /etc/ifplugd/netctl.action -bfIns
 
 [Install]
 WantedBy=multi-user.target
