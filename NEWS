@@ -1,3 +1,7 @@
+netctl 1.12
+- Add is-active subcommand to netctl and netctl-auto
+- Fix support for profile names with spaces in wifi-menu
+
 netctl 1.11
 - Fix wifi scanning for compatibility with wpa_supplicant 2.4
 - Fixes and improvements to mobile_ppp
