@@ -466,7 +466,8 @@ the *ip options*, the following are understood for connections of the
 `tunnel' type:
 
 'Mode='::
-    The tunnel type (e.g. `sit'). See *ip*(8) for available modes.
+    The tunnel type (e.g. `sit'). See *ip-tunnel*(8) for available
+    modes.
 
 'Local='::
     The address of the local end of the tunnel.
