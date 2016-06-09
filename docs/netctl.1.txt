@@ -51,6 +51,10 @@ The following commands are understood:
     Starts the network profile specified on the command line after
     stopping all profiles that refer to the same interface.
 
+*is-active [+PROFILE+]*::
+    Check whether the network profile specified on the command line is
+    active. Prints the current state.
+
 *status [+PROFILE+]*::
     Show terse runtime status information about a profile, followed by
     its most recent log data from the journal.

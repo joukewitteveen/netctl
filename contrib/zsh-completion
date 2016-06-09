@@ -11,7 +11,7 @@ _wireless_interfaces() {
 
 (( $+function[_netctl_command] )) ||
 _netctl_command() {
-    [[ $words[1] = (start|stop|restart|switch-to|status|enable|disable|reenable|is-enabled|edit) ]] &&
+    [[ $words[1] = (start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit) ]] &&
       compadd "${(f)$(find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name '*.conf' -not -name '*.service' -printf "%f\n")}"
 }
 
@@ -27,6 +27,7 @@ _netctl_commands() {
         'stop:Stop a profile'
         'restart:Restart a profile'
         'switch-to:Switch to a profile'
+        'is-active:Check whether a profile is active'
         'status:Show runtime status of a profile'
         'enable:Enable the systemd unit for a profile'
         'disable:Disable the systemd unit for a profile'
@@ -41,12 +42,13 @@ _netctl-auto_commands() {
     local -a _commands
     _commands=(
         'list:List available profiles'
-        'current:List currently active profiles'
         'switch-to:Switch to a profile, enable it if necessary'
+        'is-active:Check whether a profile is active'
         'enable:Enable a profile for automatic selection'
         'disable:Disable a profile temporarily for automatic selection'
         'enable-all:Enable all profiles for automatic selection'
         'disable-all:Disable all profiles temporarily for automatic selection'
+        'is-enabled:Check whether a profile is enabled'
       )
     _describe "netctl-auto commands" _commands
 }

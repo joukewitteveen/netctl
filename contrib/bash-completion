@@ -23,10 +23,10 @@ _netctl()
 
     case $COMP_CWORD in
       1)
-        COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to status enable disable reenable is-enabled edit" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to is-active status enable disable reenable is-enabled edit" -- "$cur") )
       ;;
       2)
-        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(start|stop|restart|switch-to|status|enable|disable|reenable|is-enabled|edit) ]] &&
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit) ]] &&
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;
     esac
@@ -40,10 +40,10 @@ _netctl_auto()
 
     case $COMP_CWORD in
       1)
-        COMPREPLY=( $(compgen -W "--help --version list current switch-to enable disable enable-all disable-all" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--help --version list switch-to is-active enable disable enable-all disable-all is-enabled" -- "$cur") )
       ;;
       2)
-        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(switch-to|enable|disable) ]] &&
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(switch-to|is-active|enable|disable|is-enabled) ]] &&
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;
     esac

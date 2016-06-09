@@ -17,6 +17,7 @@ Commands:
   stop [PROFILE]        Stop a profile
   restart [PROFILE]     Restart a profile
   switch-to [PROFILE]   Switch to a profile
+  is-active [PROFILE]   Check whether a profile is active
   status [PROFILE]      Show runtime status of a profile
   enable [PROFILE]      Enable the systemd unit for a profile
   disable [PROFILE]     Disable the systemd unit for a profile
@@ -163,7 +164,7 @@ case $# in
     esac;;
   2)
     case $1 in
-      start|stop|restart|status|is-enabled)
+      start|stop|restart|is-active|status|is-enabled)
         sd_call "$1" "$2";;
       switch-to)
         ensure_root "$(basename "$0")"

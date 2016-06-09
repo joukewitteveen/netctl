@@ -14,13 +14,14 @@ Usage: netctl-auto {COMMAND} ...
                    [--help|--version]
 
 Commands:
-  list                 List available profiles (active='*', disabled='!')
-  current              List currently active profiles
-  switch-to [PROFILE]  Switch to a profile, enable it if necessary
-  enable [PROFILE]     Enable a profile for automatic selection
-  disable [PROFILE]    Disable a profile temporarily for automatic selection
-  enable-all           Enable all profiles for automatic selection
-  disable-all          Disable all profiles temporarily for automatic selection
+  list                  List available profiles (active='*', disabled='!')
+  switch-to [PROFILE]   Switch to a profile, enable it if necessary
+  is-active [PROFILE]   Check whether a profile is active
+  enable [PROFILE]      Enable a profile for automatic selection
+  disable [PROFILE]     Disable a profile for automatic selection
+  enable-all            Enable all profiles for automatic selection
+  disable-all           Disable all profiles for automatic selection
+  is-enabled [PROFILE]  Check whether a profile is enabled
 END
 }
 
@@ -63,13 +64,13 @@ list_wpa_profiles() {
 get_wpa_network_id() {
     local interface id flag profile
     while read -r interface id flag profile; do
-        if [[ "$1" == "$profile" ]]; then
+        if [[ $profile == "$1" ]]; then
             echo "$interface" "$id"
             return 0
         fi
     done < <(list_wpa_profiles)
 
-    report_error "Profile '$1' does not exist or is not available" >&2
+    report_error "Profile '$1' does not exist or is not available"
     return 1
 }
 
@@ -146,23 +147,50 @@ switch_to() {
     reenable_networks
 }
 
-## List currently active profiles
-current() {
-    local interface
-    for interface in $(list_netctl_auto_interfaces); do
-        local state=$(wpa_get_state "$interface")
-        if [[ "$state" == "COMPLETED" ]]; then
-            wpa_call "$interface" status | sed -n 's/^id_str=//p'
+## Check whether a profile is active
+# $1: profile name
+is_active() {
+    local interface id flag profile
+    while read -r interface id flag profile; do
+        if [[ $profile == "$1" ]]; then
+            if [[ $flag == "a" ]]; then
+                echo "active"
+                return 0
+            else
+                echo "inactive"
+                return 1
+            fi
         fi
-    done
+    done < <(list_wpa_profiles)
+    echo "unknown profile: '$1'"
+    return 1
+}
+
+## Check whether a profile is enabled
+# $1: profile name
+is_enabled() {
+    local interface id flag profile
+    while read -r interface id flag profile; do
+        if [[ $profile == "$1" ]]; then
+            if [[ $flag != "d" ]]; then
+                echo "enabled"
+                return 0
+            else
+                echo "disabled"
+                return 1
+            fi
+        fi
+    done < <(list_wpa_profiles)
+    echo "unknown profile: '$1'"
+    return 1
 }
 
 ## List all available profiles and their status
 list() {
     local interface id flag profile
-    while read -r interface id flag profile; do
+    list_wpa_profiles | while read -r interface id flag profile; do
         echo "$(echo $flag | tr 'aed' '* !')" "$profile"
-    done < <(list_wpa_profiles)
+    done
 }
 
 ## Start and generate config file for the WPA supplicant, start wpa_actiond
@@ -238,7 +266,7 @@ case $# in
         report_notice "netctl version $NETCTL_VERSION";;
       --help)
         usage;;
-      list|current)
+      list)
         "$1";;
       enable-all|disable-all)
         profile_enable_disable "$1";;
@@ -249,8 +277,8 @@ case $# in
     case $1 in
       enable|disable)
         profile_enable_disable "$1" "$2";;
-      switch-to)
-        switch_to "$2";;
+      switch-to|is-active|is-enabled)
+        "${1//-/_}" "$2";;
       start|stop)
         if [[ -t 0 ]]; then
             exit_error "Use 'systemctl $1 netctl-auto@$2' to $1 netctl-auto."

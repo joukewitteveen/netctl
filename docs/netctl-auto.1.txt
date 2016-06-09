@@ -29,15 +29,16 @@ The following commands are understood:
     selection. Active profiles will be marked with a `&ast;', disabled
     profiles will be marked with a `!'.
 
-*current*::
-    Report currently active profiles.
-
 *switch-to [+PROFILE+]*::
     Switch to the network profile specified on the command line. The
     specified profile will be enabled if necessary, the state of all
     other profiles is not changed. This command does not force
     *netctl-auto* to use the specified profile. If a disconnect occurs,
     *netctl-auto* may select an alternative profile.
+
+*is-active [+PROFILE+]*::
+    Check whether the network profile specified on the command line is
+    active. Prints the current state.
 
 *enable [+PROFILE+]*::
     Enable a previously disabled network profile for automatic
@@ -55,6 +56,10 @@ The following commands are understood:
 
 *disable-all*::
     Disable all profiles for automatic selection.
+
+*is-enabled [+PROFILE+]*::
+    Check whether the specified profile is enabled for the *netctl-auto*
+    service that is currently running. Prints the current enable status.
 
 *start [+INTERFACE+]*::
     Start automatic profile selection on the specified interface. +
