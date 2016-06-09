@@ -101,7 +101,7 @@ wpa_stop() {
     fi
 
     # Done if wpa_supplicant is already terminated for this interface
-    [[ -z $WPA_CTR_DIR || -e "$WPA_CTRL_DIR/$interface" ]] || return
+    [[ -z $WPA_CTRL_DIR || -e "$WPA_CTRL_DIR/$interface" ]] || return
 
     wpa_call "$interface" terminate > /dev/null
     [[ -f $config_file && -O $config_file ]] && rm -f "$config_file"
