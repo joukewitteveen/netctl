@@ -23,7 +23,7 @@ wireless_up() {
     fi
 
     # Kill any lingering WPA supplicants
-    WPAConfigFile= wpa_stop "$Interface" &> /dev/null
+    WPAConfigFile="" wpa_stop "$Interface" &> /dev/null
 
     if [[ $Security == "wpa-config" ]]; then
         : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
