@@ -448,6 +448,9 @@ type:
 'UsePeerDNS='::
     Use the DNS provided by the peer. Defaults to `++true++'.
 
+'PPPUnit='::
+    Set the ppp unit number in the interface name (ppp0, ppp1, etc.).
+
 'OptionsFile='::
     A file to read additional pppd options from.
 

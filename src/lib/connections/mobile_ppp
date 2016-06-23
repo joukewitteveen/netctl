@@ -50,6 +50,7 @@ EOF
 
     cat >> "$options_dir/options" << EOF
 linkname $(quote_word "$Profile")
+${PPPUnit:+unit $(quote_word "$PPPUnit")}
 $(quote_word "$Interface")
 921600
 lock
