@@ -320,6 +320,10 @@ is understood for connections of the `bond' type:
     The bonding policy. See the kernel documentation on bonding for
     details.
 
+'LinkOptions='::
+    Additional options to be passed to *ip link*. Run
+    *ip link add type bond help* to see the available options.
+
 
 OPTIONS FOR `bridge' CONNECTIONS
 --------------------------------
@@ -330,6 +334,10 @@ connections of the `bridge' type:
 'SkipForwardingDelay='::
     Skip \(R)STP and immediately activate all bridge members. This can
     be useful when DHCP is used on the bridge.
+
+'LinkOptions='::
+    Additional options to be passed to *ip link*. Run
+    *ip link add type bridge help* to see the available options.
 
 
 OPTIONS FOR `dummy' CONNECTIONS
