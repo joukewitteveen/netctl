@@ -15,7 +15,7 @@ case $ACTION in
   CONNECT)
     DhcpcdOptions+=" -K"
     ip_set || exit 1
-    # JP: sandbox the eval
+    # Sandbox the eval
     if ! ( eval $ExecUpPost ); then
         # Failing ExecUpPost will take the connection down
         netctl-auto stop "$INTERFACE"
@@ -23,7 +23,7 @@ case $ACTION in
     fi
   ;;
   DISCONNECT)
-    # JP: sandbox the eval
+    # Sandbox the eval
     if ! ( eval $ExecDownPre ); then
         exit 1
     fi

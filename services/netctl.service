@@ -1,5 +1,6 @@
 [Unit]
 Description=(Re)store the netctl profile state
+Documentation=man:netctl.special(7)
 Before=network.target
 
 [Service]

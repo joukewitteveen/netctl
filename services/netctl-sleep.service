@@ -1,5 +1,6 @@
 [Unit]
 Description=netctl sleep hook
+Documentation=man:netctl.special(7)
 Before=sleep.target
 StopWhenUnneeded=yes
 

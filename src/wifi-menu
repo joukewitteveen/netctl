@@ -133,7 +133,11 @@ create_profile()
         security=none
     fi
     if [[ "$flags" =~ PSK|WEP ]]; then
-        [[ "$OBSCURE" ]] && box="--insecure --passwordbox" || box="--inputbox"
+        if is_yes "${OBSCURE:-no}"; then
+            box="--insecure --passwordbox"
+        else
+            box="--inputbox"
+        fi
         msg="Enter $security security key for\n'$1'"
         key=$(dialog $box "$msg" 10 40 --stdout) || return $?
         if [[ "${BASH_REMATCH[0]}" = "WEP" ]]; then
@@ -143,7 +147,7 @@ create_profile()
                 key=$(quote_safe "$key")
             fi
         elif [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
-            if [[ "$OBSCURE" ]]; then
+            if is_yes "${OBSCURE:-no}"; then
                 key="\"$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")"
             else
                 key=$(quote_safe "$key")
@@ -175,17 +179,17 @@ connect_to_ssid()
     PROFILE=$(ssid_to_profile "$1")
     if [[ $? -ne 0 ]]; then
         PROFILE=$(create_profile "$1") || return $?
-        NEW_PROFILE=1
+        NEW_PROFILE=yes
     fi
     clear
     if systemctl is-active --quiet "netctl-auto@$INTERFACE.service"; then
         report_notice "Interface '$INTERFACE' is controlled by netctl-auto"
-        if (( NEW_PROFILE )); then
+        if is_yes "${NEW_PROFILE:-no}"; then
             do_debug systemctl restart "netctl-auto@$INTERFACE.service"
         fi
         do_debug netctl-auto switch-to "$PROFILE"
     elif ! netctl switch-to "$PROFILE"; then
-        if (( NEW_PROFILE )); then
+        if is_yes "${NEW_PROFILE:-no}"; then
             msg="         CONNECTING FAILED
 
 Do you want to keep the generated profile ('$PROFILE')?"
@@ -204,7 +208,7 @@ while [[ "$1" = -* ]]; do
             exit
             ;;
         -o|--obscure)
-            OBSCURE=1
+            OBSCURE=yes
             shift
             ;;
         -*)
@@ -248,7 +252,7 @@ if [[ "$RFKill" && "$(rf_status "$INTERFACE" "$RFKill")" ]]; then
     if ! rf_enable "$INTERFACE" "$RFKill"; then
         exit_error "Could not unblock transmission on interface '$INTERFACE'"
     fi
-    RF_UNBLOCKED=1
+    RF_UNBLOCKED=yes
 fi
 
 echo -n "Scanning for networks... "
@@ -256,7 +260,7 @@ CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | sed -n "s/^ssid=//p")
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
 RETURN=$?
 
-if (( RF_UNBLOCKED )); then
+if is_yes "${RF_UNBLOCKED:-no}"; then
     rf_disable "$INTERFACE" "$RFKill"
 fi
 
