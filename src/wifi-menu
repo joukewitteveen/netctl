@@ -65,7 +65,7 @@ init_profiles()
 # Builds ENTRIES as an argument list for dialog based on scan results in $1.
 init_entries()
 {
-    local i=0 flags signal ssid
+    local i=0 sep=$'\t' flags signal ssid
     while IFS=$'\t' read -r signal flags ssid; do
         ENTRIES[i++]="--"  # $ssid might look like an option to dialog.
         ENTRIES[i++]=$ssid
@@ -73,7 +73,7 @@ init_entries()
             if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
                 ENTRIES[i]="."  # Automatically generated
             else
-                ENTRIES[i]="+"  # Handmade
+                ENTRIES[i]=":"  # Handmade
             fi
         else
             ENTRIES[i]=" "  # Not present
@@ -82,11 +82,11 @@ init_entries()
             ENTRIES[i]="*"  # Currently connected
         fi
         if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
-            ENTRIES[i]+=":${BASH_REMATCH[0],,}"
+            ENTRIES[i]+="${sep}${BASH_REMATCH[0],,}"
         else
-            ENTRIES[i]+=":none"
+            ENTRIES[i]+="${sep}none"
         fi
-        ENTRIES[i]+="   :$signal"
+        ENTRIES[i]+="   ${sep}${signal}"
         (( ++i ))
     done < "$1"
 }
@@ -272,10 +272,9 @@ if (( RETURN == 0 )); then
     MSG="Select the network you wish to use
 Flags description:
  * - active connection present
- + - handmade profile present
+ : - handmade profile present
  . - automatically generated profile present"
-    CHOICE=$(dialog --column-separator : --menu "$MSG" 24 50 12 \
-                 "${ENTRIES[@]}" --stdout)
+    CHOICE=$(dialog --menu "$MSG" 24 50 12 "${ENTRIES[@]}" --stdout)
     RETURN=$?
     if (( RETURN == 0 )); then
         connect_to_ssid "$CHOICE"

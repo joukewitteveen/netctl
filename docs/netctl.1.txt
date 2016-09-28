@@ -24,8 +24,8 @@ OPTIONS
 The following commands are understood:
 
 *list*::
-    List all available profiles. Active profiles will be marked with a
-    `*'.
+    List all available profiles. Online profiles will be marked with a
+    `&ast;', otherwise active profiles will be marked with a `&plus;'.
 
 *store*::
     Saves which profiles are currently active.

@@ -29,11 +29,15 @@ END
 }
 
 list() {
-    local indicators=( '*' ' ' )
+    local indicators=( ' ' '+' '*' ) i
     list_profiles | while read -r Profile; do
-        sd_call "is-active --quiet" "$Profile" &> /dev/null
-        # Make the return value boolean
-        printf '%s %s\n' "${indicators[!! $?]}" "$Profile"
+        if sd_call "is-active --quiet" "$Profile" &> /dev/null; then
+            [[ $(sd_status_text "$Profile") == "online" ]]
+            (( i = 2 - $? ))
+        else
+            (( i = 0 ))
+        fi
+        printf '%s %s\n' "${indicators[i]}" "$Profile"
     done
 }
 

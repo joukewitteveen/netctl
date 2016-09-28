@@ -58,7 +58,7 @@ bring_interface_down() {
 
 ## Indicate that the network stack for the profile is up
 network_ready() {
-    if ! is_yes "${NETWORK_READY:-no}"; then
+    if ! is_yes "${WaitOnline:-no}" && ! is_yes "${NETWORK_READY:-no}"; then
         do_debug systemd-notify --ready
         NETWORK_READY=yes
     fi
@@ -68,6 +68,9 @@ network_ready() {
 # $1: status string, should be "online" when the profile gets connected
 network_status() {
     do_debug systemd-notify --status="$1"
+    if [[ $1 == "online" ]] && is_yes "${WaitOnline:-no}"; then
+        WaitOnline=no network_ready
+    fi
 }
 
 

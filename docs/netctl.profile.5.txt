@@ -85,6 +85,10 @@ GENERAL OPTIONS
     to be a list of profiles that this profile requires. The meaning is
     the same as 'After' in *systemd.unit*(5).
 
+'WaitOnline='::
+    Set to `++yes++' to consider the profile activated only when it is
+    online.
+
 'ExecUpPost='::
     A command that is executed after a connection is established. If the
     specified command returns anything other than 0 (success), *netctl*
