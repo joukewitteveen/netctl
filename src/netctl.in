@@ -27,28 +27,6 @@ Commands:
 END
 }
 
-sd_booted() {
-    [[ -d /run/systemd/system ]]
-}
-
-sd_escape() {
-    local IFS=''
-    # Prevent a recursion loop on backspaces
-    set -- "${@//\\/\\x5c}"
-    while [[ "$*" =~ [^[:alnum:].:_/\\] ]]; do
-        set -- "${@//$BASH_REMATCH/$(printf '\\x%x' "'$BASH_REMATCH")}"
-    done
-    printf '%s\n' "${@//\//-}"
-}
-
-# Wrapper around systemctl to convert profile names to unit names
-sd_call() {
-    local command=$1
-    shift
-    set -- $(sd_escape "$@")
-    systemctl $command $(printf 'netctl@%s.service\n' "$@")
-}
-
 list() {
     local indicators=( '*' ' ' )
     list_profiles | while read -r Profile; do
@@ -105,7 +83,7 @@ switch_to() {
 }
 
 unit_enable() {
-    local unit="@systemdsystemconfdir@/netctl@$(sd_escape "$1").service"
+    local unit="@systemdsystemconfdir@/netctl@$(systemd-escape "$1").service"
     if [[ -e $unit ]]; then
         report_error "A unit file for profile '$1' already exists"
         return 1
@@ -118,14 +96,14 @@ unit_enable() {
     declare -p BindsToInterfaces &> /dev/null || BindsToInterfaces=$Interface
     if (( ${#BindsToInterfaces[@]} )); then
         : ${InterfaceRoot=sys/subsystem/net/devices/}
-        printf "BindsTo=$(sd_escape "$InterfaceRoot")%s.device\n" \
-               $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
-        printf "After=$(sd_escape "$InterfaceRoot")%s.device\n" \
-               $(sd_escape "${BindsToInterfaces[@]}") >> "$unit"
+        printf "BindsTo=$(systemd-escape "$InterfaceRoot")%s.device\n" \
+               $(systemd-escape "${BindsToInterfaces[@]}") >> "$unit"
+        printf "After=$(systemd-escape "$InterfaceRoot")%s.device\n" \
+               $(systemd-escape "${BindsToInterfaces[@]}") >> "$unit"
     fi
     if (( ${#After[@]} )); then
         printf 'After="netctl@%s.service"\n' \
-               $(sd_escape "${After[@]}") >> "$unit"
+               $(systemd-escape "${After[@]}") >> "$unit"
     fi
     mkdir -p "@systemdsystemconfdir@/multi-user.target.wants"
     echo "ln -s '$unit' '${unit/system\//system/multi-user.target.wants/}'"
@@ -133,7 +111,7 @@ unit_enable() {
 }
 
 unit_disable() {
-    local unit="@systemdsystemconfdir@/netctl@$(sd_escape "$1").service"
+    local unit="@systemdsystemconfdir@/netctl@$(systemd-escape "$1").service"
     if sd_call "is-enabled --quiet" "$1" &> /dev/null; then
         sd_call disable "$1"
     fi
@@ -172,14 +150,14 @@ case $# in
       enable|disable)
         ensure_root "$(basename "$0")"
         "unit_$1" "$2"
-        if sd_booted; then
+        if systemd-notify --booted; then
             systemctl daemon-reload
         fi;;
       reenable)
         ensure_root "$(basename "$0")"
         unit_disable "$2"
         unit_enable "$2"
-        if sd_booted; then
+        if systemd-notify --booted; then
             systemctl daemon-reload
         fi;;
       edit)

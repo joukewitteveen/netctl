@@ -132,6 +132,15 @@ load_profile() {
     source "$SUBR_DIR/connections/$Connection"
 }
 
+## Wrapper around systemctl converting profile names to unit names
+# $1: systemctl command
+# $2...: profile names
+sd_call() {
+    local command=$1
+    shift
+    systemctl $command $(systemd-escape --template=netctl@.service "$@")
+}
+
 
 # Set a restrictive umask
 do_readable :
