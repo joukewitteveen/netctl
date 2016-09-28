@@ -50,6 +50,9 @@ EOF
     if ! $PPPD file "$options"; then
         rm "$options"
         rmdir "$(dirname "$options")"
+
+        bring_interface_down "$Interface"
+
         report_error "Could not establish a ppp connection for profile '$Profile'."
         return 1
     fi
