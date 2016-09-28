@@ -25,10 +25,10 @@ _netctl()
 
     case $COMP_CWORD in
       1)
-        COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to is-active status enable disable reenable is-enabled edit" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to is-active status enable disable reenable is-enabled edit wait-online" -- "$cur") )
       ;;
       2)
-        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit) ]] &&
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit|wait-online) ]] &&
           compopt -o filenames &&
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;

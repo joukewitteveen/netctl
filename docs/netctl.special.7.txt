@@ -8,7 +8,8 @@ netctl.special - Special netctl systemd units
 
 SYNOPSIS
 --------
-netctl.service, netctl-auto.service, netctl-ifplugd.service
+netctl.service, netctl-auto.service, netctl-ifplugd.service,
+netctl-wait-online.service
 
 
 DESCRIPTION
@@ -23,7 +24,7 @@ SPECIAL UNITS
 netctl.service::
     When started, this unit tries to start the profiles that were
     running when the unit was last stopped. In some cases, the interface
-    a profile binds to might not be available yet, when netctl.service
+    a profile binds to might not be available yet, when 'netctl.service'
     tries to bring a profile up. A simple, hackish, solution is to do:
 --------------------------------------------------------------------
 echo "[[ -t 0 ]] || sleep 3" > /etc/netctl/interfaces/<interface>
@@ -56,7 +57,15 @@ netctl-ifplugd@<interface>.service::
     This unit starts ifplugd on the interface it is used for. It will
     try to start a netctl profile whenever a cable is plugged into the
     interface and stop the profile when the cable is unplugged. Note
-    that this unit does not provide network.target.
+    that this unit does not provide 'network.target'.
+
+netctl-wait-online.service::
+    When activated, this unit waits for all enabled netctl profiles to
+    come online. Enabling this unit causes 'network-online.target' to
+    only be reached once all enabled netctl profiles are fully
+    connected. The maximum time, in seconds, to wait for profiles can be
+    passed to this unit via 'TIMEOUT_ONLINE='. The default value is
+    +120+. If a timeout occurs, the service enters a failed state.
 
 
 SEE ALSO

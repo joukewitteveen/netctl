@@ -18,6 +18,7 @@ pppoe_up() {
         report_error "Failed to bring interface '$Interface' up"
         return 1
     fi
+    network_ready
 
     mkdir -p "$(dirname "$options")"
     cat >> "$options" << EOF

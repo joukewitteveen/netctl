@@ -12,6 +12,9 @@ quote_word() {
 
 mobile_ppp_up() {
     local options_dir="$STATE_DIR/mobile_ppp.$Interface.$Profile"
+
+    network_ready
+
     mkdir -p "$options_dir"
     if [[ -z $ChatScript ]]; then
         ChatScript="$options_dir/modem.chat"

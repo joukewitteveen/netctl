@@ -56,17 +56,33 @@ bring_interface_down() {
     timeout_wait "${TimeoutUp:-5}" '! interface_is_up "$interface"'
 }
 
+## Indicate that the network stack for the profile is up
+network_ready() {
+    if ! is_yes "${NETWORK_READY:-no}"; then
+        do_debug systemd-notify --ready
+        NETWORK_READY=yes
+    fi
+}
 
-if [[ $# -ne 2 || $1 != @(start|stop) ]]; then
-    exit_error "Usage: $0 {start|stop} <profile>"
-fi
+## Describe the status of the service for the profile
+# $1: status string, should be "online" when the profile gets connected
+network_status() {
+    do_debug systemd-notify --status="$1"
+}
+
+
 ensure_root netctl
 # Ensure we are not in a transient directory
 cd /
 
-# Expose the profile name
-Profile=$2
-load_profile "$Profile"
+if [[ $# -eq 2 && $1 == @(start|stop) ]]; then
+    # Expose the profile name
+    Profile=$2
+    load_profile "$Profile"
+elif [[ $# -ne 1 || $1 != "wait-online" ]]; then
+    exit_error "Usage: $0 {start|stop|wait-online} [profile]"
+fi
+
 case $1 in
   start)
     report_notice "Starting network profile '$Profile'..."
@@ -79,6 +95,7 @@ case $1 in
         report_error "Failed to bring the network up for profile '$Profile'"
         exit 1
     fi
+    network_ready
     # Sandbox the eval
     if ! ( eval $ExecUpPost ); then
         report_error "ExecUpPost failed for network profile '$Profile'"
@@ -86,6 +103,7 @@ case $1 in
         "${Connection}_down"
         exit 1
     fi
+    network_status "online"
     report_notice "Started network profile '$Profile'"
   ;;
   stop)
@@ -100,12 +118,22 @@ case $1 in
         report_error "Failed to bring the network down for profile '$Profile'"
         exit 1
     fi
+    network_status ""
     if is_interface "$Interface" && interface_is_up "$Interface" && \
        ! is_yes "${ForceConnect:-no}"; then
         report_error "The interface of network profile '$Profile' did not go down"
         exit 1
     fi
     report_notice "Stopped network profile '$Profile'"
+  ;;
+  wait-online)
+    mapfile -t Profiles < <(list_profiles)
+    i=0
+    # Wait for all enabled profiles to come online within a single timeout
+    timeout_wait "${TIMEOUT_ONLINE:-120}" \
+                 '! until [[ $(sd_call is-enabled "${Profiles[i]}") == "enabled" &&
+                             $(sd_status_text "${Profiles[i]}") != "online" ]]; do
+                      (( ++i < ${#Profiles[@]} )) || return 0; done'
   ;;
 esac
 

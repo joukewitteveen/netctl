@@ -84,6 +84,10 @@ The following commands are understood:
     Open the file of the specified profile in an editor. This does not
     reenable or restart any profiles.
 
+*wait-online [+PROFILE+]*::
+    Wait until the interface of the profile has a routable IP address of
+    some kind.
+
 
 EXIT STATUS
 -----------

@@ -38,6 +38,8 @@ resolvconf_add() {
 ip_set() {
     local addr line route interface_sysctl=${Interface/.//}
 
+    network_ready
+
     if [[ -z $IP && -z $IP6 ]]; then
         report_error "Neither IP, nor IP6 was specified"
         return 1

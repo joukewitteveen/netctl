@@ -6,7 +6,8 @@ Before=network.target netctl.service
 Wants=network.target
 
 [Service]
-Type=oneshot
+Type=notify
+NotifyAccess=exec
 RemainAfterExit=yes
 ExecStart=/usr/lib/network/network start %I
 ExecStop=/usr/lib/network/network stop %I

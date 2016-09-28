@@ -11,7 +11,7 @@ _wireless_interfaces() {
 
 (( $+function[_netctl_command] )) ||
 _netctl_command() {
-    [[ $words[1] = (start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit) ]] &&
+    [[ $words[1] = (start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit|wait-online) ]] &&
       compadd "${(f)$(find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n")}"
 }
 
@@ -34,6 +34,7 @@ _netctl_commands() {
         'reenable:Reenable the systemd unit for a profile'
         'is-enabled:Check whether a profile is enabled'
         'edit:Edit a profile'
+        'wait-online:Wait for a profile to finish connecting'
       )
     _describe "netctl commands" _commands
 }

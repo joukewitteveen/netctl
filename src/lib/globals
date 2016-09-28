@@ -141,6 +141,12 @@ sd_call() {
     systemctl $command $(systemd-escape --template=netctl@.service "$@")
 }
 
+## Retrieves the status string from the unit for a profile
+# $1: profile name
+sd_status_text() {
+    sd_call status "$1" | sed -n 's/^ *Status: "\(.*\)"$/\1/p'
+}
+
 
 # Set a restrictive umask
 do_readable :

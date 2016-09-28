@@ -9,21 +9,22 @@ Usage: netctl {COMMAND} [PROFILE]
               [--help|--version]
 
 Commands:
-  list                  List available profiles
-  store                 Save which profiles are active
-  restore               Load saved profiles
-  stop-all              Stops all profiles
-  start [PROFILE]       Start a profile
-  stop [PROFILE]        Stop a profile
-  restart [PROFILE]     Restart a profile
-  switch-to [PROFILE]   Switch to a profile
-  is-active [PROFILE]   Check whether a profile is active
-  status [PROFILE]      Show runtime status of a profile
-  enable [PROFILE]      Enable the systemd unit for a profile
-  disable [PROFILE]     Disable the systemd unit for a profile
-  reenable [PROFILE]    Reenable the systemd unit for a profile
-  is-enabled [PROFILE]  Check whether a profile is enabled
-  edit [PROFILE]        Edit a profile
+  list                   List available profiles
+  store                  Save which profiles are active
+  restore                Load saved profiles
+  stop-all               Stops all profiles
+  start [PROFILE]        Start a profile
+  stop [PROFILE]         Stop a profile
+  restart [PROFILE]      Restart a profile
+  switch-to [PROFILE]    Switch to a profile
+  is-active [PROFILE]    Check whether a profile is active
+  status [PROFILE]       Show runtime status of a profile
+  enable [PROFILE]       Enable the systemd unit for a profile
+  disable [PROFILE]      Disable the systemd unit for a profile
+  reenable [PROFILE]     Reenable the systemd unit for a profile
+  is-enabled [PROFILE]   Check whether a profile is enabled
+  edit [PROFILE]         Edit a profile
+  wait-online [PROFILE]  Wait for a profile to finish connecting
 END
 }
 
@@ -122,6 +123,16 @@ unit_disable() {
     do_debug rm "$unit"
 }
 
+wait_online() {
+    local profile="$1"
+    if sd_call "is-active --quiet" "$profile"; then
+        timeout_wait "${TIMEOUT_ONLINE:-120}" \
+                     '[[ $(sd_status_text "$profile") == "online" ]]'
+    else
+        return 1
+    fi
+}
+
 
 case $# in
   1)
@@ -162,6 +173,8 @@ case $# in
         fi;;
       edit)
         exec ${EDITOR:-nano} "$PROFILE_DIR/$2";;
+      wait-online)
+        wait_online "$2";;
       *)
         exit_error "$(usage)";;
     esac;;
