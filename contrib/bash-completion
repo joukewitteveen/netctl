@@ -13,7 +13,9 @@ _wireless_interfaces()
 
 _netctl_profiles()
 {
-    find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
+    local profile
+    find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n" |
+      while read -r profile; do quote_readline "$profile"; echo; done
 }
 
 
@@ -27,6 +29,7 @@ _netctl()
       ;;
       2)
         [[ ${COMP_WORDS[COMP_CWORD-1]} = @(start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit) ]] &&
+          compopt -o filenames &&
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;
     esac
@@ -44,6 +47,7 @@ _netctl_auto()
       ;;
       2)
         [[ ${COMP_WORDS[COMP_CWORD-1]} = @(switch-to|is-active|enable|disable|is-enabled) ]] &&
+          compopt -o filenames &&
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;
     esac
