@@ -67,6 +67,7 @@ init_entries()
 {
     local i=0 sep=$'\t' flags signal ssid
     while IFS=$'\t' read -r signal flags ssid; do
+        ssid=$(echo -ne "$ssid")
         ENTRIES[i++]="--"  # $ssid might look like an option to dialog.
         ENTRIES[i++]=$ssid
         if in_array "$ssid" "${ESSIDS[@]}"; then
@@ -122,11 +123,16 @@ Do you want to overwrite it?"
 # Creates a profile for ssid $1.
 create_profile()
 {
-    local box flags key msg security
+    local box flags key msg security signal_ flags_ ssid_
     PROFILE="$INTERFACE-${1//\//_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
     confirm_profile || return $?
-    flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
+    while IFS=$'\t' read -r signal_ flags_ ssid_; do
+        if [[ "$(echo -ne "$ssid_")" = "$1" ]]; then
+            flags=$flags_
+            break
+        fi
+    done < "$NETWORKS"
     if [[ "$flags" =~ WPA|WEP ]]; then
         security=${BASH_REMATCH[0],,}
     else
@@ -256,7 +262,7 @@ if [[ "$RFKill" && "$(rf_status "$INTERFACE" "$RFKill")" ]]; then
 fi
 
 echo -n "Scanning for networks... "
-CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | sed -n "s/^ssid=//p")
+CONNECTION=$(echo -ne $(wpa_call "$INTERFACE" status 2> /dev/null | sed -n "s/^ssid=//p"))
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
 RETURN=$?
 
