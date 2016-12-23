@@ -123,7 +123,7 @@ network. In particular, these connection types are +ethernet+,
 +wireless+, +bond+, +bridge+, +tunnel+, +tuntap+, and +vlan+.
 
 'IP=' [mandatory for IPv4]::
-    One of `static', `dhcp', or `no', depending on the desired way of
+    One of `static', `staticp2p', `dhcp', or `no', depending on the desired way of
     obtaining an address.
 
 'IP6=' [mandatory for IPv6]::
@@ -489,6 +489,9 @@ the *ip options*, the following are understood for connections of the
 
 'Remote='::
     The address of the remote end of the tunnel.
+    
+'PoinToPoint='::
+    The address of the Peer-to-Peer end of the tunnel. Available only in IP=staticp2p
 
 'Key=' [requires 'Mode=gre']::
     A key identifying an individual traffic flow within a tunnel.

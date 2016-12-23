@@ -76,6 +76,15 @@ ip_set() {
             fi
         done
       ;;
+      staticp2p)
+        for addr in "${Address[@]}"; do
+            #if ! do_debug ip addr add "$addr" brd + dev "$Interface"; then
+            if ! do_debug ifconfig "$Interface" "$addr"  pointopoint $PoinToPoint; then
+                report_error "Could not add address '$addr' to interface '$Interface'"
+                return 1
+            fi
+        done
+      ;;
       ""|no)
       ;;
       *)
