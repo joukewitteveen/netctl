@@ -3,7 +3,7 @@ type dhcpcd &> /dev/null || return
 dhcpcd_start() {
     local options
     case $1 in
-      4) options="$DhcpcdOptions -L";;
+      4) options=$DhcpcdOptions;;
       6) options=$DhcpcdOptions6;;
       *) return 1;;
     esac

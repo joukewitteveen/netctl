@@ -5,7 +5,7 @@ Support for dhcp clients is implemented by files in
 The file name determines the name of the client for the profile, so
 support for a client named dhcpcd is provided by the file:
 
-  /usr/lib/network/connections/dhcpcd
+  /usr/lib/network/dhcp/dhcpcd
 
 Files that implement support for a connection type should NOT be
 executable. Such files should contain valid Bash code, among which two
