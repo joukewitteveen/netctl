@@ -13,7 +13,7 @@ load_profile "$Profile"
 
 case $ACTION in
   CONNECT)
-    DhcpcdOptions+=" -K"
+    DhcpcdOptions+=" -K -L"
     ip_set || exit 1
     # Sandbox the eval
     if ! ( eval $ExecUpPost ); then
