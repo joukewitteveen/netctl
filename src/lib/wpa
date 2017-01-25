@@ -24,7 +24,7 @@ wpa_call() {
 
 ## Check if an instance of the wpa supplicant is active on an interface
 # $1: interface name
-wpa_is_active(){
+wpa_is_active() {
     [[ $(wpa_call "$1" ping 2> /dev/null) == "PONG" ]]
 }
 

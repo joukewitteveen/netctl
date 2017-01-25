@@ -5,8 +5,7 @@
 . "$SUBR_DIR/rfkill"
 
 
-usage()
-{
+usage() {
     cat << END
 Usage: wifi-menu [-h | --help] [-o | --obscure] [INTERFACE]
 
@@ -21,8 +20,7 @@ END
 }
 
 # Prepares $1 for use in a special quoting context
-quote_safe()
-{
+quote_safe() {
     if [[ "$1" = \"* ]]; then
         printf '""%s"' "$1"
     else
@@ -32,8 +30,7 @@ quote_safe()
 
 # Fills PROFILES and ESSIDS with the profile names and essids of the profiles
 # for interface $1.
-init_profiles()
-{
+init_profiles() {
     local i=0 essid profile
     while read -r profile; do
         essid=$(
@@ -63,8 +60,7 @@ init_profiles()
 }
 
 # Builds ENTRIES as an argument list for dialog based on scan results in $1.
-init_entries()
-{
+init_entries() {
     local i=0 sep=$'\t' flags signal ssid
     while IFS=$'\t' read -r signal flags ssid; do
         ENTRIES[i++]="--"  # $ssid might look like an option to dialog.
@@ -92,8 +88,7 @@ init_entries()
 }
 
 # Finds a profile name for ssid $1.
-ssid_to_profile()
-{
+ssid_to_profile() {
     local i
     for i in $(seq 0 $((${#ESSIDS[@]}-1))); do
         if [[ "$1" = "${ESSIDS[i]}" ]]; then
@@ -105,8 +100,7 @@ ssid_to_profile()
 }
 
 # Ask the user for the name of the new profile
-confirm_profile()
-{
+confirm_profile() {
     local msg="Enter a name for the new profile\n"
     PROFILE=$(dialog --inputbox "$msg" 10 50 "$PROFILE" --stdout) || return $?
     if [[ "$PROFILE" = */* ]]; then
@@ -120,8 +114,7 @@ Do you want to overwrite it?"
 }
 
 # Creates a profile for ssid $1.
-create_profile()
-{
+create_profile() {
     local box flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
@@ -173,8 +166,7 @@ EOF
 
 # Connects to ssid $1 using an available profile or an automatically created
 # one if none exists.
-connect_to_ssid()
-{
+connect_to_ssid() {
     local msg
     PROFILE=$(ssid_to_profile "$1")
     if [[ $? -ne 0 ]]; then

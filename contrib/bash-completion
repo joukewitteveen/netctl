@@ -1,8 +1,7 @@
 # netctl completion
 
 
-_wireless_interfaces()
-{
+_wireless_interfaces() {
     local iface
 
     for iface in /sys/class/net/*/wireless/; do
@@ -11,16 +10,14 @@ _wireless_interfaces()
 }
 
 
-_netctl_profiles()
-{
+_netctl_profiles() {
     local profile
     find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n" |
       while read -r profile; do quote_readline "$profile"; echo; done
 }
 
 
-_netctl()
-{
+_netctl() {
     local cur=${COMP_WORDS[COMP_CWORD]}
 
     case $COMP_CWORD in
@@ -33,12 +30,11 @@ _netctl()
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;
     esac
-} &&
+}
 complete -F _netctl netctl
 
 
-_netctl_auto()
-{
+_netctl_auto() {
     local cur=${COMP_WORDS[COMP_CWORD]}
 
     case $COMP_CWORD in
@@ -51,15 +47,14 @@ _netctl_auto()
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
       ;;
     esac
-} &&
+}
 complete -F _netctl_auto netctl-auto
 
 
-_wifi_menu()
-{
+_wifi_menu() {
     (( COMP_CWORD == 1 )) &&
       COMPREPLY=( $(compgen -W "$(_wireless_interfaces)" -- "${COMP_WORDS[1]}") )
-} &&
+}
 complete -F _wifi_menu wifi-menu
 
 
