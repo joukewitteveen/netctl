@@ -8,7 +8,7 @@ dhclient_start() {
       *) return 1;;
     esac
     [[ $2 == "noaddr" ]] && options+=" -S"
-    if ! do_debug do_readable dhclient -$1 -q -e "TIMEOUT=${TimeoutDHCP:-30}" -pf "$pidfile" $options "$Interface"; then
+    if ! do_debug do_readable dhclient "-$1" -q -e "TIMEOUT=${TimeoutDHCP:-30}" -pf "$pidfile" $options "$Interface"; then
         report_error "DHCP IPv$1 lease attempt failed on interface '$Interface'"
         return 1
     fi
@@ -18,7 +18,7 @@ dhclient_stop() {
     local stop="-x" pidfile="/run/dhclient-$Interface-$1.pid"
     if [[ -f $pidfile ]]; then
         is_yes "${DHCPReleaseOnStop:-no}" && stop="-r"
-        do_debug dhclient -$1 -q $stop "$Interface" -pf "$pidfile" > /dev/null
+        do_debug dhclient "-$1" -q $stop "$Interface" -pf "$pidfile" > /dev/null
     fi
 }
 

@@ -8,7 +8,7 @@ quote_word() {
 }
 
 pppoe_up() {
-    local options="$STATE_DIR/pppoe.$Interface.$Profile/options"
+    local options="$STATE_DIR/pppoe-$Interface-$Profile/options"
 
     if ! is_interface "$Interface"; then
         report_error "Interface '$Interface' does not exist"
@@ -61,7 +61,7 @@ EOF
 
 pppoe_down() {
     local options pidfile pid
-    options="$STATE_DIR/pppoe.$Interface.$Profile/options"
+    options="$STATE_DIR/pppoe-$Interface-$Profile/options"
     pidfile="/var/run/ppp-$Profile.pid"
 
     if [[ -r $pidfile ]]; then

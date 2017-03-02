@@ -4,7 +4,7 @@
 
 . /usr/lib/network/globals
 
-PROFILE_FILE="$STATE_DIR/ifplugd_$1.profile"
+PROFILE_FILE="$STATE_DIR/ifplugd-$1.profile"
 
 case "$2" in
   up)

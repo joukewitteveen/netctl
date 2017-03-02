@@ -8,6 +8,7 @@
 : ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
 : ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
 
+
 usage() {
     cat << END
 Usage: netctl-auto {COMMAND} ...
@@ -81,7 +82,7 @@ profile_enable_disable() {
     local action="$1" profile="$2"
     local id interfaces wpa_cmd
 
-    if [[ -n "$profile" ]]; then
+    if [[ $profile ]]; then
         read -r interfaces id < <(get_wpa_network_id "$profile") || return 1
     else
         interfaces=$(list_netctl_auto_interfaces)
@@ -197,7 +198,7 @@ list() {
 # $1: interface
 start() {
     local interface="$1"
-    local pidfile="$STATE_DIR/wpa_actiond_$1.pid"
+    local pidfile="$STATE_DIR/wpa_actiond-$interface.pid"
 
     if wpa_is_active "$interface"; then
         exit_error "The interface ($interface) is already in use"
@@ -247,7 +248,7 @@ start() {
 # $1: interface
 stop() {
     local interface="$1"
-    local pidfile="$STATE_DIR/wpa_actiond_$1.pid"
+    local pidfile="$STATE_DIR/wpa_actiond-$interface.pid"
 
     [[ -e "$pidfile" ]] && kill "$(< "$pidfile")"
     if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
@@ -258,6 +259,7 @@ stop() {
     [[ $RFKill ]] && rf_disable "$interface" "$RFKill"
     return 0
 }
+
 
 case $# in
   1)
@@ -291,5 +293,6 @@ case $# in
   *)
     exit_error "$(usage)";;
 esac
+
 
 # vim: ft=sh ts=4 et sw=4:

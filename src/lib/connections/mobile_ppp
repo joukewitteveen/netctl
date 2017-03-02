@@ -11,7 +11,7 @@ quote_word() {
 }
 
 mobile_ppp_up() {
-    local options_dir="$STATE_DIR/mobile_ppp.$Interface.$Profile"
+    local options_dir="$STATE_DIR/mobile_ppp-$Interface-$Profile"
 
     network_ready
 
@@ -83,7 +83,7 @@ EOF
 
 mobile_ppp_down() {
     local options_dir pidfile pid
-    options_dir="$STATE_DIR/mobile_ppp.$Interface.$Profile"
+    options_dir="$STATE_DIR/mobile_ppp-$Interface-$Profile"
     pidfile="/var/run/ppp-$Profile.pid"
 
     if [[ -r $pidfile ]]; then

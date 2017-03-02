@@ -97,7 +97,7 @@ unit_enable() {
     do_readable touch "$unit"
     echo ".include @systemdsystemunitdir@/netctl@.service" > "$unit"
     echo -e "\n[Unit]" >> "$unit"
-    [[ -n $Description ]] && echo "Description=$Description" >> "$unit"
+    [[ $Description ]] && echo "Description=$Description" >> "$unit"
     declare -p BindsToInterfaces &> /dev/null || BindsToInterfaces=$Interface
     if (( ${#BindsToInterfaces[@]} )); then
         : ${InterfaceRoot=sys/subsystem/net/devices/}
