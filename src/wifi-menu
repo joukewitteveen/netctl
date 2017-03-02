@@ -1,8 +1,9 @@
 #! /bin/bash
 
 . /usr/lib/netctl/globals
-. "$SUBR_DIR/wpa"
+. "$SUBR_DIR/interface"
 . "$SUBR_DIR/rfkill"
+. "$SUBR_DIR/wpa"
 
 
 usage() {
@@ -231,15 +232,12 @@ if [[ -z "$INTERFACE" ]]; then
     fi
     INTERFACE=${INTERFACE:15:-10}
     report_debug "Using interface '$INTERFACE'"
-fi
-if [[ -x "$PROFILE_DIR/interfaces/$INTERFACE" ]]; then
-    source "$PROFILE_DIR/interfaces/$INTERFACE"
-fi
-
-cd /  # We do not want to spawn anything that can block unmounting
-if [[ ! -d "/sys/class/net/$INTERFACE" ]]; then
+elif ! is_interface "$INTERFACE"; then
     exit_error "No such interface: $INTERFACE"
 fi
+load_interface_config "$INTERFACE"
+
+cd /  # We do not want to spawn anything that can block unmounting
 if [[ "$RFKill" && "$(rf_status "$INTERFACE" "$RFKill")" ]]; then
     if ! rf_enable "$INTERFACE" "$RFKill"; then
         exit_error "Could not unblock transmission on interface '$INTERFACE'"

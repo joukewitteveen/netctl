@@ -109,7 +109,7 @@ list_profiles() {
     find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
 }
 
-## Sources all hooks, a profile and any interface hook
+## Sources all hooks and a profile (but no interface configuration)
 # $1: profile name
 load_profile() {
     local hook
@@ -125,9 +125,6 @@ load_profile() {
     fi
     if [[ ! -r "${Connection:+$SUBR_DIR/connections/$Connection}" ]]; then
         exit_error "Profile '$1' does not specify a valid connection"
-    fi
-    if [[ -x "$PROFILE_DIR/interfaces/$Interface" ]]; then
-        source "$PROFILE_DIR/interfaces/$Interface"
     fi
     source "$SUBR_DIR/connections/$Connection"
 }

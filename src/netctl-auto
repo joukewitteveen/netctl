@@ -2,8 +2,9 @@
 # Contributed by: Sebastian Wicki <gandro@gmx.net>
 
 . /usr/lib/netctl/globals
-. "$SUBR_DIR/wpa"
+. "$SUBR_DIR/interface"
 . "$SUBR_DIR/rfkill"
+. "$SUBR_DIR/wpa"
 
 : ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
 : ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
@@ -200,11 +201,8 @@ start() {
     local interface="$1"
     local pidfile="$STATE_DIR/wpa_actiond-$interface.pid"
 
-    if wpa_is_active "$interface"; then
-        exit_error "The interface ($interface) is already in use"
-    fi
-    if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
-        source "$PROFILE_DIR/interfaces/$interface"
+    if interface_is_up "$interface"; then
+        exit_error "The interface '$interface' is already up"
     fi
     if [[ $RFKill ]]; then
         rf_enable "$interface" "$RFKill" || return 1
@@ -240,6 +238,7 @@ start() {
             return 0
         fi
         wpa_stop "$interface"
+        bring_interface_down "$interface"
     fi
     return 1
 }
@@ -251,11 +250,8 @@ stop() {
     local pidfile="$STATE_DIR/wpa_actiond-$interface.pid"
 
     [[ -e "$pidfile" ]] && kill "$(< "$pidfile")"
-    if [[ -x "$PROFILE_DIR/interfaces/$interface" ]]; then
-        source "$PROFILE_DIR/interfaces/$interface"
-    fi
     timeout_wait 1 '! wpa_is_active "$interface"' || wpa_stop "$interface"
-    ip link set dev "$interface" down
+    bring_interface_down "$interface"
     [[ $RFKill ]] && rf_disable "$interface" "$RFKill"
     return 0
 }
@@ -286,6 +282,7 @@ case $# in
             exit_error "Use 'systemctl $1 netctl-auto@$2' to $1 netctl-auto."
         fi
         ensure_root "$(basename "$0")"
+        load_interface_config "$2"
         "$1" "$2";;
       *)
         exit_error "$(usage)";;

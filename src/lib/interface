@@ -1,0 +1,65 @@
+## /usr/lib/netctl/globals needs to be sourced before this file
+
+
+## Load interface configuration, if present
+# $1: interface name
+load_interface_config() {
+    local config_file="$PROFILE_DIR/interfaces/$1"
+    if [[ -x $config_file ]]; then
+        source "$config_file"
+    fi
+}
+
+## Check if a string represents a network interface
+# $1: potential interface name
+is_interface() {
+    # Strip any old school alias specifier
+    [[ -d "/sys/class/net/${1%%:?*}" ]]
+}
+
+## Add an interface
+# $1: interface type
+# $2: interface name
+# $3: interface link (optional)
+# $4...: additional arguments
+interface_add() {
+    local type="$1" name="$2" link="$3"
+    do_debug ip link add ${link:+link "$link"} name "$name" type "$type" "${@:4}" $LinkOptions || return
+    load_interface_config "$name"
+}
+
+## Delete an interface
+# $1: interface name
+interface_delete() {
+    bring_interface_down "$1"
+    ip link delete "$1"
+}
+
+## Check if an interface is up
+# $1: interface name
+interface_is_up() {
+    local flags
+    read flags < "/sys/class/net/${1%%:?*}/flags"
+    # IFF_UP is defined as 0x1 in linux/if.h
+    (( flags & 0x1 ))
+}
+
+## Activate an interface
+# $1: interface name
+bring_interface_up() {
+    local interface=$1
+    ip link set dev "$interface" up &>/dev/null
+    timeout_wait "${TimeoutUp:-5}" 'interface_is_up "$interface"'
+}
+
+## Deactivate an interface
+# $1: interface name
+bring_interface_down() {
+    local interface=$1
+    ip link set dev "$interface" down &>/dev/null
+    # We reuse the up timeout (down normally is faster)
+    timeout_wait "${TimeoutUp:-5}" '! interface_is_up "$interface"'
+}
+
+
+# vim: ft=sh ts=4 et sw=4:

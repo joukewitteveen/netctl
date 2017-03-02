@@ -22,6 +22,7 @@ available. The readily sourced files are:
 
   /usr/lib/netctl/network
   /usr/lib/netctl/globals
+  /usr/lib/netctl/interface
   /etc/netctl/<profile>
 
 Here, <profile> is the profile file specifying the desired network

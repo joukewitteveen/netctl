@@ -1,60 +1,8 @@
 #! /bin/bash
 
 . /usr/lib/netctl/globals
+. "$SUBR_DIR/interface"
 
-
-## Check if a string represents a network interface
-# $1: potential interface name
-is_interface() {
-    # Strip any old school alias specifier
-    [[ -d "/sys/class/net/${1%%:?*}" ]]
-}
-
-## Add an interface
-# $1: interface type
-# $2: interface name
-# $3: interface link (optional)
-# $4...: additional arguments
-interface_add() {
-    local type="$1" name="$2" link="$3"
-    do_debug ip link add ${link:+link "$link"} name "$name" type "$type" "${@:4}" $LinkOptions || return
-    if [[ -x "$PROFILE_DIR/interfaces/$name" ]]; then
-        source "$PROFILE_DIR/interfaces/$name"
-    fi
-}
-
-## Delete an interface
-# $1: interface name
-interface_delete() {
-    bring_interface_down "$1"
-    ip link delete "$1"
-}
-
-## Check if an interface is up
-# $1: interface name
-interface_is_up() {
-    local flags
-    read flags < "/sys/class/net/${1%%:?*}/flags"
-    # IFF_UP is defined as 0x1 in linux/if.h
-    (( flags & 0x1 ))
-}
-
-## Activate an interface
-# $1: interface name
-bring_interface_up() {
-    local interface=$1
-    ip link set dev "$interface" up &>/dev/null
-    timeout_wait "${TimeoutUp:-5}" 'interface_is_up "$interface"'
-}
-
-## Deactivate an interface
-# $1: interface name
-bring_interface_down() {
-    local interface=$1
-    ip link set dev "$interface" down &>/dev/null
-    # We reuse the up timeout (down normally is faster)
-    timeout_wait "${TimeoutUp:-5}" '! interface_is_up "$interface"'
-}
 
 ## Indicate that the network stack for the profile is up
 network_ready() {
@@ -82,6 +30,7 @@ if [[ $# -eq 2 && $1 == @(start|stop) ]]; then
     # Expose the profile name
     Profile=$2
     load_profile "$Profile"
+    load_interface_config "$Interface"
 elif [[ $# -ne 1 || $1 != "wait-online" ]]; then
     exit_error "Usage: $0 {start|stop|wait-online} [profile]"
 fi
