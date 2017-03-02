@@ -7,7 +7,7 @@ Before=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/lib/network/network wait-online
+ExecStart=/usr/lib/netctl/network wait-online
 
 [Install]
 WantedBy=network-online.target

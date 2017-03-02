@@ -1,7 +1,7 @@
 NETCTL_VERSION="notpackaged"
 PROFILE_DIR="/etc/netctl"
-SUBR_DIR="/usr/lib/network"
-STATE_DIR="/run/network"
+SUBR_DIR="/usr/lib/netctl"
+STATE_DIR="/run/netctl"
 STATE_FILE="${NETCTL_STATE_FILE:-/var/lib/netctl/netctl.state}"
 
 

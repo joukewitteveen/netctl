@@ -2,7 +2,7 @@
 #
 # ifplugd.action script for netctl
 
-. /usr/lib/network/globals
+. /usr/lib/netctl/globals
 
 PROFILE_FILE="$STATE_DIR/ifplugd-$1.profile"
 

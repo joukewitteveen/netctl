@@ -1,4 +1,4 @@
-## /usr/lib/network/globals needs to be sourced before this file
+## /usr/lib/netctl/globals needs to be sourced before this file
 
 
 ## Determine the system interface of an rfkill device

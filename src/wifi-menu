@@ -1,6 +1,6 @@
 #! /bin/bash
 
-. /usr/lib/network/globals
+. /usr/lib/netctl/globals
 . "$SUBR_DIR/wpa"
 . "$SUBR_DIR/rfkill"
 

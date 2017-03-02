@@ -1,11 +1,11 @@
 Support for dhcp clients is implemented by files in
 
-  /usr/lib/network/dhcp/
+  /usr/lib/netctl/dhcp/
 
 The file name determines the name of the client for the profile, so
 support for a client named dhcpcd is provided by the file:
 
-  /usr/lib/network/dhcp/dhcpcd
+  /usr/lib/netctl/dhcp/dhcpcd
 
 Files that implement support for a connection type should NOT be
 executable. Such files should contain valid Bash code, among which two
@@ -20,8 +20,8 @@ client. When the functions are called, three bash files are already
 sourced, so all functions and variables in those files are available.
 The readily sourced files are:
 
-  /usr/lib/network/network
-  /usr/lib/network/globals
+  /usr/lib/netctl/network
+  /usr/lib/netctl/globals
   /etc/netctl/<profile>
 
 Here, <profile> is the profile file specifying the desired network
