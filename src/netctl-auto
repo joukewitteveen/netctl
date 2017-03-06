@@ -60,7 +60,7 @@ list_wpa_profiles() {
     done
 }
 
-## Get WPA supplicant network id and interface for the given profile
+## Get the WPA supplicant network id and interface for the given profile
 ## Output format: INTERFACE ID
 # $1: profile name
 get_wpa_network_id() {
@@ -76,7 +76,7 @@ get_wpa_network_id() {
     return 1
 }
 
-## Enable or disable profiles in WPA supplicant
+## Enable or disable profiles in the WPA supplicant
 # $1: profile action: "enable", "disable", "enable-all" or "disable-all"
 # $2: profile name if action is "enable" or "disable"
 profile_enable_disable() {
@@ -142,9 +142,7 @@ switch_to() {
 
     # select_network will disable all other networks on that interface
     wpa_call "$interface" select_network "$id" >/dev/null
-    if ! wpa_wait_until_state "$timeout" "$interface" "COMPLETED"; then
-        report_error "WPA association/authentication failed for interface '$interface'"
-    fi
+    wpa_wait_until_completed "$timeout" "$interface"
 
     reenable_networks
 }
@@ -208,7 +206,6 @@ start() {
         rf_enable "$interface" "$RFKill" || return 1
     fi
 
-
     local wpa_conf
     if ! wpa_conf=$(wpa_make_config_file "$interface"); then
         exit_error "Could not create the configuration file for interface '$interface'"
@@ -240,10 +237,11 @@ start() {
         wpa_stop "$interface"
         bring_interface_down "$interface"
     fi
+    # Systemd executes cleanup on failure
     return 1
 }
 
-## Stop wpa_supplicant and wpa_actiond
+## Stop the WPA supplicant and wpa_actiond
 # $1: interface
 stop() {
     local interface="$1"
@@ -254,6 +252,12 @@ stop() {
     bring_interface_down "$interface"
     [[ $RFKill ]] && rf_disable "$interface" "$RFKill"
     return 0
+}
+
+## Remove WPA supplicant configuration files
+# $1: interface
+clean() {
+    wpa_destroy_config_file "$1"
 }
 
 
@@ -277,9 +281,9 @@ case $# in
         profile_enable_disable "$1" "$2";;
       switch-to|is-active|is-enabled)
         "${1//-/_}" "$2";;
-      start|stop)
+      start|stop|clean)
         if [[ -t 0 ]]; then
-            exit_error "Use 'systemctl $1 netctl-auto@$2' to $1 netctl-auto."
+            exit_error "Use 'systemctl ${1/clean/stop} netctl-auto@$2' to $1 netctl-auto."
         fi
         ensure_root "$(basename "$0")"
         load_interface_config "$2"

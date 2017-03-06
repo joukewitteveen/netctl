@@ -29,9 +29,11 @@ wireless_up() {
         : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
         config_file=$WPAConfigFile
     else
+        # Remove any stray configuration files
+        wpa_destroy_config_file "$Interface"
         config_file=$(wpa_make_config_file "$Interface")
         if [[ -z $config_file ]]; then
-            report_error "Could not create a wpa config file for interface '$Interface'"
+            report_error "Could not create a WPA config file for interface '$Interface'"
             return 1
         fi
         printf "%s\n" "network={" "$(wpa_make_config_block)" "}" >> "$config_file"
@@ -40,6 +42,9 @@ wireless_up() {
     # Start the WPA supplicant
     if ! wpa_start "$Interface" "$WPADriver" "$config_file"; then
         report_error "The WPA supplicant did not start for interface '$Interface'"
+        if [[ $Security != "wpa-config" ]]; then
+            wpa_destroy_config_file "$Interface"
+        fi
         bring_interface_down "$Interface"
         return 1
     fi
@@ -47,18 +52,13 @@ wireless_up() {
     # Bring interface up after starting wpa_supplicant
     # This is important since cards such as iwl3945 do not support
     # mode switching when they are already up.
-    bring_interface_up "$Interface" || return 1
-
-    if ! wpa_wait_until_state "$TimeoutWPA" "$Interface" "COMPLETED"; then
-        report_error "WPA association/authentication failed for interface '$Interface'"
-        report_debug "WPA state for interface '$Interface': $(wpa_get_state "$Interface")"
+    if ! bring_interface_up "$Interface" ||
+       ! wpa_wait_until_completed "$TimeoutWPA" "$Interface" ||
+       ! ip_set; then
         wpa_stop "$Interface"
-        bring_interface_down "$Interface"
-        return 1
-    fi
-
-    if ! ip_set; then
-        wpa_stop "$Interface"
+        if [[ $Security != "wpa-config" ]]; then
+            wpa_destroy_config_file "$Interface"
+        fi
         bring_interface_down "$Interface"
         return 1
     fi
@@ -68,6 +68,8 @@ wireless_down() {
     ip_unset
     if [[ $Security == "wpa-config" ]]; then
         : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
+    else
+        wpa_destroy_config_file "$Interface"
     fi
     wpa_stop "$Interface"
     bring_interface_down "$Interface" || return 1

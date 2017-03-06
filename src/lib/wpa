@@ -22,13 +22,13 @@ wpa_call() {
     do_debug wpa_cli "${args[@]}" "$@"
 }
 
-## Check if an instance of the wpa supplicant is active on an interface
+## Check if an instance of the WPA supplicant is active on an interface
 # $1: interface name
 wpa_is_active() {
     [[ $(wpa_call "$1" ping 2> /dev/null) == "PONG" ]]
 }
 
-## Retrieves the state of an instance of the wpa supplicant
+## Retrieve the state of an instance of the WPA supplicant
 ## Displays one of: DISCONNECTED, INTERFACE_DISABLED, INACTIVE, SCANNING,
 ##                  AUTHENTICATING, ASSOCIATING, ASSOCIATED, 4WAY_HANDSHAKE,
 ##                  GROUP_HANDSHAKE, COMPLETED
@@ -39,7 +39,7 @@ wpa_get_state() {
     echo "${state#wpa_state=}"
 }
 
-## Waits until the wpa supplicant reaches a listed state
+## Wait until the WPA supplicant reaches a listed state
 # $1: timeout
 # $2: interface name
 # $3...: accepted states
@@ -49,7 +49,7 @@ wpa_wait_until_state() {
                  'in_array "$(wpa_get_state "$interface")" "${states[@]}"'
 }
 
-## Waits while the wpa supplicant is in a listed state
+## Wait while the WPA supplicant is in a listed state
 # $1: timeout
 # $2: interface name
 # $3...: rejected states
@@ -59,7 +59,21 @@ wpa_wait_while_state() {
                  '! in_array "$(wpa_get_state "$interface")" "${states[@]}"'
 }
 
-## Start an instance of the wpa supplicant
+## Wait for the WPA supplicant to finish association and authentication
+# $1: timeout
+# $2: interface name
+# $3...: additional accepted states
+wpa_wait_until_completed() {
+    local timeout=$1 interface=$2
+    shift 2
+    if ! wpa_wait_until_state "$timeout" "$interface" "COMPLETED" "$@"; then
+        report_error "WPA association/authentication failed for interface '$interface'"
+        report_debug "WPA state for interface '$interface': $(wpa_get_state "$interface")"
+        return 1
+    fi
+}
+
+## Start an instance of the WPA supplicant
 # $1: interface name
 # $2: interface driver(s)
 # $3: configuration file
@@ -82,30 +96,22 @@ wpa_start() {
                             "$configuration" $WPAOptions >&2
 
     # Wait up to one second for the pid file to appear
-    if ! timeout_wait 1 '[[ -f $pidfile ]]'; then
-        # Remove the configuration file if it was generated
-        configuration="$STATE_DIR/wpa_supplicant-$interface.conf"
-        [[ -f $configuration && -O $configuration ]] && rm -f "$configuration"
-        return 1
-    fi
+    timeout_wait 1 '[[ -f $pidfile ]]'
 }
 
-## Stop an instance of the wpa supplicant
+## Stop an instance of the WPA supplicant
 # $1: interface name
 wpa_stop() {
-    local interface=$1 config_file="$STATE_DIR/wpa_supplicant-$1.conf"
-    local pidfile="/run/wpa_supplicant-$interface.pid"
+    local interface=$1 pidfile="/run/wpa_supplicant-$1.pid"
     # We need this as long as wpa_cli has a different default than netctl
     if [[ -z $WPA_CTRL_DIR && -z $WPAConfigFile ]]; then
         WPA_CTRL_DIR="/run/wpa_supplicant"
     fi
 
     # Done if wpa_supplicant is already terminated for this interface
-    [[ -z $WPA_CTRL_DIR || -e "$WPA_CTRL_DIR/$interface" ]] || return
+    [[ -z $WPA_CTRL_DIR || -e "$WPA_CTRL_DIR/$interface" ]] || return 0
 
     wpa_call "$interface" terminate > /dev/null
-    [[ -f $config_file && -O $config_file ]] && rm -f "$config_file"
-
     # Wait up to one second for the pid file to be removed
     if ! timeout_wait 1 '[[ ! -f $pidfile ]]'; then
         kill "$(< "$pidfile")" &> /dev/null
@@ -173,7 +179,7 @@ wpa_quote() {
     fi
 }
 
-## Unquotes a string, i.e. returned from wpa_cli
+## Unquote a string, i.e. returned from wpa_cli
 ## Quoted:     "string"     -> string
 ## Non-Quoted: string       -> string
 ## Hex:        737472696e67 -> string
@@ -256,6 +262,15 @@ wpa_make_config_block() {
     [[ $ScanFrequencies ]] && echo "scan_freq=$ScanFrequencies"
     [[ $Frequency ]] && echo "frequency=$Frequency"
     [[ $Priority ]] && echo "priority=$Priority"
+}
+
+## Remove a configuration file for wpa_supplicant
+# $1: interface name
+wpa_destroy_config_file() {
+    local config_file="$STATE_DIR/wpa_supplicant-$1.conf"
+    if [[ -f $config_file && -O $config_file ]]; then
+        do_debug rm -f "$config_file"
+    fi
 }
 
 

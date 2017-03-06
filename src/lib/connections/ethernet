@@ -43,10 +43,9 @@ ethernet_up() {
             return 1
         fi
 
-        if ! wpa_wait_until_state "$TimeoutWPA" "$Interface" "ASSOCIATED"; then
+        if ! wpa_wait_until_completed "$TimeoutWPA" "$Interface" "ASSOCIATED"; then
             wpa_stop "$Interface"
             bring_interface_down "$Interface"
-            report_error "WPA Authentication/Association Failed"
             return 1
         fi
     fi
