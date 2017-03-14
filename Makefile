@@ -56,7 +56,7 @@ PKGBUILD: netctl-$(VERSION).tar.xz contrib/PKGBUILD.in
 	    $(lastword $^) > $@
 
 upload: netctl-$(VERSION).tar.xz
-	scp $< $<.sig nymeria.archlinux.org:/srv/ftp/other/packages/netctl
+	scp $< $<.sig sources.archlinux.org:/srv/ftp/other/packages/netctl
 
 clean:
 	$(MAKE) -C docs clean
