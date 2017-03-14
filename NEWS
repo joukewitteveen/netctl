@@ -1,3 +1,10 @@
+netctl 1.13
+- Add netctl-wait-online service, fixing the network{,-online}.target logic
+- Add wait-online subcommand to netctl and WaitOnline option to profiles
+- Improved clean up for wireless connections
+- DhcpcdOptions= defaults to "-L", which is no longer added unconditionally
+- Minor functional and cosmetic improvements
+
 netctl 1.12
 - Add is-active subcommand to netctl and netctl-auto
 - Fix support for profile names with spaces in wifi-menu
