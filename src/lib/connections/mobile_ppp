@@ -43,6 +43,8 @@ TIMEOUT 3
   3Gpref) printf "\^SYSCFG=2,2,3fffffff,0,1";;
   GPRSonly) printf "\^SYSCFG=13,1,3fffffff,0,0";;
   GPRSpref) printf "\^SYSCFG=2,1,3fffffff,0,0";;
+  SYSCFG=*) printf "\^$Mode";;
+  # If set to "None", this is a no-op
 esac)'
 ${AccessPointName:+'OK-AT-OK' 'AT+CGDCONT=1,$(quote_word "IP"),$(quote_word "$AccessPointName")'}
 'OK' 'ATDT${PhoneNumber:-*99#}'
