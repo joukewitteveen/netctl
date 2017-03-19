@@ -19,4 +19,5 @@ AccessPointName=apn
 
 # Mode can be one of 3Gpref, 3Gonly, GPRSpref, GPRSonly, None
 # These only work for Huawei USB modems; all other devices should use None
+# If Mode is set to SYSCFG=..., a custom AT^SYSCFG line is sent instead.
 Mode=3Gpref
