@@ -436,10 +436,10 @@ type:
 
 'Mode='::
     This option is used to specify the connection mode. Can be one of
-    `3Gpref', `3Gonly', `GPRSpref', `GPRSonly', `None'. This generates
-    AT commands specific to certain Huawei modems; all other devices
-    should use `None'. If `Mode` is set to `SYSCFG=...`, a custom
-    `AT^SYSCFG` line is sent instead.
+    `3Gpref', `3Gonly', `GPRSpref', `GPRSonly', `None', or a custom
+    +AT^SYSCFG=...+ line specified as `++SYSCFG=...++{empty}'.
+    This generates +AT+ commands specific to certain Huawei modems; all
+    other devices should leave this option unset, or set it to `None'.
 
 'Init='::
     An initialization string sent to the modem before dialing. This
