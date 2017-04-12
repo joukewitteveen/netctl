@@ -176,7 +176,7 @@ connect_to_ssid() {
     fi
     clear
     if systemctl is-active --quiet "netctl-auto@$INTERFACE.service"; then
-        report_notice "Interface '$INTERFACE' is controlled by netctl-auto"
+        report_notice "Interface '$INTERFACE' is controlled by netctl-auto. Try running 'systemctl restart netctl-auto@$INTERFACE.service' to use the new profile."
         if is_yes "${NEW_PROFILE:-no}"; then
             do_debug systemctl restart "netctl-auto@$INTERFACE.service"
         fi
