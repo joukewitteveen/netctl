@@ -64,8 +64,9 @@ restore() {
 stop_all() {
     # We cannot pipe to mapfile, as the end of a pipe is inside a subshell
     mapfile -t Profiles < <(list_profiles)
-    (( ${#Profiles[@]} )) && do_debug sd_call stop "${Profiles[@]}" 2> \
-      >(grep -Fv "not loaded" >&2)
+    if (( ${#Profiles[@]} )); then
+        do_debug sd_call stop "${Profiles[@]}" 2> >(grep -Fv "not loaded" >&2)
+    fi
 }
 
 switch_to() {
@@ -82,8 +83,9 @@ switch_to() {
     fi
     mapfile -t AllProfiles < <(list_profiles)
     mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
-    (( ${#Profiles[@]} )) && do_debug sd_call stop "${Profiles[@]}" 2> \
-      >(grep -Fv "not loaded" >&2)
+    if (( ${#Profiles[@]} )); then
+        do_debug sd_call stop "${Profiles[@]}" 2> >(grep -Fv "not loaded" >&2)
+    fi
     do_debug sd_call start "$1"
 }
 
