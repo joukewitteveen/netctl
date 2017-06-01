@@ -225,8 +225,12 @@ fi
 INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
     INTERFACE=(/sys/class/net/*/wireless/)
-    if [[ "${#INTERFACE[@]}" -ne 1 || ! -d "$INTERFACE" ]]; then
-        report_error "Invalid interface specification"
+    if [[ "${#INTERFACE[@]}" -gt 1 ]]; then
+        report_error "Multiple interfaces. Use 'ip l' to list interfaces."
+        usage
+        exit 255
+    else if [[ "${#INTERFACE[@]}" -lt 1 || ! -d "$INTERFACE" ]]; then
+        report_error "No network found or specified."
         usage
         exit 255
     fi
