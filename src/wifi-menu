@@ -75,7 +75,7 @@ init_entries() {
         else
             ENTRIES[i]=" "  # Not present
         fi
-        if [[ "$ssid" = "$CONNECTION" ]]; then
+        if is_yes "${CONNECTED:-no}" && [[ "$ssid" = "$CONNECTION" ]]; then
             ENTRIES[i]="*"  # Currently connected
         fi
         if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
@@ -246,7 +246,10 @@ if [[ "$RFKill" && "$(rf_status "$INTERFACE" "$RFKill")" ]]; then
 fi
 
 echo -n "Scanning for networks... "
-CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | sed -n "s/^ssid=//p")
+if CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 "^ssid="); then
+    CONNECTION=${CONNECTION#ssid=}
+    CONNECTED=yes
+fi
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
 RETURN=$?
 
