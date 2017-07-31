@@ -149,7 +149,7 @@ ip_set() {
     done
 
     if [[ $Hostname ]]; then
-        if ! do_debug hostnamectl set-hostname "$Hostname"; then
+        if ! do_debug hostnamectl --transient set-hostname "$Hostname"; then
             report_error "Cannot set the hostname to '$Hostname'"
             return 1
         fi
@@ -172,6 +172,7 @@ ip_set() {
 ip_unset() {
     [[ $IP == "dhcp" ]] && dhcp_call "${DHCPClient:-dhcpcd}" stop 4
     [[ $IP6 == dhcp* ]] && dhcp_call "${DHCP6Client:-dhclient}" stop 6
+    [[ $Hostname ]] && do_debug hostnamectl --transient set-hostname ""
     [[ $DNS ]] && resolvconf -d "$Interface"
     ip route flush dev "$Interface" &>/dev/null
     ip -6 route flush dev "$Interface" &>/dev/null
