@@ -33,7 +33,7 @@ quote_safe() {
 # for interface $1.
 init_profiles() {
     local i=0 essid profile
-    while read -r profile; do
+    while IFS= read -r profile; do
         essid=$(
             unset INTERFACE ESSID
             source "$PROFILE_DIR/$profile" > /dev/null

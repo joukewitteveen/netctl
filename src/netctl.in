@@ -30,7 +30,7 @@ END
 
 list() {
     local indicators=( ' ' '+' '*' ) i
-    list_profiles | while read -r Profile; do
+    list_profiles | while IFS= read -r Profile; do
         if sd_call "is-active --quiet" "$Profile" &> /dev/null; then
             [[ $(sd_status_text "$Profile") == "online" ]]
             (( i = 2 - $? ))
@@ -43,7 +43,7 @@ list() {
 
 store() {
     mkdir -p "$(dirname "$STATE_FILE")"
-    list_profiles | while read -r Profile; do
+    list_profiles | while IFS= read -r Profile; do
         if sd_call "is-active --quiet" "$Profile" &> /dev/null; then
             printf "%s\n" "$Profile"
         fi

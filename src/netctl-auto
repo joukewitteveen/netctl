@@ -214,7 +214,7 @@ start() {
     echo "p2p_disabled=1" >> "$wpa_conf"
 
     local profile
-    list_profiles | while read -r profile; do
+    list_profiles | while IFS= read -r profile; do
         report_debug "Examining profile '$profile'"
         (
           source "$PROFILE_DIR/$profile"

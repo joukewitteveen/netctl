@@ -103,7 +103,7 @@ timeout_wait() {
 
 ### Profile management
 
-## List all acceptable profiles names (assume they don't contain newlines)
+## List all acceptable profiles names separated by newlines
 list_profiles() {
     # Follow aliases with -L, skip forbidden/reserved names
     find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
@@ -116,9 +116,9 @@ load_profile() {
     if [[ -z $1 || ! -r "$PROFILE_DIR/$1" ]]; then
         exit_error "Profile '$1' does not exist or is not readable"
     fi
-    while read -r hook; do
+    while IFS= read -r hook; do
         source "$hook"
-    done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' | sort -u)
+    done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' -not -name $'*\n*' | sort -u)
     source "$PROFILE_DIR/$1"
     if [[ -z $Interface ]]; then
         exit_error "Profile '$1' does not specify an interface"

@@ -8,13 +8,13 @@ PROFILE_FILE="$STATE_DIR/ifplugd-$1.profile"
 
 case "$2" in
   up)
-    while read -r profile; do
+    while IFS= read -r profile; do
         if ForceConnect=yes "$SUBR_DIR/network" start "$profile"; then
             mkdir -p "$(dirname "$PROFILE_FILE")"
             printf "%s" "$profile" > "$PROFILE_FILE"
             exit 0
         fi
-    done < <(list_profiles | while read -r profile; do
+    done < <(list_profiles | while IFS= read -r profile; do
         report_debug "Examining profile '$profile'"
         (
           source "$PROFILE_DIR/$profile" > /dev/null
