@@ -49,7 +49,7 @@ case $1 in
     fi
     network_ready
     # Sandbox the eval
-    if ! ( eval $ExecUpPost ); then
+    if ! ( do_debug eval "$ExecUpPost" ); then
         report_error "ExecUpPost failed for network profile '$Profile'"
         # Failing ExecUpPost will take the connection down
         "${Connection}_down"
@@ -61,7 +61,7 @@ case $1 in
   stop)
     report_notice "Stopping network profile '$Profile'..."
     # Sandbox the eval
-    if ! ( eval $ExecDownPre ); then
+    if ! ( do_debug eval "$ExecDownPre" ); then
         report_error "ExecDownPre failed for network profile '$Profile'"
         # Failing ExecDownPre will leave the profile active
         exit 1
