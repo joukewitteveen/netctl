@@ -11,9 +11,7 @@ _wireless_interfaces() {
 
 
 _netctl_profiles() {
-    local profile
-    find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n" |
-      while read -r profile; do quote_readline "$profile"; echo; done
+    find -L /etc/netctl -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf "%f\n"
 }
 
 
