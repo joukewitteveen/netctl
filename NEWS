@@ -1,3 +1,8 @@
+netctl 1.14
+- Modified hostname handling to only touch the transient hostname
+- Add support for custom SYSCFG lines in mobile_ppp profiles
+- Improved handling of whitespace in profile names
+
 netctl 1.13
 - Add netctl-wait-online service, fixing the network{,-online}.target logic
 - Add wait-online subcommand to netctl and WaitOnline option to profiles
