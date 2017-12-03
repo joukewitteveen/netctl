@@ -87,7 +87,7 @@ GENERAL OPTIONS
 
 'WaitOnline='::
     Set to `++yes++' to consider the profile activated only when it is
-    online.
+    online. Defaults to `++no++'.
 
 'ExecUpPost='::
     A command that is executed after a connection is established. If the
@@ -176,7 +176,7 @@ network. In particular, these connection types are +ethernet+,
     achieve complicated configurations within the framework of *netctl*.
 
 'Hostname='::
-    A system hostname.
+    A transient hostname for the system.
 
 'DNS=()'::
     An array of DNS nameservers. Simply specify the IP addresses of each
