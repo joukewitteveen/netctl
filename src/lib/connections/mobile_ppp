@@ -92,6 +92,8 @@ mobile_ppp_down() {
         read pid < "$pidfile"
         (( pid )) && kill "$pid"
     fi
+    # Allow pppd up to one second to clean up
+    timeout_wait 1 '[[ ! -f $pidfile ]]'
 
     rm -r "$options_dir"
 }
