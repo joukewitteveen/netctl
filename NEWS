@@ -1,3 +1,6 @@
+netctl 1.15
+- Fix clean up of DNS configuration for PPP connections
+
 netctl 1.14
 - Modified hostname handling to only touch the transient hostname
 - Add support for custom SYSCFG lines in mobile_ppp profiles
