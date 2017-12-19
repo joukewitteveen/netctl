@@ -16,7 +16,7 @@ the client named dhcpcd these would be:
   dhcpcd_stop
 
 These functions are responsible for starting and stopping the dhcp
-client. When the functions are called, three bash files are already
+client. When the functions are called, four bash files are already
 sourced, so all functions and variables in those files are available.
 The readily sourced files are:
 

@@ -16,7 +16,7 @@ the aviancarrier file these would be:
   aviancarrier_down
 
 These functions are responsible for bringing the network up and down,
-respectively. When the functions are called, three bash files are
+respectively. When the functions are called, four bash files are
 already sourced, so all functions and variables in those files are
 available. The readily sourced files are:
 

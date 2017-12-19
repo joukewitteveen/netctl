@@ -24,9 +24,11 @@ contain newlines and should not end in '.action', '.conf', or
 '.service'. Whenever a profile is read, all executable scripts in
 '/etc/netctl/hooks/' and any executable script in
 '/etc/netctl/interfaces/' with the name of the interface for the profile
-are sourced. Declarations in an interface script override declarations
-in a profile, which override declarations in hooks. For each connection
-type, there are example profile files in '/etc/netctl/examples/'.
+are sourced. The name of the current profile is available via the
+'Profile' variable in the environment of the sourced scripts.
+Declarations in an interface script override declarations in a profile,
+which override declarations in hooks. For each connection type, there
+are example profile files in '/etc/netctl/examples/'.
 
 
 AVAILABLE CONNECTION TYPES
