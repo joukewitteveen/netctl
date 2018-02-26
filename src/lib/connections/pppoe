@@ -67,9 +67,9 @@ pppoe_down() {
     if [[ -r $pidfile ]]; then
         read pid < "$pidfile"
         (( pid )) && kill "$pid"
+        # Allow pppd up to one second to clean up
+        timeout_wait 1 '[[ ! -f $pidfile ]]'
     fi
-    # Allow pppd up to one second to clean up
-    timeout_wait 1 '[[ ! -f $pidfile ]]'
 
     rm "$options"
     rmdir "$(dirname "$options")"
