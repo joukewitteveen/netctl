@@ -109,7 +109,7 @@ unit_enable() {
                $(systemd-escape "${BindsToInterfaces[@]}") >> "$unit"
     fi
     if (( ${#After[@]} )); then
-        printf 'After="netctl@%s.service"\n' \
+        printf 'After=netctl@%s.service\n' \
                $(systemd-escape "${After[@]}") >> "$unit"
     fi
     mkdir -p "@systemdsystemconfdir@/multi-user.target.wants"
