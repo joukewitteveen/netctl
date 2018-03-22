@@ -1,3 +1,7 @@
+netctl 1.16
+- Fix handling of After=
+- Update documentation
+
 netctl 1.15
 - Fix clean up of DNS configuration for PPP connections
 

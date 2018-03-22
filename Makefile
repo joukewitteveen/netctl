@@ -1,4 +1,4 @@
-export VERSION = 1.15
+export VERSION = 1.16
 
 PKG_CONFIG ?= pkg-config
 
@@ -6,7 +6,7 @@ sd_var = $(shell $(PKG_CONFIG) --variable=systemd$(1) systemd)
 systemdsystemconfdir = $(call sd_var,systemconfdir)
 systemdsystemunitdir = $(call sd_var,systemunitdir)
 
-.PHONY: install tarball pkgbuild clean
+.PHONY: install tarball pkgbuild upload clean
 
 install:
 	# Documentation
