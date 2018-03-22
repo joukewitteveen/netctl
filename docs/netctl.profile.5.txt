@@ -79,13 +79,13 @@ GENERAL OPTIONS
     before it can be started. For `enabled' profiles, *systemd* will
     wait for the presence of the specified interfaces before starting a
     profile. If this variable is not specified, it defaults to the value
-    of 'Interface'.
+    of 'Interface='.
 
 'After=()'::
     An array of profile names that should be started before this profile
     is started. This is only an ordering dependency and is not intended
     to be a list of profiles that this profile requires. The meaning is
-    the same as 'After' in *systemd.unit*(5).
+    the same as 'After=' in *systemd.unit*(5).
 
 'WaitOnline='::
     Set to `++yes++' to consider the profile activated only when it is
@@ -99,7 +99,7 @@ GENERAL OPTIONS
 
 'ExecDownPre='::
     A command that is executed before a connection is brought down.
-    Similar precautions should be taken as with 'ExecUpPost'.
+    Similar precautions should be taken as with 'ExecUpPost='.
 
 'TimeoutUp'::
     Maximum time, in seconds, to wait for an interface to get up.
@@ -290,9 +290,10 @@ of the `wireless' type:
 
 'WPAConfigFile='::
     Path to a *wpa_supplicant* configuration file. Used only for
-    'Security=wpa-config'. All options except 'WPADriver', 'TimeoutWPA',
-    and 'RFKill' will be ignored. The profile is excluded from
-    automatic profile selection. Defaults to '/etc/wpa_supplicant.conf'.
+    'Security=wpa-config'. All options except 'WPADriver=',
+    'TimeoutWPA=', and 'RFKill=' will be ignored. The profile is
+    excluded from automatic profile selection. Defaults to
+    '/etc/wpa_supplicant.conf'.
 
 'Country='::
     The country for which frequency regulations will be enforced.
@@ -318,9 +319,9 @@ of the `wireless' type:
 
 OPTIONS FOR `bond' CONNECTIONS
 ------------------------------
-The interfaces of 'BindsToInterfaces' are bound together in the
-interface named by 'Interface'. Next to the *ip options*, the following
-is understood for connections of the `bond' type:
+The interfaces of 'BindsToInterfaces=' are bound together in the
+interface named by 'Interface='. Next to the *ip options*, the
+following is understood for connections of the `bond' type:
 
 'Mode='::
     The bonding policy. See the kernel documentation on bonding for
@@ -333,8 +334,8 @@ is understood for connections of the `bond' type:
 
 OPTIONS FOR `bridge' CONNECTIONS
 --------------------------------
-The interfaces of 'BindsToInterfaces' take part in the bridge named by
-'Interface'. Next to the *ip options*, the following is understood for
+The interfaces of 'BindsToInterfaces=' take part in the bridge named by
+'Interface='. Next to the *ip options*, the following is understood for
 connections of the `bridge' type:
 
 'SkipForwardingDelay='::
@@ -348,22 +349,22 @@ connections of the `bridge' type:
 
 OPTIONS FOR `dummy' CONNECTIONS
 -------------------------------
-The name of the dummy interface is specified in 'Interface'. Only the
+The name of the dummy interface is specified in 'Interface='. Only the
 *ip options* are understood for connections of the `dummy' type.
 
 
 OPTIONS FOR `ppp' CONNECTIONS
 -----------------------------
 This connection type is identical to the `pppoe' type below, with the
-ethernet interface specified in 'BindsToInterfaces'. The value of
-'Interface' must be of the form `ppp<++n++>', where ++n++ is passed on
-to 'PPPUnit'.
+ethernet interface specified in 'BindsToInterfaces='. The value of
+'Interface=' must be of the form `ppp<++n++>', where ++n++ is passed on
+to 'PPPUnit='.
 
 
 OPTIONS FOR `pppoe' CONNECTIONS
 -------------------------------
 The interface to dial peer-to-peer over ethernet is specified in
-'Interface'. The following options are understood for connections of
+'Interface='. The following options are understood for connections of
 the `pppoe' type:
 
 'User=' and 'Password='::
@@ -375,8 +376,8 @@ the `pppoe' type:
 
 'IdleTimeout='::
     This option specifies the idle time (in seconds) after which `pppd'
-    should disconnect. This option is only valid if 'ConnectionMode' is
-    set to `demand'.
+    should disconnect. This option is only valid if 'ConnectionMode='
+    is set to `demand'.
 
 'MaxFail='::
     The number of consecutive failed connection attempts to tolerate.
@@ -419,7 +420,7 @@ The following advanced options are also understood:
 
 OPTIONS FOR `mobile_ppp' CONNECTIONS
 ------------------------------------
-The name of the USB serial device is specified in 'Interface'. The
+The name of the USB serial device is specified in 'Interface='. The
 following options are understood for connections of the `mobile_ppp'
 type:
 
@@ -450,7 +451,7 @@ type:
 
 'ChatScript='::
     Path to a chat file. If specified, no chat script will be generated
-    and all of the above options except 'User' and 'Password' will be
+    and all of the above options except 'User=' and 'Password=' will be
     ignored.
 
 'MaxFail='::
@@ -472,14 +473,14 @@ type:
 
 OPTIONS FOR `openvswitch' CONNECTIONS
 -------------------------------------
-The interfaces of 'BindsToInterfaces' take part in the bridge named by
-'Interface'. Only the *ip options* are understood for connections of
+The interfaces of 'BindsToInterfaces=' take part in the bridge named by
+'Interface='. Only the *ip options* are understood for connections of
 the `openvswitch' type.
 
 
 OPTIONS FOR `tunnel' CONNECTIONS
 --------------------------------
-The name of the tunnel interface is specified in 'Interface'. Next to
+The name of the tunnel interface is specified in 'Interface='. Next to
 the *ip options*, the following are understood for connections of the
 `tunnel' type:
 
@@ -499,7 +500,7 @@ the *ip options*, the following are understood for connections of the
 
 OPTIONS FOR `tuntap' CONNECTIONS
 --------------------------------
-The name of the tuntap interface is specified in 'Interface'. Next to
+The name of the tuntap interface is specified in 'Interface='. Next to
 the *ip options*, the following are understood for connections of the
 `tuntap' type:
 
@@ -515,9 +516,9 @@ the *ip options*, the following are understood for connections of the
 
 OPTIONS FOR `vlan' CONNECTIONS
 ------------------------------
-The name of the vlan interface is specified in 'Interface'. The
-underlying physical interface is specified in 'BindsToInterfaces'.
-Hence, for vlan profiles, 'BindsToInterfaces' contains the name of a
+The name of the vlan interface is specified in 'Interface='. The
+underlying physical interface is specified in 'BindsToInterfaces='.
+Hence, for vlan profiles, 'BindsToInterfaces=' contains the name of a
 single network interface.
 
 All options for connections of the `ethernet' type are understood for
@@ -528,10 +529,10 @@ details.
 
 OPTIONS FOR `macvlan' CONNECTIONS
 ---------------------------------
-The name of the macvlan interface is specified in 'Interface'. The
-underlying physical interface is specified in 'BindsToInterfaces'.
-Hence, for macvlan profiles, 'BindsToInterfaces' contains the name of a
-single network interface.
+The name of the macvlan interface is specified in 'Interface='. The
+underlying physical interface is specified in 'BindsToInterfaces='.
+Hence, for macvlan profiles, 'BindsToInterfaces=' contains the name of
+a single network interface.
 
 All options for connections of the `ethernet' type are understood for
 connections of the `macvlan' type. Next to the *ip options*, the
@@ -550,7 +551,7 @@ SPECIAL QUOTING RULES
 Configuration files for *wpa_supplicant* use non-standard quoting.
 Therefore, non-standard quoting rules exist for some variables for
 connections of the `wireless' type. In particular, these variables are
-'ESSID', and 'Key'.
+'ESSID=', and 'Key='.
 
 A variable is considered *quoted* by *wpa_supplicant* if it is enclosed
 in double quotes ("). A variable is considered *non-quoted* by
