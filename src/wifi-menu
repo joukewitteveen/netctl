@@ -20,6 +20,11 @@ Arguments:
 END
 }
 
+# Undo printf escaping in $1
+printf_decode() {
+    printf -- "${1//%/%%}"
+}
+
 # Prepare $1 for use in a special quoting context
 quote_safe() {
     if [[ "$1" = \"* ]]; then
@@ -38,6 +43,9 @@ init_profiles() {
             unset Interface ESSID
             source "$PROFILE_DIR/$profile" > /dev/null
             if [[ "$Interface" = "$1" && -n "$ESSID" ]]; then
+                if [[ "$ESSID" = \"\"*\" ]]; then
+                    ESSID=${ESSID:2:-1}
+                fi
                 printf "%s" "$ESSID"
                 if [[ "$Description" =~ "Automatically generated" ]]; then
                     return 2
@@ -62,14 +70,19 @@ init_profiles() {
 
 # Build ENTRIES as an argument list for dialog based on scan results in $1
 init_entries() {
-    local i=0 sep=$'\t' flags signal ssid
+    local i=0 sep=$'\t' decoded flags signal ssid
     while IFS=$'\t' read -r signal flags ssid; do
+        decoded=$(printf_decode "$ssid")
         ENTRIES[i++]="--"  # the SSID might look like an option to dialog
-        ENTRIES[i++]=$ssid
-        if is_yes "${CONNECTED:-no}" && [[ "$ssid" = "$CONNECTION" ]]; then
+        if [[ "$CHARMAP" = "UTF-8" ]]; then
+            ENTRIES[i++]=$decoded
+        else
+            ENTRIES[i++]=$ssid
+        fi
+        if is_yes "${CONNECTED:-no}" && [[ "$decoded" = "$CONNECTION" ]]; then
             ENTRIES[i]="*"  # Currently connected
-        elif in_array "$ssid" "${ESSIDS[@]}"; then
-            if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
+        elif in_array "$decoded" "${ESSIDS[@]}"; then
+            if in_array "$(ssid_to_profile "$decoded")" "${GENERATED[@]}"; then
                 ENTRIES[i]="."  # Automatically generated
             else
                 ENTRIES[i]=":"  # Handmade
@@ -115,11 +128,14 @@ Do you want to overwrite it?"
 
 # Create a profile for ssid $1
 create_profile() {
-    local box flags key msg security
-    PROFILE="$INTERFACE-${1//\//_}"
+    local box flags key msg security signal ssid
+    PROFILE=$(iconv -c -f UTF-8 -t //TRANSLIT <<< "$1")
+    PROFILE="$INTERFACE-${PROFILE//[?\/]/_}"
     [[ -e "$PROFILE_DIR/$PROFILE" ]] && PROFILE+=".wifi-menu"
     confirm_profile || return $?
-    flags=$(grep -m 1 $'\t'"$1\$" "$NETWORKS" | cut -f 2)
+    while IFS=$'\t' read -r signal flags ssid; do
+        [[ "$(printf_decode "$ssid")" != "$1" ]] || break
+    done < "$NETWORKS"
     if [[ "$flags" =~ WPA|WEP ]]; then
         security=${BASH_REMATCH[0],,}
     else
@@ -221,6 +237,8 @@ ensure_root "$(basename "$0")"
 if ! type dialog &> /dev/null; then
     exit_error "Please install 'dialog' to use wifi-menu"
 fi
+CHARMAP=$(locale charmap)
+cd /  # We do not want to spawn anything that can block unmounting
 
 INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
@@ -237,7 +255,6 @@ elif ! is_interface "$INTERFACE"; then
 fi
 load_interface_config "$INTERFACE"
 
-cd /  # We do not want to spawn anything that can block unmounting
 if [[ "$RFKill" && "$(rf_status "$INTERFACE" "$RFKill")" ]]; then
     if ! rf_enable "$INTERFACE" "$RFKill"; then
         exit_error "Could not unblock transmission on interface '$INTERFACE'"
@@ -247,7 +264,7 @@ fi
 
 echo -n "Scanning for networks... "
 if CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 "^ssid="); then
-    CONNECTION=${CONNECTION#ssid=}
+    CONNECTION=$(printf_decode "${CONNECTION#ssid=}")
     CONNECTED=yes
 fi
 NETWORKS=$(wpa_supplicant_scan "$INTERFACE" 3,4,5)
@@ -270,6 +287,9 @@ Flags description:
     CHOICE=$(dialog --menu "$MSG" 24 50 12 "${ENTRIES[@]}" --stdout)
     RETURN=$?
     if (( RETURN == 0 )); then
+        if [[ "$CHARMAP" != "UTF-8" ]]; then
+            CHOICE=$(printf_decode "$CHOICE")
+        fi
         connect_to_ssid "$CHOICE"
         RETURN=$?
     fi
