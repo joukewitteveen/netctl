@@ -119,6 +119,7 @@ load_profile() {
     while IFS= read -r hook; do
         source "$hook"
     done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' -not -name $'*\n*' | sort -u)
+    unset hook
     source "$PROFILE_DIR/$1"
     if [[ -z $Interface ]]; then
         exit_error "Profile '$1' does not specify an interface"

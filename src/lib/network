@@ -85,7 +85,8 @@ cd /
 if [[ $# -eq 1 && $1 == wait-online ]]; then
     network_wait_online
 elif [[ $# -eq 2 && $1 == @(start|stop) ]]; then
-    # Expose the profile name
+    # Expose the profile name and command
+    Command=$1
     Profile=$2
     load_profile "$Profile"
     load_interface_config "$Interface"
