@@ -121,6 +121,7 @@ wpa_stop() {
 ## Scan for networks within range
 # $1: interface name
 # $2: fields of the wpa_supplicant scan_results
+#     1: bssid  2: frequency  3: signal level  4: flags  5: ssid
 wpa_supplicant_scan() {
     local interface=$1 fields=$2 spawned_wpa=no essids
     # temp file used, as keeping ESSID's with spaces in their name in arrays
@@ -140,18 +141,11 @@ wpa_supplicant_scan() {
     # Sometimes, that is not enough
     wpa_wait_while_state 7 "$interface" "SCANNING"
     wpa_call "$interface" scan_results |
-        tail -n+2 |
-        sort -rn -k3 |
-        sort -u -k5 |
-        sort -rn -k3 |
+        tail -n+2 |     # Remove extraneous output
+        sort -rn -k3 |  # Sort by signal strength
+        sort -u -k5 |   # Remove duplicates
+        sort -rn -k3 |  # Re-sort as the removal disorders the list
         cut -f"$fields"  > "$essids"
-
-    # Fields are tab delimited
-    # Remove extraneous output from wpa_cli
-    # Sort by strength
-    # Remove duplicates
-    # Re-sort by strength as the removal disorders the list
-    # Cut to the AP/essid fields only
 
     if is_yes "$spawned_wpa"; then
         wpa_stop "$interface"
@@ -179,10 +173,9 @@ wpa_quote() {
     fi
 }
 
-## Unquote a string, i.e. returned from wpa_cli
-## Quoted:     "string"     -> string
-## Non-Quoted: string       -> string
-## Hex:        737472696e67 -> string
+## Unquote a string returned by wpa_call
+## Possible representations of string: "string" 737472696e67 string
+# $1: string
 wpa_unquote() {
     local string="$1"
     if [[ $string == \"*\" ]]; then

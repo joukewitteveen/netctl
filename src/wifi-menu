@@ -20,7 +20,7 @@ Arguments:
 END
 }
 
-# Prepares $1 for use in a special quoting context
+# Prepare $1 for use in a special quoting context
 quote_safe() {
     if [[ "$1" = \"* ]]; then
         printf '""%s"' "$1"
@@ -29,8 +29,8 @@ quote_safe() {
     fi
 }
 
-# Fills PROFILES and ESSIDS with the profile names and essids of the profiles
-# for interface $1.
+# Fill PROFILES and ESSIDS with the profile names and essids of the profiles
+# for interface $1
 init_profiles() {
     local i=0 essid profile
     while IFS= read -r profile; do
@@ -60,13 +60,15 @@ init_profiles() {
     done < <(list_profiles)
 }
 
-# Builds ENTRIES as an argument list for dialog based on scan results in $1.
+# Build ENTRIES as an argument list for dialog based on scan results in $1
 init_entries() {
     local i=0 sep=$'\t' flags signal ssid
     while IFS=$'\t' read -r signal flags ssid; do
-        ENTRIES[i++]="--"  # $ssid might look like an option to dialog.
+        ENTRIES[i++]="--"  # the SSID might look like an option to dialog
         ENTRIES[i++]=$ssid
-        if in_array "$ssid" "${ESSIDS[@]}"; then
+        if is_yes "${CONNECTED:-no}" && [[ "$ssid" = "$CONNECTION" ]]; then
+            ENTRIES[i]="*"  # Currently connected
+        elif in_array "$ssid" "${ESSIDS[@]}"; then
             if in_array "$(ssid_to_profile "$ssid")" "${GENERATED[@]}"; then
                 ENTRIES[i]="."  # Automatically generated
             else
@@ -74,9 +76,6 @@ init_entries() {
             fi
         else
             ENTRIES[i]=" "  # Not present
-        fi
-        if is_yes "${CONNECTED:-no}" && [[ "$ssid" = "$CONNECTION" ]]; then
-            ENTRIES[i]="*"  # Currently connected
         fi
         if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
             ENTRIES[i]+="${sep}${BASH_REMATCH[0],,}"
@@ -88,7 +87,7 @@ init_entries() {
     done < "$1"
 }
 
-# Finds a profile name for ssid $1.
+# Find a profile name for ssid $1
 ssid_to_profile() {
     local i
     for i in $(seq 0 $((${#ESSIDS[@]}-1))); do
@@ -114,7 +113,7 @@ Do you want to overwrite it?"
     fi
 }
 
-# Creates a profile for ssid $1.
+# Create a profile for ssid $1
 create_profile() {
     local box flags key msg security
     PROFILE="$INTERFACE-${1//\//_}"
@@ -140,13 +139,13 @@ create_profile() {
             else
                 key=$(quote_safe "$key")
             fi
-        elif [[ "${#key}" -ge 8 && "${#key}" -le 63 ]]; then
+        elif [[ ${#key} -ge 8 && ${#key} -le 63 ]]; then
             if is_yes "${OBSCURE:-no}"; then
                 key="\"$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")"
             else
                 key=$(quote_safe "$key")
             fi
-        elif [[ "${#key}" -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
+        elif [[ ${#key} -eq 64 && "$key" = +([[:xdigit:]]) ]]; then
             key="\"$key"
         else
             return 4
@@ -165,8 +164,8 @@ EOF
     return 0
 }
 
-# Connects to ssid $1 using an available profile or an automatically created
-# one if none exists.
+# Connect to ssid $1 using an available profile or an automatically created one
+# if none exists
 connect_to_ssid() {
     local msg
     PROFILE=$(ssid_to_profile "$1")
@@ -193,6 +192,7 @@ Do you want to keep the generated profile ('$PROFILE')?"
     fi
     return 0
 }
+
 
 while [[ "$1" = -* ]]; do
     case "$1" in
@@ -225,7 +225,7 @@ fi
 INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
     INTERFACE=(/sys/class/net/*/wireless/)
-    if [[ "${#INTERFACE[@]}" -ne 1 || ! -d "$INTERFACE" ]]; then
+    if [[ ${#INTERFACE[@]} -ne 1 || ! -d "$INTERFACE" ]]; then
         report_error "Invalid interface specification"
         usage
         exit 255

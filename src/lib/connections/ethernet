@@ -51,7 +51,9 @@ ethernet_up() {
     fi
 
     if ! ip_set; then
-        stop_8021x
+        if is_yes "${Auth8021X:-no}"; then
+            wpa_stop "$Interface"
+        fi
         bring_interface_down "$Interface"
         return 1
     fi
@@ -59,17 +61,12 @@ ethernet_up() {
 
 ethernet_down() {
     ip_unset
-    stop_8021x
-    bring_interface_down "$Interface"
-}
-
-# Stop wpa_supplicant if neccessary
-stop_8021x() {
     if is_yes "${Auth8021X:-no}"; then
         . "$SUBR_DIR/wpa"
         : ${WPAConfigFile:=/etc/wpa_supplicant.conf}
         do_debug wpa_stop "$Interface"
     fi
+    bring_interface_down "$Interface"
 }
 
 
