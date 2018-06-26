@@ -34,13 +34,13 @@ quote_safe() {
     fi
 }
 
-# Fill PROFILES and ESSIDS with the profile names and essids of the profiles
-# for interface $1
+# Fill PROFILES and ESSIDS with the profile names and essids and fill GENERATED
+# with the names of automatically generated profiles for interface $1
 init_profiles() {
     local i=0 essid profile
     while IFS= read -r profile; do
+        # Sandbox the sourcing of profiles
         essid=$(
-            unset Interface ESSID
             source "$PROFILE_DIR/$profile" > /dev/null
             if [[ "$Interface" = "$1" && -n "$ESSID" ]]; then
                 if [[ "$ESSID" = \"\"*\" ]]; then

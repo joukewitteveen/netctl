@@ -25,10 +25,12 @@ contain newlines and should not end in '.action', '.conf', or
 '/etc/netctl/hooks/' and any executable script in
 '/etc/netctl/interfaces/' with the name of the interface for the profile
 are sourced. The name of the current profile is available via the
-'Profile' variable in the environment of the sourced scripts.
-Declarations in an interface script override declarations in a profile,
-which override declarations in hooks. For each connection type, there
-are example profile files in '/etc/netctl/examples/'.
+'Profile' variable in the environment of the sourced scripts. On
+starting or stopping a profile, the respective command is available via
+the 'Command' variable. Declarations in an interface script override
+declarations in a profile, which override declarations in hooks. For
+each connection type, there are example profile files in
+'/etc/netctl/examples/'.
 
 
 AVAILABLE CONNECTION TYPES
