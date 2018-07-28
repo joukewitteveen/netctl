@@ -11,8 +11,8 @@ wpa_call() {
 
     if [[ $WPA_CTRL_DIR ]]; then
         args+=("-p" "$WPA_CTRL_DIR")
-    elif [[ $WPAConfigFile ]] && grep -q "^[[:space:]]*ctrl_interface=" "$WPAConfigFile"; then
-        WPA_CTRL_DIR=$(sed -n "0,/^[[:space:]]*ctrl_interface=/s///p" "$WPAConfigFile")
+    elif [[ $WPAConfigFile ]] && grep -q '^[[:space:]]*ctrl_interface=' "$WPAConfigFile"; then
+        WPA_CTRL_DIR=$(sed -n '0,/^[[:space:]]*ctrl_interface=/s///p' "$WPAConfigFile")
         if [[ $WPA_CTRL_DIR == DIR=* ]]; then
             WPA_CTRL_DIR=${WPA_CTRL_DIR:4}
             WPA_CTRL_DIR=${WPA_CTRL_DIR%% GROUP=*}
@@ -35,7 +35,7 @@ wpa_is_active() {
 # $1: interface name
 wpa_get_state() {
     local state
-    state=$(wpa_call "$1" status | grep -m1 "^wpa_state=") || return 1
+    state=$(wpa_call "$1" status | grep -m1 '^wpa_state=') || return 1
     echo "${state#wpa_state=}"
 }
 
@@ -179,14 +179,14 @@ wpa_quote() {
 wpa_unquote() {
     local string="$1"
     if [[ $string == \"*\" ]]; then
-        printf "%s" "${string:1:-1}"
+        printf '%s' "${string:1:-1}"
     elif [[ $string == +([[:xdigit:]][[:xdigit:]]) ]]; then
         while [[ $string ]]; do
-            printf "\x${string:0:2}"
+            printf "\\x${string:0:2}"
             string=${string:2}
         done
     else
-        printf "%s" "${string}"
+        printf '%s' "${string}"
     fi
 }
 
@@ -239,7 +239,7 @@ wpa_make_config_block() {
         fi
       ;;
       wpa-configsection)
-        printf "%s\n" "${WPAConfigSection[@]}"
+        printf '%s\n' "${WPAConfigSection[@]}"
         return
       ;;
       *)

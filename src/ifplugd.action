@@ -11,7 +11,7 @@ case "$2" in
     while IFS= read -r profile; do
         if ForceConnect=yes "$SUBR_DIR/network" start "$profile"; then
             mkdir -p "$(dirname "$PROFILE_FILE")"
-            printf "%s" "$profile" > "$PROFILE_FILE"
+            printf '%s' "$profile" > "$PROFILE_FILE"
             exit 0
         fi
     done < <(list_profiles | while IFS= read -r profile; do
@@ -26,7 +26,7 @@ case "$2" in
               : ${Priority:=1}
           fi
           is_yes "${ExcludeAuto:-yes}" && exit
-          printf "%i\t%s\n" "${Priority:-0}" "$profile"
+          printf '%i\t%s\n' "${Priority:-0}" "$profile"
           report_debug "Included profile '$profile'"
         )
     done | sort -nrs -k 1,1 | cut -f 2-)

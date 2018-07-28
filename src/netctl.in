@@ -45,7 +45,7 @@ store() {
     mkdir -p "$(dirname "$STATE_FILE")"
     list_profiles | while IFS= read -r Profile; do
         if sd_call "is-active --quiet" "$Profile" &> /dev/null; then
-            printf "%s\n" "$Profile"
+            printf '%s\n' "$Profile"
         fi
     done > "$STATE_FILE"
 }
@@ -65,7 +65,7 @@ stop_all() {
     # We cannot pipe to mapfile, as the end of a pipe is inside a subshell
     mapfile -t Profiles < <(list_profiles)
     if (( ${#Profiles[@]} )); then
-        do_debug sd_call stop "${Profiles[@]}" 2> >(grep -Fv "not loaded" >&2)
+        do_debug sd_call stop "${Profiles[@]}" 2> >(grep -Fv 'not loaded' >&2)
     fi
 }
 
@@ -77,14 +77,14 @@ switch_to() {
     # We assume interface names are not quoted
     # Using read removes leading whitespace
     read InterfaceLine < \
-      <(grep -om1 "^[[:space:]]*Interface=[[:alnum:]:._-]\+" "$1")
+      <(grep -om1 '^[[:space:]]*Interface=[[:alnum:]:._-]\+' "$1")
     if [[ -z $InterfaceLine ]]; then
         exit_error "Profile '$1' does not specify an interface"
     fi
     mapfile -t AllProfiles < <(list_profiles)
     mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
     if (( ${#Profiles[@]} )); then
-        do_debug sd_call stop "${Profiles[@]}" 2> >(grep -Fv "not loaded" >&2)
+        do_debug sd_call stop "${Profiles[@]}" 2> >(grep -Fv 'not loaded' >&2)
     fi
     do_debug sd_call start "$1"
 }

@@ -30,7 +30,7 @@ quote_safe() {
     if [[ "$1" = \"* ]]; then
         printf '""%s"' "$1"
     else
-        printf "%s" "$1"
+        printf '%s' "$1"
     fi
 }
 
@@ -46,7 +46,7 @@ init_profiles() {
                 if [[ "$ESSID" = \"\"*\" ]]; then
                     ESSID=${ESSID:2:-1}
                 fi
-                printf "%s" "$ESSID"
+                printf '%s' "$ESSID"
                 if [[ "$Description" =~ "Automatically generated" ]]; then
                     return 2
                 else
@@ -105,7 +105,7 @@ ssid_to_profile() {
     local i
     for i in $(seq 0 $((${#ESSIDS[@]}-1))); do
         if [[ "$1" = "${ESSIDS[i]}" ]]; then
-            printf "%s" "${PROFILES[i]}"
+            printf '%s' "${PROFILES[i]}"
             return 0
         fi
     done
@@ -157,7 +157,7 @@ create_profile() {
             fi
         elif [[ ${#key} -ge 8 && ${#key} -le 63 ]]; then
             if is_yes "${OBSCURE:-no}"; then
-                key="\"$(wpa_passphrase "$1" "$key" | sed -n "s/^[[:space:]]*psk=//p")"
+                key="\"$(wpa_passphrase "$1" "$key" | sed -n 's/^[[:space:]]*psk=//p')"
             else
                 key=$(quote_safe "$key")
             fi
@@ -172,11 +172,11 @@ Description='Automatically generated profile by wifi-menu'
 Interface=$INTERFACE
 Connection=wireless
 Security=$security
-ESSID=$(printf "%q" "$(quote_safe "$1")")
+ESSID=$(printf '%q' "$(quote_safe "$1")")
 IP=dhcp
-${key+Key=$(printf "%q" "$key")}
+${key+Key=$(printf '%q' "$key")}
 EOF
-    printf "%s" "$PROFILE"
+    printf '%s' "$PROFILE"
     return 0
 }
 
@@ -263,7 +263,7 @@ if [[ "$RFKill" && "$(rf_status "$INTERFACE" "$RFKill")" ]]; then
 fi
 
 echo -n "Scanning for networks... "
-if CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 "^ssid="); then
+if CONNECTION=$(wpa_call "$INTERFACE" status 2> /dev/null | grep -m 1 '^ssid='); then
     CONNECTION=$(printf_decode "${CONNECTION#ssid=}")
     CONNECTED=yes
 fi

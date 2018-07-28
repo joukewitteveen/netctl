@@ -36,7 +36,7 @@ wireless_up() {
             report_error "Could not create a WPA config file for interface '$Interface'"
             return 1
         fi
-        printf "%s\n" "network={" "$(wpa_make_config_block)" "}" >> "$config_file"
+        printf '%s\n' "network={" "$(wpa_make_config_block)" "}" >> "$config_file"
     fi
 
     # Start the WPA supplicant

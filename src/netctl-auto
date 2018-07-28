@@ -123,7 +123,7 @@ switch_to() {
 
     # List of enabled networks
     local enabled_networks=$(wpa_call "$interface" list_networks | tail -n+2 | \
-        cut -f 1,4 | grep -Fv "[DISABLED]" | cut -f 1 | tr "\n" ' ')
+        cut -f 1,4 | grep -Fv '[DISABLED]' | cut -f 1 | tr '\n' ' ')
 
     reenable_networks() {
         for network in $enabled_networks; do
@@ -222,7 +222,7 @@ start() {
           is_yes "${ExcludeAuto:-no}" && exit
           # Set default and exclude wpa-config as it does not fit this scheme
           [[ ${Security:=none} != "wpa-config" ]] || exit
-          printf "%s\n" "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$wpa_conf"
+          printf '%s\n' "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$wpa_conf"
           report_notice "Included profile '$profile'"
         )
     done
