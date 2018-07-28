@@ -90,43 +90,43 @@ switch_to() {
 }
 
 unit_enable() {
-    local unit="@systemdsystemconfdir@/netctl@$(systemd-escape "$1").service"
-    if [[ -e $unit ]]; then
-        report_error "A unit file for profile '$1' already exists"
+    local unit=$(systemd-escape --template=netctl@.service "$1") target
+    load_profile "$1"
+
+    target="@systemdsystemconfdir@/multi-user.target.wants/$unit"
+    if [[ -e $target ]]; then
+        report_error "The profile '$1' is already enabled"
         return 1
     fi
-    load_profile "$1"
-    do_readable touch "$unit"
-    echo ".include @systemdsystemunitdir@/netctl@.service" > "$unit"
-    echo -e "\n[Unit]" >> "$unit"
-    [[ $Description ]] && echo "Description=$Description" >> "$unit"
+    do_readable mkdir -p "$(dirname "$target")"
+    ln -vs "@systemdsystemunitdir@/netctl@.service" "$target"
+
+    target="@systemdsystemconfdir@/$unit.d/profile.conf"
+    do_readable mkdir -p "$(dirname "$target")"
+    do_readable touch "$target"
+    echo "[Unit]" > "$target"
+    if [[ $Description ]]; then
+        echo "Description=$Description" >> "$target"
+    fi
     declare -p BindsToInterfaces &> /dev/null || BindsToInterfaces=$Interface
     if (( ${#BindsToInterfaces[@]} )); then
         : ${InterfaceRoot=sys/subsystem/net/devices/}
         printf "BindsTo=$(systemd-escape "$InterfaceRoot")%s.device\n" \
-               $(systemd-escape "${BindsToInterfaces[@]}") >> "$unit"
+               $(systemd-escape "${BindsToInterfaces[@]}") >> "$target"
         printf "After=$(systemd-escape "$InterfaceRoot")%s.device\n" \
-               $(systemd-escape "${BindsToInterfaces[@]}") >> "$unit"
+               $(systemd-escape "${BindsToInterfaces[@]}") >> "$target"
     fi
     if (( ${#After[@]} )); then
         printf 'After=netctl@%s.service\n' \
-               $(systemd-escape "${After[@]}") >> "$unit"
+               $(systemd-escape "${After[@]}") >> "$target"
     fi
-    mkdir -p "@systemdsystemconfdir@/multi-user.target.wants"
-    echo "ln -s '$unit' '${unit/system\//system/multi-user.target.wants/}'"
-    ln -s "$unit" "${unit/system\//system/multi-user.target.wants/}"
+    report_notice "generated '$target'"
 }
 
 unit_disable() {
-    local unit="@systemdsystemconfdir@/netctl@$(systemd-escape "$1").service"
-    if sd_call "is-enabled --quiet" "$1" &> /dev/null; then
-        sd_call disable "$1"
-    fi
-    if [[ ! -f $unit ]]; then
-        report_error "No regular unit file found for profile '$1'"
-        return 1
-    fi
-    do_debug rm "$unit"
+    local unit=$(systemd-escape --template=netctl@.service "$1")
+    rm -vfd "@systemdsystemconfdir@"{/multi-user.target.wants,}"/$unit" \
+            "@systemdsystemconfdir@/$unit.d"{/profile.conf,}
 }
 
 wait_online() {
