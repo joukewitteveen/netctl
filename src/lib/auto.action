@@ -6,11 +6,9 @@
 
 export INTERFACE="$1"
 export SSID="$2"
-# Expose the profile name similar to ordinary netctl usage
-Profile="$3"
 export ACTION="$4"
 
-load_profile "$Profile"
+load_profile "$3"
 load_interface_config "$INTERFACE"
 
 case $ACTION in

@@ -113,19 +113,21 @@ list_profiles() {
 # $1: profile name
 load_profile() {
     local hook
-    if [[ -z $1 || ! -r "$PROFILE_DIR/$1" ]]; then
-        exit_error "Profile '$1' does not exist or is not readable"
+    # Expose the profile name
+    Profile=$1
+    if [[ -z $Profile || ! -r "$PROFILE_DIR/$Profile" ]]; then
+        exit_error "Profile '$Profile' does not exist or is not readable"
     fi
     while IFS= read -r hook; do
         source "$hook"
     done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' -not -name $'*\n*' | sort -u)
     unset hook
-    source "$PROFILE_DIR/$1"
+    source "$PROFILE_DIR/$Profile"
     if [[ -z $Interface ]]; then
-        exit_error "Profile '$1' does not specify an interface"
+        exit_error "Profile '$Profile' does not specify an interface"
     fi
     if [[ ! -r "${Connection:+$SUBR_DIR/connections/$Connection}" ]]; then
-        exit_error "Profile '$1' does not specify a valid connection"
+        exit_error "Profile '$Profile' does not specify a valid connection"
     fi
     source "$SUBR_DIR/connections/$Connection"
 }
