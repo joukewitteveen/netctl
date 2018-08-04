@@ -49,16 +49,19 @@ netctl-$(VERSION).tar.xz:
 	gpg --detach-sign $@
 
 pkgbuild: PKGBUILD
-PKGBUILD: netctl-$(VERSION).tar.xz contrib/PKGBUILD.in
+PKGBUILD: netctl-$(VERSION).tar.xz netctl.install contrib/PKGBUILD.in
 	sed -e "s|@pkgver@|$(VERSION)|g" \
 	    -e "s|@md5sum@|$(shell md5sum $< | cut -d ' ' -f 1)|" \
 	    -e "s|@md5sum.sig@|$(shell md5sum $<.sig | cut -d ' ' -f 1)|" \
 	    $(lastword $^) > $@
+
+netctl.install: contrib/netctl.install
+	cp $< $@
 
 upload: netctl-$(VERSION).tar.xz
 	scp $< $<.sig sources.archlinux.org:/srv/ftp/other/packages/netctl
 
 clean:
 	$(MAKE) -C docs clean
-	-@rm -vf PKGBUILD *.tar.xz *.tar.xz.sig 2>/dev/null
+	-@rm -vf netctl-*.tar.xz{,.sig} PKGBUILD netctl.install
 

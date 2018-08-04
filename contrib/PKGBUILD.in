@@ -19,6 +19,7 @@ optdepends=('dialog: for the menu based wifi assistant'
             'ppp: for PPP connections'
             'openvswitch: for Open vSwitch connections'
            )
+install=netctl.install
 source=(https://sources.archlinux.org/other/packages/netctl/netctl-${pkgver}.tar.xz{,.sig})
 arch=('any')
 md5sums=('@md5sum@'
