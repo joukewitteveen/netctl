@@ -114,15 +114,26 @@ ssid_to_profile() {
 
 # Ask the user for the name of the new profile
 confirm_profile() {
-    local msg="Enter a name for the new profile\n"
-    PROFILE=$(dialog --inputbox "$msg" 10 50 "$PROFILE" --stdout) || return $?
+    local msg
+    msg="Enter a name for the new profile"
+    if $WITH_DIALOG; then
+        PROFILE=$(dialog --inputbox "$msg\n" 10 50 "$PROFILE" --stdout) \
+            || return $?
+    else
+        PROFILE=$(ask_text "$msg" "$PROFILE") || return $?
+    fi
     if [[ "$PROFILE" = */* ]]; then
         PROFILE=${PROFILE//\//_}
         confirm_profile
     elif [[ -e "$PROFILE_DIR/$PROFILE" ]]; then
-        msg="A profile by the name '$PROFILE' already exists.
-Do you want to overwrite it?"
-        dialog --yesno "$msg" 10 50 --stdout || confirm_profile
+        msg="A profile by the name '$PROFILE' already exists."
+        question="Do you want to overwrite it?"
+        if $WITH_DIALOG; then
+            dialog --yesno "$msg\n$question" 10 50 --stdout || confirm_profile
+        else
+            printf "%s" "$msg"
+            ask_yesno "$question" || confirm_profile
+        fi
     fi
 }
 
@@ -142,13 +153,18 @@ create_profile() {
         security=none
     fi
     if [[ "$flags" =~ PSK|WEP ]]; then
-        if is_yes "${OBSCURE:-no}"; then
-            box="--insecure --passwordbox"
+        if $WITH_DIALOG; then
+            if is_yes "${OBSCURE:-no}"; then
+                box="--insecure --passwordbox"
+            else
+                box="--inputbox"
+            fi
+            msg="Enter $security security key for\n'$1'"
+            key=$(dialog $box "$msg" 10 40 --stdout) || return $?
         else
-            box="--inputbox"
+            msg="Enter $security security key for '$1'"
+            key=$(ask_password "$msg") || return $?
         fi
-        msg="Enter $security security key for\n'$1'"
-        key=$(dialog $box "$msg" 10 40 --stdout) || return $?
         if [[ "${BASH_REMATCH[0]}" = "WEP" ]]; then
             if [[ "$key" = +([[:xdigit:]][[:xdigit:]]) ]]; then
                 key="\"$key"
@@ -183,13 +199,15 @@ EOF
 # Connect to ssid $1 using an available profile or an automatically created one
 # if none exists
 connect_to_ssid() {
-    local msg
+    local msg question
     PROFILE=$(ssid_to_profile "$1")
     if [[ $? -ne 0 ]]; then
         PROFILE=$(create_profile "$1") || return $?
         NEW_PROFILE=yes
     fi
-    clear
+    if $WITH_DIALOG; then
+        clear
+    fi
     if systemctl is-active --quiet "netctl-auto@$INTERFACE.service"; then
         report_notice "Interface '$INTERFACE' is controlled by netctl-auto"
         if is_yes "${NEW_PROFILE:-no}"; then
@@ -198,15 +216,89 @@ connect_to_ssid() {
         do_debug netctl-auto switch-to "$PROFILE"
     elif ! netctl switch-to "$PROFILE"; then
         if is_yes "${NEW_PROFILE:-no}"; then
-            msg="         CONNECTING FAILED
-
-Do you want to keep the generated profile ('$PROFILE')?"
-            dialog --yesno "$msg" 10 40 --stdout || rm "$PROFILE_DIR/$PROFILE"
-            clear
+            question="Do you want to keep the generated profile ('$PROFILE')?"
+            if $WITH_DIALOG; then
+                msg="         CONNECTING FAILED$'\n'$'\n'$question"
+                dialog --yesno "$msg" 10 40 --stdout \
+                    || rm "$PROFILE_DIR/$PROFILE"
+                clear
+            else
+                printf "Connecting failed." >&2
+                ask_yesno "$question" || rm "$PROFILE_DIR/$PROFILE"
+            fi
         fi
         return 2
     fi
     return 0
+}
+
+ask_password() {
+    if is_yes "${OBSCURE:-no}"; then
+        local result
+        read -s -e -p "${1}: " -i "${2:-}" result >&2
+        # suppressed read will not print newline symbol, need to force it
+        # otherwise lines will be joined
+        echo >&2
+        printf "%s" "$result"
+    else
+        ask_text "${@}"
+        return $?
+    fi
+}
+
+ask_yesno() {
+    local result
+    while :; do
+        printf "%s [y/n]: " "$1" >&2
+        read result
+
+        if [[ "$result" == "y" || "$result" == "Y" || "$result" == "yes" ]]; then
+            return 0
+        fi
+
+        if [[ "$result" == "n" || "$result" == "N" || "$result" == "no" ]]; then
+            return 1
+        fi
+
+        # otherwise we have invalid answer, need to ask again.
+    done
+}
+
+ask_text() {
+    local result
+    read -e -p "${1}: " -i "${2:-}" result >&2
+    printf "%s" "$result"
+}
+
+ask_choice() {
+    local names=() infos=()
+    local selection
+
+    for (( i=0; i<${#ENTRIES[@]}; i++ )); do
+        entry="${ENTRIES[i]}"
+        if [[ "$entry" == "--" ]]; then
+            names+=("${ENTRIES[$i+1]}")
+            infos+=("${ENTRIES[$i+2]}")
+            i+=2
+        fi
+    done
+
+    printf "%s\n" "$1" >&2
+    for (( i=0; i<${#names[@]}; i++ )); do
+        printf "%d) %s %s\n" "$((i+1))" "${names[$i]}" "${infos[$i]}" >&2
+    done
+
+    while :; do
+        selection=$(ask_text "Enter a selection [1-${#names[@]}]") \
+            || return $?
+        if [[ "$selection" =~ ^[0-9]+$ ]]; then
+            selection=$((selection-1))
+            if [[ "${names[$selection]:-}" ]]; then
+                echo "${names[$selection]}"
+                break
+            fi
+        fi
+    done
 }
 
 
@@ -234,9 +326,12 @@ if [[ $# -gt 1 ]]; then
 fi
 
 ensure_root "$(basename "$0")"
+
+WITH_DIALOG=true
 if ! type dialog &> /dev/null; then
-    exit_error "Please install 'dialog' to use wifi-menu"
+    WITH_DIALOG=false
 fi
+
 CHARMAP=$(locale charmap)
 cd /  # We do not want to spawn anything that can block unmounting
 
@@ -284,8 +379,13 @@ Flags description:
  * - active connection present
  : - handmade profile present
  . - automatically generated profile present"
-    CHOICE=$(dialog --menu "$MSG" 24 50 12 "${ENTRIES[@]}" --stdout)
-    RETURN=$?
+    if $WITH_DIALOG; then
+        CHOICE=$(dialog --menu "$MSG" 24 50 12 "${ENTRIES[@]}" --stdout)
+        RETURN=$?
+    else
+        CHOICE=$(ask_choice "$MSG")
+        RETURN=$?
+    fi
     if (( RETURN == 0 )); then
         if [[ "$CHARMAP" != "UTF-8" ]]; then
             CHOICE=$(printf_decode "$CHOICE")
