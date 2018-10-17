@@ -64,7 +64,7 @@ modem
 passive
 novj
 holdoff 10
-noipdefault
+$(is_yes "${ConfReqAnyAddr:-no}" && printf noipdefault)
 
 noauth
 $(is_yes "${DefaultRoute:-yes}" || printf no)defaultroute

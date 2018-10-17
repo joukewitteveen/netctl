@@ -21,3 +21,10 @@ AccessPointName=apn
 # If Mode is set to SYSCFG=..., a custom AT^SYSCFG=... line is sent
 # This setting is for Huawei USB modems; all other devices should use None
 Mode=3Gpref
+
+# If pppd should request any of your currently assigned IP addressess (default: no)
+# pppd requests the IP addressess of *any* other interface in the ConfReq
+# during IPCP negotiation. Some providers silently ignore those requests and
+# you might experience 'IPCP: timeout sending Config-Requests'.
+# By enabling this, option 'noipdefault' is set. This results in '0.0.0.0' being requested.
+ConfReqAnyAddr=yes
