@@ -66,6 +66,7 @@ novj
 holdoff 10
 
 noauth
+noipdefault
 $(is_yes "${DefaultRoute:-yes}" || printf no)defaultroute
 maxfail $(quote_word "${MaxFail:-5}")
 $(is_yes "${UsePeerDNS:-yes}" && printf usepeerdns)
