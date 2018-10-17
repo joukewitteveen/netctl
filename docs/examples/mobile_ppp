@@ -23,7 +23,7 @@ AccessPointName=apn
 Mode=3Gpref
 
 # If pppd should request '0.0.0.0' during IPCP negotiation (default: no)
-# If set to 'no' pppd requests the IP addressess of *any* other interface
+# If set to 'no', pppd requests the IP address of *any* other interface
 # in the ConfReq during IPCP negotiation. Some providers silently ignore
 # those requests and you might experience 'IPCP: timeout sending Config-Requests'.
 # By enabling this, option 'noipdefault' is passed to pppd.
