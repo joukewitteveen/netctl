@@ -2,6 +2,8 @@ export VERSION = 1.19
 
 PKG_CONFIG ?= pkg-config
 
+SHELL=/bin/bash
+
 sd_var = $(shell $(PKG_CONFIG) --variable=systemd$(1) systemd)
 systemdsystemconfdir = $(call sd_var,systemconfdir)
 systemdsystemunitdir = $(call sd_var,systemunitdir)
@@ -64,4 +66,3 @@ upload: netctl-$(VERSION).tar.xz
 clean:
 	$(MAKE) -C docs clean
 	-@rm -vf netctl-*.tar.xz{,.sig} PKGBUILD netctl.install
-
