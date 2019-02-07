@@ -9,8 +9,8 @@ Optional:
 - dhcpcd or dhclient: for DHCP support
 - wpa_supplicant: for WPA support
 - dialog: for the interactive assistant
-- ifplugd: for automatic connection
-- wpa_actiond: for automatic connection
+- ifplugd: for automatic wired connections
+- ppp: for PPP support
 
 For documentation generation:
 - asciidoc

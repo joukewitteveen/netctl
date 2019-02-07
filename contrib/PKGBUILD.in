@@ -15,7 +15,6 @@ optdepends=('dialog: for the menu based wifi assistant'
             'dhcpcd: for DHCP support (or dhclient)'
             'wpa_supplicant: for wireless networking support'
             'ifplugd: for automatic wired connections through netctl-ifplugd'
-            'wpa_actiond: for automatic wireless connections through netctl-auto'
             'ppp: for PPP connections'
             'openvswitch: for Open vSwitch connections'
            )

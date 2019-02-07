@@ -5,16 +5,17 @@
 . "$SUBR_DIR/ip"
 
 export INTERFACE="$1"
-export SSID="$2"
-export ACTION="$4"
-
-load_profile "$3"
-load_interface_config "$INTERFACE"
+export ACTION="$2"
+PROFILE_FILE="$STATE_DIR/netctl-auto-$INTERFACE.profile"
 
 case $ACTION in
-  CONNECT)
+  CONNECTED)
+    load_profile "$WPA_ID_STR"
+    load_interface_config "$INTERFACE"
     DhcpcdOptions+=" -K -L"
     ip_set || exit 1
+    mkdir -p "$(dirname "$PROFILE_FILE")"
+    printf '%s' "$Profile" > "$PROFILE_FILE"
     # Sandbox the eval
     if ! ( do_debug eval "$ExecUpPost" ); then
         # Failing ExecUpPost will take the connection down
@@ -22,20 +23,17 @@ case $ACTION in
         exit 1
     fi
   ;;
-  DISCONNECT)
-    # Sandbox the eval
-    if ! ( do_debug eval "$ExecDownPre" ); then
-        exit 1
+  DISCONNECTED)
+    if [[ -s "$PROFILE_FILE" ]]; then
+        load_profile "$(< "$PROFILE_FILE")"
+        load_interface_config "$INTERFACE"
+        rm -f "$PROFILE_FILE"
+        # Sandbox the eval
+        if ! ( do_debug eval "$ExecDownPre" ); then
+            exit 1
+        fi
+        ip_unset
     fi
-    ip_unset
-  ;;
-  LOST|REESTABLISHED)
-    # Not handled.
-    exit 0
-  ;;
-  *)
-    # ???
-    exit 1
   ;;
 esac
 

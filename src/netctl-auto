@@ -6,7 +6,6 @@
 . "$SUBR_DIR/rfkill"
 . "$SUBR_DIR/wpa"
 
-: ${ACTIOND:=wpa_actiond -p /run/wpa_supplicant}
 : ${ACTION_SCRIPT:=$SUBR_DIR/auto.action}
 
 
@@ -193,11 +192,10 @@ list() {
     done
 }
 
-## Start and generate config file for the WPA supplicant, start wpa_actiond
+## Start and generate config file for the WPA supplicant, monitor for changes
 # $1: interface
 start() {
     local interface="$1"
-    local pidfile="$STATE_DIR/wpa_actiond-$interface.pid"
 
     if interface_is_up "$interface"; then
         exit_error "The interface '$interface' is already up"
@@ -206,12 +204,11 @@ start() {
         rf_enable "$interface" "$RFKill" || return 1
     fi
 
-    local wpa_conf
-    if ! wpa_conf=$(wpa_make_config_file "$interface"); then
+    if ! WPAConfigFile=$(wpa_make_config_file "$interface"); then
         exit_error "Could not create the configuration file for interface '$interface'"
     fi
-    # Disable p2p to prevent wpa_supplicant from creating another control interface.
-    echo "p2p_disabled=1" >> "$wpa_conf"
+    # Disable p2p to prevent wpa_supplicant from creating another control interface
+    echo "p2p_disabled=1" >> "$WPAConfigFile"
 
     local profile
     list_profiles | while IFS= read -r profile; do
@@ -222,16 +219,16 @@ start() {
           is_yes "${ExcludeAuto:-no}" && exit
           # Set default and exclude wpa-config as it does not fit this scheme
           [[ ${Security:=none} != "wpa-config" ]] || exit
-          printf '%s\n' "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$wpa_conf"
+          printf '%s\n' "network={" "$(wpa_make_config_block)" "id_str=\"$profile\"" "}" >> "$WPAConfigFile"
           report_notice "Included profile '$profile'"
         )
     done
 
-    # Start the WPA supplicant and wpa_actiond
+    # Start the WPA supplicant and wpa_cli
     : ${WPADriver:=nl80211,wext}
     WPAOptions+=" -W"
-    if wpa_start "$interface" "$WPADriver" "$wpa_conf"; then
-        if $ACTIOND -i "$interface" -P "$pidfile" -a "$ACTION_SCRIPT"; then
+    if wpa_start "$interface" "$WPADriver" "$WPAConfigFile"; then
+        if wpa_call "$interface" -B -a "$ACTION_SCRIPT"; then
             return 0
         fi
         wpa_stop "$interface"
@@ -241,17 +238,16 @@ start() {
     return 1
 }
 
-## Stop the WPA supplicant and wpa_actiond
+## Stop the WPA supplicant, which automatically stops wpa_cli
 # $1: interface
 stop() {
     local interface="$1"
-    local pidfile="$STATE_DIR/wpa_actiond-$interface.pid"
 
-    [[ -e "$pidfile" ]] && kill "$(< "$pidfile")"
-    timeout_wait 1 '! wpa_is_active "$interface"' || wpa_stop "$interface"
+    wpa_stop "$interface"
     bring_interface_down "$interface"
-    [[ $RFKill ]] && rf_disable "$interface" "$RFKill"
-    return 0
+    if [[ $RFKill ]]; then
+        rf_disable "$interface" "$RFKill"
+    fi
 }
 
 ## Remove WPA supplicant configuration files
