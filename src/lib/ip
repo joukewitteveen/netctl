@@ -50,13 +50,16 @@ ip_set() {
       dhcp|dhcp-noaddr|stateless|static)
         [[ -d "/proc/sys/net/ipv6" ]] || modprobe ipv6
         sysctl -q -w "net.ipv6.conf.$interface_sysctl.disable_ipv6=0"
-        [[ $IP6 == "static" ]]
-        sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=$?"
+        if [[ $IP6 == "static" ]]; then
+            sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=0"
+        else  # Accept router advertisements regardless of the forwarding setting
+            sysctl -q -w "net.ipv6.conf.$interface_sysctl.accept_ra=2"
+        fi
       ;;
       no)
         [[ -d "/proc/sys/net/ipv6" ]] && sysctl -q -w "net.ipv6.conf.$interface_sysctl.disable_ipv6=1"
       ;;
-      "")  # undefined IP6 does not prevent RA's from being received -> nop
+      "")  # Having IP6= unset does not prevent router advertisements from being received
       ;;
       *)
         report_error "IP6 must be 'dhcp', 'dhcp-noaddr', 'stateless', 'static' or 'no'"
