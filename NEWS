@@ -1,3 +1,7 @@
+netctl 1.20
+- Accept router advertisements more often
+- Switch from wpa_actiond to using wpa_cli
+
 netctl 1.19
 - Support removable devices in automatic profile handling
 - Add "noipdefault" option to mobile_ppp connections
