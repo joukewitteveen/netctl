@@ -23,9 +23,17 @@ _netctl() {
         COMPREPLY=( $(compgen -W "--help --version list store restore stop-all start stop restart switch-to is-active status enable disable reenable is-enabled edit wait-online" -- "$cur") )
       ;;
       2)
-        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(start|stop|restart|switch-to|is-active|status|enable|disable|reenable|is-enabled|edit|wait-online) ]] &&
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(is-active|status|enable|disable|reenable|is-enabled|edit|wait-online) ]] &&
           compopt -o filenames &&
           mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(_netctl_profiles)" -- "$cur")
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(stop|restart) ]] &&
+          compopt -o filenames &&
+	  # Suggest only active profiles for stopping/restarting
+          mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(netctl list | grep '\*' | cut -f2 -d' ')" -- "$cur")
+        [[ ${COMP_WORDS[COMP_CWORD-1]} = @(switch-to|start) ]] &&
+	  # Suggest only inactive profiles for starting/switching-to
+          compopt -o filenames &&
+          mapfile -t COMPREPLY < <(IFS=$'\n'; compgen -W "$(netctl list | grep -v '\*' | sed 's/^[\t ]*//g')" -- "$cur")
       ;;
     esac
 }
