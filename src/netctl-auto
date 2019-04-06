@@ -215,6 +215,7 @@ start() {
         report_debug "Examining profile '$profile'"
         (
           source "$PROFILE_DIR/$profile"
+          load_interface_config "$Interface"
           [[ $Interface == "$interface" && $Connection == "wireless" ]] || exit
           is_yes "${ExcludeAuto:-no}" && exit
           # Set default and exclude wpa-config as it does not fit this scheme
