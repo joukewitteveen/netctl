@@ -2,6 +2,7 @@ type dhcpcd &> /dev/null || return
 
 dhcpcd_start() {
     local options
+    load_interface_config "$Interface"
     case $1 in
       4) options=${DhcpcdOptions-"-L"};;
       6) options=$DhcpcdOptions6;;
