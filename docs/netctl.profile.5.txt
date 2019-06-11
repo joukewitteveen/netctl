@@ -348,6 +348,11 @@ connections of the `bridge' type:
     Additional options to be passed to *ip link*. Run
     *ip link add type bridge help* to see the available options.
 
+'MACAddressOf='::
+    Use the MAC address of the optionally specified interface. This can
+    be useful if the network uses MAC address filtering or there are
+    MAC-based DHCP leases needing to be maintained.
+
 
 OPTIONS FOR `dummy' CONNECTIONS
 -------------------------------

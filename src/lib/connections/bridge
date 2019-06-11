@@ -6,6 +6,15 @@
 BindsToInterfaces=("${BindsToInterfaces[@]}")
 
 bridge_up() {
+    if [[ $MACAddressOf ]]; then
+      if is_interface "$MACAddressOf"; then
+        IPCustom+=('link set dev "'$Interface'" address "'$(< /sys/class/net/$MACAddressOf/address)'"')
+      else
+        report_error "Interface '$MACAddressOf' does not exist"
+        return 1
+      fi
+    fi
+
     if is_interface "$Interface"; then
         if [[ ! -d "/sys/class/net/$Interface/brif" ]]; then
             report_error "Interface '$Interface' already exists and is not a bridge"
