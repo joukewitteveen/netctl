@@ -17,6 +17,7 @@ optdepends=('dialog: for the menu based wifi assistant'
             'ifplugd: for automatic wired connections through netctl-ifplugd'
             'ppp: for PPP connections'
             'openvswitch: for Open vSwitch connections'
+            'wireguard-tools: for WireGuard connections'
            )
 install=netctl.install
 source=(https://sources.archlinux.org/other/packages/netctl/netctl-${pkgver}.tar.xz{,.sig})

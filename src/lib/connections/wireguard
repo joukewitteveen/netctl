@@ -1,0 +1,30 @@
+# Contributed by: Thibaut Sautereau (thithib) <thibaut at sautereau dot fr>
+
+. "$SUBR_DIR/ip"
+
+wireguard_up() {
+    if is_interface "$Interface"; then
+        report_error "Interface '$Interface' already exists"
+        return 1
+    fi
+
+    interface_add wireguard "$Interface"
+    if ! is_interface "$Interface"; then
+        # This check should be removed once WireGuard support lands in the Arch
+        # Linux kernel. Alternatively, we could add 'WIREGUARD-MODULE' to the
+        # PKGBUILD optdepends?
+        report_error "Interface '$Interface' could not be created. Please make sure your running kernel supports WireGuard."
+        return 1
+    fi
+
+    wg setconf "$Interface" "${ConfigFile:-/etc/wireguard/$Interface.conf}"
+    ip_set
+    bring_interface_up "$Interface"
+}
+
+wireguard_down() {
+    ip_unset
+    interface_delete "$Interface"
+}
+
+# vim: ft=sh ts=4 et sw=4:

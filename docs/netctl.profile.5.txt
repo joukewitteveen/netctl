@@ -62,6 +62,8 @@ AVAILABLE CONNECTION TYPES
     For VLANs on ethernet-like connections.
 +macvlan+::
     For MACVLANs on ethernet-like connections.
++wireguard+::
+	For WireGuard interfaces.
 
 
 GENERAL OPTIONS
@@ -546,6 +548,17 @@ following are understood for connections of the `macvlan' type:
 
 'MACAddress='::
     Optional static MAC address for the `macvlan' type link.
+
+
+OPTIONS FOR `wireguard' CONNECTIONS
+-----------------------------------
+The name of the WireGuard interface is specified in 'Interface='. Next
+to the *ip options*, the following are understood for connections of
+the `wireguard' type:
+
+'ConfigFile='::
+    Path to a *WireGuard* configuration file. Defaults to
+    '/etc/wireguard/$Interface.conf'.
 
 
 SPECIAL QUOTING RULES
