@@ -18,8 +18,8 @@ wireguard_up() {
     fi
 
     wg setconf "$Interface" "${ConfigFile:-/etc/wireguard/$Interface.conf}"
-    ip_set
     bring_interface_up "$Interface"
+    ip_set
 }
 
 wireguard_down() {
