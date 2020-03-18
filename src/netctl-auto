@@ -30,7 +30,7 @@ END
 list_netctl_auto_interfaces() {
     systemctl --full --no-legend --no-pager \
         --type=service --state=running list-units | \
-        sed -nr 's/^netctl-auto@([[:alnum:]]+).*/\1/p'
+        sed -nr 's/^\s*netctl-auto@([[:alnum:]]+).*/\1/p'
 }
 
 ## List all profiles available to the WPA supplicant
