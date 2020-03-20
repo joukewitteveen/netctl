@@ -20,11 +20,15 @@ is_interface() {
 ## Add an interface
 # $1: interface type
 # $2: interface name
-# $3: interface link (optional)
-# $4...: additional arguments
+# $3: interface MAC address (optional)
+# $4: interface link (optional)
+# $5...: additional type related arguments
 interface_add() {
-    local type="$1" name="$2" link="$3"
-    do_debug ip link add ${link:+link "$link"} name "$name" type "$type" "${@:4}" $LinkOptions || return
+    local type="$1" name="$2" address="$3" link="$4"
+    if [[ -e "/sys/class/net/$address/address" ]]; then
+        address=$(< "/sys/class/net/$address/address")
+    fi
+    do_debug ip link add ${link:+link "$link"} name "$name" ${address:+address "$address"} type "$type" "${@:5}" $LinkOptions || return
     load_interface_config "$name"
 }
 

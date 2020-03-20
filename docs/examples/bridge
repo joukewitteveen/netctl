@@ -2,6 +2,8 @@ Description="Example Bridge connection"
 Interface=br0
 Connection=bridge
 BindsToInterfaces=(eth0 eth1 tap0)
+## Use the MAC address of eth1 (may also be set to a literal MAC address)
+#MACAddress=eth1
 IP=dhcp
 ## Ignore (R)STP and immediately activate the bridge
 #SkipForwardingDelay=yes

@@ -83,6 +83,12 @@ GENERAL OPTIONS
     profile. If this variable is not specified, it defaults to the value
     of 'Interface='.
 
+'MACAddress='::
+    Optional MAC address for newly created interfaces. When set to the
+    name of an existing interface, the address of that interface is used.
+    The connection types that create an interface and are able to set a
+    MAC address are +bond+, +bridge+, +dummy+, +vlan+, and +macvlan+.
+
 'After=()'::
     An array of profile names that should be started before this profile
     is started. This is only an ordering dependency and is not intended
@@ -543,9 +549,6 @@ following are understood for connections of the `macvlan' type:
 'Mode='::
     Either `bridge', `vepa', `private', or `passthru'. See *ip*(8) for
     details.
-
-'MACAddress='::
-    Optional static MAC address for the `macvlan' type link.
 
 
 SPECIAL QUOTING RULES

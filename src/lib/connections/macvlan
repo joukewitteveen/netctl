@@ -15,10 +15,7 @@ macvlan_up() {
         return 1
     else
         bring_interface_up "$BindsToInterfaces"
-        interface_add macvlan "$Interface" "$BindsToInterfaces" mode "$Mode"
-        if [[ $MACAddress ]]; then
-            ip link set dev "$Interface" address "$MACAddress" || return 1
-        fi
+        interface_add macvlan "$Interface" "$MACAddress" "$BindsToInterfaces" mode "$Mode" || return 1
     fi
     ethernet_up
 }

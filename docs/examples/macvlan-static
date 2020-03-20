@@ -6,7 +6,7 @@ BindsToInterfaces=eth0
 # MACVLAN Mode
 Mode="bridge"
 # Optional static MAC Address for MACVLAN interface
-MACAddress=""
+#MACAddress="12:34:56:78:9a:bc"
 IP=static
 Address="192.168.0.100/24"
 Gateway="192.168.0.1"
