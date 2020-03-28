@@ -1,0 +1,11 @@
+Description="Example WireGuard tunnel connection"
+Interface=wg0
+Connection=wireguard
+WGConfigFile=/etc/wireguard/wg0.conf
+
+## Example IP configuration
+IP=static
+Address=('10.0.0.2/24')
+
+IP6=static
+Address6=('fd00::2/120')

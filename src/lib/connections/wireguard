@@ -1,0 +1,26 @@
+# Contributed by: Thibaut Sautereau <thibaut@sautereau.fr>
+
+. "$SUBR_DIR/ip"
+
+wireguard_up() {
+    if is_interface "$Interface"; then
+        report_error "Interface '$Interface' already exists"
+        return 1
+    fi
+
+    if ! interface_add wireguard "$Interface" "$MACAddress"; then
+        report_error "Your kernel may not support WireGuard."
+        return 1
+    fi
+
+    wg setconf "$Interface" "${WGConfigFile:-/etc/wireguard/$Interface.conf}"
+    bring_interface_up "$Interface"
+    ip_set
+}
+
+wireguard_down() {
+    ip_unset
+    interface_delete "$Interface"
+}
+
+# vim: ft=sh ts=4 et sw=4:
