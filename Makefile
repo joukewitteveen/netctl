@@ -17,10 +17,9 @@ install:
 	install -d $(DESTDIR)/etc/netctl/{examples,hooks,interfaces}
 	install -m644 docs/examples/* $(DESTDIR)/etc/netctl/examples/
 	# Libs
-	install -d $(DESTDIR)/usr/lib/netctl/{connections,dhcp}
-	install -m644 src/lib/{globals,interface,ip,rfkill,wpa} $(DESTDIR)/usr/lib/netctl/
-	install -m644 src/lib/connections/* $(DESTDIR)/usr/lib/netctl/connections/
-	install -m644 src/lib/dhcp/* $(DESTDIR)/usr/lib/netctl/dhcp/
+	install -Dt $(DESTDIR)/usr/lib/netctl -m644 src/lib/{globals,interface,ip,rfkill,wpa}
+	install -Dt $(DESTDIR)/usr/lib/netctl/connections -m644 src/lib/connections/*
+	install -Dt $(DESTDIR)/usr/lib/netctl/dhcp -m644 src/lib/dhcp/*
 	install -m755 src/lib/{auto.action,network} $(DESTDIR)/usr/lib/netctl/
 	# Scripts
 	install -d $(DESTDIR)/usr/bin
@@ -34,8 +33,7 @@ install:
 	    $(DESTDIR)/usr/bin/
 	install -Dm755 src/ifplugd.action $(DESTDIR)/etc/ifplugd/netctl.action
 	# Services
-	install -d $(DESTDIR)$(systemdsystemunitdir)
-	install -m644 services/*.service $(DESTDIR)$(systemdsystemunitdir)/
+	install -Dt $(DESTDIR)$(systemdsystemunitdir) -m644 services/*.service
 
 tarball: netctl-$(VERSION).tar.xz
 netctl-$(VERSION).tar.xz:
