@@ -11,6 +11,7 @@ Optional:
 - dialog: for the interactive assistant
 - ifplugd: for automatic wired connections
 - ppp: for PPP support
+- wireguard-tools: for WireGuard support
 
 For documentation generation:
 - asciidoc
