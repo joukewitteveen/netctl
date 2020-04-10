@@ -26,3 +26,6 @@ ppp_down() {
 
     Interface=$interface pppoe_down
 }
+
+
+# vim: ft=sh ts=4 et sw=4:

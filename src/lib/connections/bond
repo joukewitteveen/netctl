@@ -11,7 +11,7 @@ bond_up() {
         return 1
     fi
 
-    interface_add bond "$Interface" "$MACAddress" "" ${Mode:+mode "$Mode"}
+    interface_add bond "$Interface" "$MACAddress" "" ${Mode:+mode "$Mode"} || return
     bring_interface_up "$Interface"
     for slave in "${BindsToInterfaces[@]}"; do
         ip link set dev "$slave" master "$Interface"

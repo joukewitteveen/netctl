@@ -6,8 +6,7 @@ vlan_up() {
     if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
         report_error "No unique physical device for VLAN interface '$Interface' specified"
         return 1
-    fi
-    if is_interface "$Interface"; then
+    elif is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"
         return 1
     elif [[ $VLANID != +([[:digit:]]) ]]; then
@@ -15,7 +14,7 @@ vlan_up() {
         return 1
     else
         bring_interface_up "$BindsToInterfaces"
-        interface_add vlan "$Interface" "$MACAddress" "$BindsToInterfaces" id "$VLANID"
+        interface_add vlan "$Interface" "$MACAddress" "$BindsToInterfaces" id "$VLANID" || return
     fi
 
     ethernet_up

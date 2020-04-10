@@ -6,8 +6,7 @@ macvlan_up() {
     if [[ ${#BindsToInterfaces[@]} -ne 1 ]]; then
         report_error "No unique physical device for MACVLAN interface '$Interface' specified"
         return 1
-    fi
-    if is_interface "$Interface"; then
+    elif is_interface "$Interface"; then
         report_error "Interface '$Interface' already exists"
         return 1
     elif [[ $Mode != @(bridge|passthru|private|vepa) ]]; then
@@ -15,7 +14,7 @@ macvlan_up() {
         return 1
     else
         bring_interface_up "$BindsToInterfaces"
-        interface_add macvlan "$Interface" "$MACAddress" "$BindsToInterfaces" mode "$Mode" || return 1
+        interface_add macvlan "$Interface" "$MACAddress" "$BindsToInterfaces" mode "$Mode" || return
     fi
     ethernet_up
 }
@@ -24,5 +23,6 @@ macvlan_down() {
     ethernet_down
     interface_delete "$Interface"
 }
+
 
 # vim: ft=sh ts=4 et sw=4:

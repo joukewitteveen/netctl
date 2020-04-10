@@ -15,7 +15,7 @@ bridge_up() {
             report_error "Setting a MAC address on existing bridge interface '$Interface' is unsupported"
         fi
     else
-        interface_add bridge "$Interface" "$MACAddress"
+        interface_add bridge "$Interface" "$MACAddress" || return
     fi
 
     for member in "${BindsToInterfaces[@]}"; do
