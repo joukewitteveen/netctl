@@ -2,6 +2,8 @@
 # Based on Thomas Bächler’s <thomas@archlinux.org> pppoe script
 # Also see <https://wiki.archlinux.org/index.php/3G_and_GPRS_modems_with_pppd> for more information.
 
+. "$SUBR_DIR/rfkill"
+
 : ${PPPD:=pppd}
 : ${InterfaceRoot=dev/}
 
@@ -12,6 +14,10 @@ quote_word() {
 
 mobile_ppp_up() {
     local options_dir="$STATE_DIR/mobile_ppp-$Interface-$Profile"
+
+    if [[ $RFKill ]]; then
+        rf_enable "$Interface" "$RFKill" || return 1
+    fi
 
     network_ready
 
@@ -97,6 +103,9 @@ mobile_ppp_down() {
     fi
 
     rm -r "$options_dir"
+    if [[ $RFKill ]]; then
+        rf_disable "$Interface" "$RFKill"
+    fi
 }
 
 

@@ -480,6 +480,11 @@ type:
 'OptionsFile='::
     A file to read additional pppd options from.
 
+'RFKill='::
+    The name of an *rfkill* device. When specified, the device is used
+    to block/unblock the interface when appropriate. Names can be found
+    in '/sys/class/rfkill/rfkillX/name'.
+
 
 OPTIONS FOR `openvswitch' CONNECTIONS
 -------------------------------------
