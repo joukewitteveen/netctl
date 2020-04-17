@@ -28,9 +28,10 @@ END
 
 ## Print a list of interfaces for which netctl-auto is active
 list_netctl_auto_interfaces() {
-    systemctl --full --no-legend --no-pager \
-        --type=service --state=running list-units | \
-        sed -nr 's/^netctl-auto@([[:alnum:]]+).*/\1/p'
+    systemctl --full --no-legend --no-pager --plain --state=running \
+              list-units 'netctl-auto@*.service' | while read -r name _; do
+        systemd-escape --unescape --instance "$name"
+    done
 }
 
 ## List all profiles available to the WPA supplicant
