@@ -1,3 +1,7 @@
+netctl 1.22
+- Add rfkill support to mobile_ppp connections
+- Improve active interface finding in netctl-auto
+
 netctl 1.21
 - Add support for wireguard interfaces
 - Support custom MAC addresses on dynamic interfaces
