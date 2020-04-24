@@ -7,10 +7,7 @@ dhcpcd_start() {
       6) options=$DhcpcdOptions6;;
       *) return 1;;
     esac
-    if [[ $2 == "noaddr" ]]; then
-        report_error "Using 'dhcpcd' for configuration without address assignment is unsupported"
-        return 1
-    fi
+    [[ $2 == "noaddr" ]] && options+=" --inform6"
     # If using own dns, tell dhcpcd to NOT replace resolv.conf
     [[ $DNS ]] && options+=" -C resolv.conf"
     if ! do_debug do_readable dhcpcd "-$1" -q -t "${TimeoutDHCP:-30}" $options "$Interface"; then
@@ -21,7 +18,7 @@ dhcpcd_start() {
 
 dhcpcd_stop() {
     local stop="-x"
-    if [[ -f "/run/dhcpcd-$Interface-$1.pid" ]]; then
+    if [[ -f "/run/dhcpcd/$Interface-$1.pid" ]]; then
         is_yes "${DHCPReleaseOnStop:-no}" && stop="-k"
         do_debug dhcpcd "-$1" -q $stop "$Interface" > /dev/null
     fi
