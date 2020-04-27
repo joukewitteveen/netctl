@@ -1,3 +1,6 @@
+netctl 1.23
+- Update dhcpcd support for dhcpcd 9
+
 netctl 1.22
 - Add rfkill support to mobile_ppp connections
 - Improve active interface finding in netctl-auto
