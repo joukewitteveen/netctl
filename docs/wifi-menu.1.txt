@@ -1,0 +1,118 @@
+WIFI-MENU(8)
+============
+
+NAME
+----
+wifi-menu - Interactively connect to a wireless network
+
+
+SYNOPSIS
+--------
+*wifi-menu* [-o | --obscure] [+INTERFACE+]
+
+*wifi-menu* [-h | --help]
+
+
+DESCRIPTION
+-----------
+*wifi-menu* allows a user to interactively connect to a wireless network 
+over INTERFACE using a auto-generated netctl profile. If only one 
+wireless interface is available, INTERFACE can be omitted. Additionally,
+if INTERFACE is omitted and more than one wireless interface is found, 
+the user is prompted to select which interface should be used.
+
+Once a valid interface is specified, wifi-menu uses *wpa_supplicant*(8) 
+to scan for available wireless networks, and presents the results to the 
+user in a menu. Entries are marked with one of the following flags to 
+indicate their status:
+
+*`&ast;'*::
+    An active connect is present.
+
+*\:*::
+    A hand-made profile is present.
+
+*.*::
+    An automatically-generated profile is present.
+
+If a network is selected that already has a profile, the profile is 
+immediately started with no further interaction. However, if the selected 
+network lacks a profile, the user is given the option of accepting or
+changing the provided profile name. Next, if the selected network is 
+encrypted, the user is prompted to enter a passphrase or pre-shared key, 
+as appropriate. Once this is done, a *netctl*(1) profile is created and 
+then started. If the connection is successful, the program exits; if 
+unsuccessful, the user is asked whether the profile should still be saved.
+
+OPTIONS
+-------
+
+*-h, --help*::
+    Show help
+
+*-o, --obscure*::
+    Show asterisks for the characters of the password and store the password
+    as a hexadecimal string.
+
++INTERFACE+::
+    Specifies the wireless network interface to use when connecting to a 
+    wireless network.
+
+
+EXIT STATUS
+-----------
+
+*0*::
+    The interface connected to the wireless network successfully.
+
+*1*::
+    The connection attempt was cancelled.
+
+*2*::
+    The connection attempt failed.
+
+*3*::
+    No wireless networks were found.
+
+*4*::
+    Invalid passphrase length (WEP keys must be between 8 and 63 characters
+    in length).
+
+*7*::
+    An unexpected error code was received.
+
+*255*::
+    The connection attempt was aborted (or an error occurred).
+
+
+NOTES
+-----
+The program may display a black screen for up to a minute when starting a 
+connection.
+
+
+BUGS
+----
+This program is not capable of setting up and establishing connections that 
+require configurations more complex than the specification of a passphrase.
+In such situations, one should manually configure and establish the 
+connection using a network manager such as *netctl*(1). Alternately, lower-
+level utilities such as *wpa_supplicant*(8) may be used directly, in
+conjunction with *ip*(8) or *dhcpcd*(8) for configuring IP connectivity.
+
+
+ENVIRONMENT
+-----------
++$NETCTL_DEBUG*::
+    If set to "yes", debugging output is generated.
+
+
+FILES
+-----
++/etc/netctl+::
+    Directory where created netctl profiles are stored.
+
+
+SEE ALSO
+--------
+    *netctl*(1), *wpa_supplicant*(8), *iwd*(8)
