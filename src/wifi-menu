@@ -242,13 +242,27 @@ cd /  # We do not want to spawn anything that can block unmounting
 
 INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
-    INTERFACE=(/sys/class/net/*/wireless/)
-    if [[ ${#INTERFACE[@]} -ne 1 || ! -d "$INTERFACE" ]]; then
+    INTERFACES=(/sys/class/net/*/wireless/)
+    if [[ ${#INTERFACES[@]} -eq 1 && -d "$INTERFACES" ]]; then
+        INTERFACE=${INTERFACES:15:-10}
+    elif [[ ${#INTERFACES[@]} -gt 1 ]]; then
+        report_debug "Multiple wireless interfaces found: '${INTERFACES[@]}'"
+	WIRELESS_INTERFACES=()
+	for WIRELESS_IDX in ${!INTERFACES[@]}; do
+	  if [[ -d ${INTERFACES[$WIRELESS_IDX]} ]]; then
+	      echo $WIRELESS_IDX ${INTERFACES[$WIRELESS_IDX]}
+	      WIRELESS_INTERFACES+=($WIRELESS_IDX ${INTERFACES[$WIRELESS_IDX]:15:-10})
+	  fi
+	done
+	echo Interface: ${WIRELESS_INTERFACES[@]}
+        IFACE_CHOICE=$(dialog --menu "Select wireless interface you wish to use:" 24 50 12 "${WIRELESS_INTERFACES[@]}" --stdout)
+        INTERFACE=${INTERFACES[$IFACE_CHOICE]:15:-10}
+        report_debug "Wireless interface selected: '$INTERFACE'"
+    else
         report_error "Invalid interface specification"
         usage
         exit 255
     fi
-    INTERFACE=${INTERFACE:15:-10}
     report_debug "Using interface '$INTERFACE'"
 elif ! is_interface "$INTERFACE"; then
     exit_error "No such interface: $INTERFACE"
