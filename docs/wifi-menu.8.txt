@@ -114,4 +114,4 @@ FILES
 
 SEE ALSO
 --------
-*netctl*(1), *wpa_supplicant*(8), *iwd*(8)
+*netctl*(1), *netctl-auto*(1)
