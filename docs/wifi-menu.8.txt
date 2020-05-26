@@ -86,8 +86,8 @@ EXIT STATUS
 
 NOTES
 -----
-The program may display a black screen for up to a minute when starting a 
-connection.
+Establishing a connection may take a minute. While establishing a connection,
+nothing is shown on screen.
 
 
 BUGS
