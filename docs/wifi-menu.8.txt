@@ -48,7 +48,7 @@ OPTIONS
 -------
 
 *-h, --help*::
-    Show help
+    Print a short help text and exit.
 
 *-o, --obscure*::
     Show asterisks for the characters of the password and store the password
