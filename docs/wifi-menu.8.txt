@@ -15,7 +15,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-*wifi-menu* allows a user to interactively connect to a wireless network 
+*wifi-menu* allows a user to interactively connect to a wireless network
 over INTERFACE using an existing netctl profile, or an automatically
 generated profile for basic configurations. If only one wireless
 interface is available, INTERFACE can be omitted.  If no interface is
@@ -68,8 +68,8 @@ EXIT STATUS
 
 NOTES
 -----
-Establishing a connection may take a minute. While establishing a connection,
-nothing is shown on screen.
+The program may display a black screen for up to a minute when starting a
+connection.
 
 
 ENVIRONMENT
@@ -81,7 +81,7 @@ ENVIRONMENT
 FILES
 -----
 +/etc/netctl+::
-    Directory where generated profiles are stored.
+    Directory where created netctl profiles are stored.
 
 
 SEE ALSO
