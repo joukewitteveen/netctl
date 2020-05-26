@@ -55,8 +55,7 @@ OPTIONS
     as a hexadecimal string.
 
 +INTERFACE+::
-    Specifies the wireless network interface to use when connecting to a 
-    wireless network.
+    The wireless network interface to use for connecting.
 
 
 EXIT STATUS
