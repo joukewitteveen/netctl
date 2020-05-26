@@ -16,33 +16,15 @@ SYNOPSIS
 DESCRIPTION
 -----------
 *wifi-menu* allows a user to interactively connect to a wireless network 
-over INTERFACE using a auto-generated netctl profile. If only one 
-wireless interface is available, INTERFACE can be omitted. Additionally,
-if INTERFACE is omitted and more than one wireless interface is found, 
-the user is prompted to select which interface should be used.
+over INTERFACE using an existing netctl profile, or an automatically
+generated profile for basic configurations. If only one wireless
+interface is available, INTERFACE can be omitted.  If no interface is
+specified and more than one is detected, a choice of interfaces is
+offered.
 
-Once a valid interface is specified, wifi-menu uses *wpa_supplicant*(8) 
-to scan for available wireless networks, and presents the results to the 
-user in a menu. Entries are marked with one of the following flags to 
-indicate their status:
-
-***::
-    An active connect is present.
-
-*:*::
-    A hand-made profile is present.
-
-*.*::
-    An automatically-generated profile is present.
-
-If a network is selected that already has a profile, the profile is 
-immediately started with no further interaction. However, if the selected 
-network lacks a profile, the user is given the option of accepting or
-changing the provided profile name. Next, if the selected network is 
-encrypted, the user is prompted to enter a passphrase or pre-shared key, 
-as appropriate. Once this is done, a *netctl*(1) profile is created and 
-then started. If the connection is successful, the program exits; if 
-unsuccessful, the user is asked whether the profile should still be saved.
+*wifi-menu* is only able to generate netctl profiles for simple network
+configurations. Profiles for more complex configurations must be set up
+manually, or through the use of other tools.
 
 OPTIONS
 -------
@@ -88,16 +70,6 @@ NOTES
 -----
 Establishing a connection may take a minute. While establishing a connection,
 nothing is shown on screen.
-
-
-BUGS
-----
-This program is not capable of setting up and establishing connections that 
-require configurations more complex than the specification of a passphrase.
-In such situations, one should manually configure and establish the 
-connection using a network manager such as *netctl*(1), or use lower-level 
-utilities such as *wpa_supplicant*(8) directly, along with  *ip*(8) or 
-*dhcpcd*(8) for configuring IP connectivity.
 
 
 ENVIRONMENT
