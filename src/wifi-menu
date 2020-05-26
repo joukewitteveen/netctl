@@ -15,8 +15,8 @@ If only one wireless interface is available, INTERFACE can be omitted.
 
 Arguments:
   -h, --help     Show this help
-  -o, --obscure  Show asterisks for the characters of the password
-                 and store the password as a hexadecimal string
+  -o, --obscure  Do not echo password, and store derived pre-shared
+                 key in profile instead of plaintext password.
 END
 }
 
