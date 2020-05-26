@@ -244,9 +244,10 @@ INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
     INTERFACES=(/sys/class/net/*/wireless/)
     if [[ ${#INTERFACES[@]} -gt 1 ]]; then
-        report_debug "Multiple wireless interfaces found: '${INTERFACES[@]}'"
-        INTERFACE_LIST=$(for IFACE in ${INTERFACES[@]}; do echo ${IFACE:15:-10}; done)
-        INTERFACE=$(dialog --no-items --menu "Select wireless interface you wish to use:" 13 50 12 $INTERFACE_LIST --stdout)
+        INTERFACES=$(for INTERFACE in ${INTERFACES[@]}; do
+            echo ${INTERFACE:15:-10}
+        done)
+        INTERFACE=$(dialog --no-items --menu "Select the interface you wish to use" 24 50 12 $INTERFACES --stdout)
     elif [[ -d "$INTERFACES" ]]; then
         INTERFACE=${INTERFACES:15:-10}
     else
