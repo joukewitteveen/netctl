@@ -110,7 +110,7 @@ ENVIRONMENT
 FILES
 -----
 +/etc/netctl+::
-    Directory where created netctl profiles are stored.
+    Directory where generated profiles are stored.
 
 
 SEE ALSO
