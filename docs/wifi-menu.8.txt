@@ -104,7 +104,7 @@ utilities such as *wpa_supplicant*(8) directly, along with  *ip*(8) or
 ENVIRONMENT
 -----------
 +$NETCTL_DEBUG+::
-    If set to "yes", debugging output is generated.
+    If set to +"yes"+, debugging output is generated.
 
 
 FILES
