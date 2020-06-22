@@ -144,7 +144,7 @@ sd_call() {
 ## Retrieves the status string from the unit for a profile
 # $1: profile name
 sd_status_text() {
-    sd_call "status --lines=0" "$1" | sed -n 's/^ *Status: "\(.*\)"$/\1/p'
+    sd_call "show --property=StatusText --value" "$1"
 }
 
 
