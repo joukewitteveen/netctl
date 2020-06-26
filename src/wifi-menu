@@ -15,8 +15,8 @@ If only one wireless interface is available, INTERFACE can be omitted.
 
 Arguments:
   -h, --help     Show this help
-  -o, --obscure  Show asterisks for the characters of the password
-                 and store the password as a hexadecimal string
+  -o, --obscure  Do not echo password, and store derived pre-shared
+                 key in profile instead of plaintext password.
 END
 }
 
@@ -242,13 +242,19 @@ cd /  # We do not want to spawn anything that can block unmounting
 
 INTERFACE=$1
 if [[ -z "$INTERFACE" ]]; then
-    INTERFACE=(/sys/class/net/*/wireless/)
-    if [[ ${#INTERFACE[@]} -ne 1 || ! -d "$INTERFACE" ]]; then
-        report_error "Invalid interface specification"
+    INTERFACES=(/sys/class/net/*/wireless/)
+    if [[ ${#INTERFACES[@]} -gt 1 ]]; then
+        INTERFACES=$(for INTERFACE in ${INTERFACES[@]}; do
+            echo ${INTERFACE:15:-10}
+        done)
+        INTERFACE=$(dialog --no-items --menu "Select the interface you wish to use" 24 50 12 $INTERFACES --stdout)
+    elif [[ -d "$INTERFACES" ]]; then
+        INTERFACE=${INTERFACES:15:-10}
+    else
+        report_error "No wireless interfaces found"
         usage
         exit 255
     fi
-    INTERFACE=${INTERFACE:15:-10}
     report_debug "Using interface '$INTERFACE'"
 elif ! is_interface "$INTERFACE"; then
     exit_error "No such interface: $INTERFACE"
