@@ -1,3 +1,7 @@
+netctl 1.24
+- Fix netctl-ifplugd for interfaces that use DHCP and disappear briefly
+- Add man page for wifi-menu
+
 netctl 1.23
 - Update dhcpcd support for dhcpcd 9
 
