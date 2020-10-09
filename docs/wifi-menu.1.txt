@@ -1,0 +1,90 @@
+WIFI-MENU(1)
+============
+
+NAME
+----
+wifi-menu - Interactively connect to a wireless network
+
+
+SYNOPSIS
+--------
+*wifi-menu* [-o | --obscure] [+INTERFACE+]
+
+*wifi-menu* [-h | --help]
+
+
+DESCRIPTION
+-----------
+*wifi-menu* allows to interactively connect to a wireless network on
++INTERFACE+ using a netctl profile. In case no netctl profile is
+available, one can be generated. If only one wireless interface is
+available, +INTERFACE+ can be omitted.
+
+*wifi-menu* is only able to generate netctl profiles for simple network
+configurations. Profiles for more complex configurations must be set up
+manually. See *netctl.profile*(5) for more information.
+
+
+OPTIONS
+-------
++-h+, +--help+::
+    Print a short help text and exit.
+
++-o+, +--obscure+::
+    Show asterisks for the characters of the password and store the password
+    as a hexadecimal pre-shared key.
+
++INTERFACE+::
+    The wireless network interface to use for connecting.
+
+
+EXIT STATUS
+-----------
++0+::
+    The interface connected to the wireless network successfully.
+
++1+::
+    The connection attempt was canceled.
+
++2+::
+    The connection attempt failed.
+
++3+::
+    No wireless networks were found.
+
++4+::
+    Invalid passphrase length (+WEP+ keys must be between 8 and 63
+    characters in length).
+
++7+::
+    An unexpected error code was received.
+
++255+::
+    The command was invalid or the connection attempt was aborted.
+
+
+NOTES
+-----
+Establishing a connection may take a minute. While establishing a
+connection, nothing is shown on screen.
+
+Starting a connection on an interface that is controlled by
+*netctl-auto* will cause *wifi-menu* to switch to the selected network.
+The interface will continue to be controlled by *netctl-auto*.
+
+
+ENVIRONMENT
+-----------
+'$NETCTL_DEBUG'::
+    If set to +"yes"+, debugging output is generated.
+
+
+FILES
+-----
+'/etc/netctl'::
+    Directory where generated profiles are stored.
+
+
+SEE ALSO
+--------
+*netctl*(1), *netctl-auto*(1)
