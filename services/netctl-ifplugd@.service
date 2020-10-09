@@ -7,7 +7,7 @@ After=sys-subsystem-net-devices-%i.device network-pre.target
 
 [Service]
 NotifyAccess=all
-ExecStart=/usr/bin/ifplugd -i %I -r /etc/ifplugd/netctl.action -bfIns
+ExecStart=/usr/bin/ifplugd -i %I -r /etc/ifplugd/netctl.action -d 0 -bfIns
 ExecStop=/usr/bin/ifplugd -i %I -k -W
 
 [Install]
