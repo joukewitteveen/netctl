@@ -178,7 +178,7 @@ case $# in
             systemctl daemon-reload
         fi;;
       edit)
-        exec ${EDITOR:-nano} "$PROFILE_DIR/$2";;
+        exec ${EDITOR:-vi} "$PROFILE_DIR/$2";;
       wait-online)
         wait_online "$2";;
       *)
