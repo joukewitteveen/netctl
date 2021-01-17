@@ -109,6 +109,12 @@ list_profiles() {
     find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf '%f\n'
 }
 
+## Exit if a profile file is not syntactically correct
+# $1: profile name
+verify_profile() {
+    /bin/bash -n "$PROFILE_DIR/$1" || exit 1
+}
+
 ## Sources all hooks and a profile (but no interface configuration)
 # $1: profile name
 load_profile() {

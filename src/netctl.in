@@ -23,7 +23,8 @@ Commands:
   disable [PROFILE]      Disable the systemd unit for a profile
   reenable [PROFILE]     Reenable the systemd unit for a profile
   is-enabled [PROFILE]   Check whether a profile is enabled
-  edit [PROFILE]         Edit a profile
+  edit [PROFILE]         Edit a profile file
+  verify [PROFILE]       Check the syntax of a profile file
   wait-online [PROFILE]  Wait for a profile to finish connecting
 END
 }
@@ -71,9 +72,6 @@ stop_all() {
 
 switch_to() {
     cd "$PROFILE_DIR"
-    if [[ ! -r $1 ]]; then
-        exit_error "Profile '$1' does not exist or is not readable"
-    fi
     # We assume interface names are not quoted
     # Using read removes leading whitespace
     read InterfaceLine < \
@@ -129,6 +127,11 @@ unit_disable() {
             "@systemdsystemconfdir@/$unit.d"{/profile.conf,}
 }
 
+unit_reenable() {
+    unit_disable "$1"
+    unit_enable "$1"
+}
+
 wait_online() {
     local profile="$1"
     if sd_call "is-active --quiet" "$profile"; then
@@ -163,22 +166,21 @@ case $# in
         sd_call "$1" "$2";;
       switch-to)
         ensure_root "$(basename "$0")"
+        verify_profile "$2"
         switch_to "$2";;
-      enable|disable)
+      enable|disable|reenable)
         ensure_root "$(basename "$0")"
+        if [[ $1 != "disable" ]]; then
+            verify_profile "$2"
+        fi
         "unit_$1" "$2"
-        if systemd-notify --booted; then
-            systemctl daemon-reload
-        fi;;
-      reenable)
-        ensure_root "$(basename "$0")"
-        unit_disable "$2"
-        unit_enable "$2"
         if systemd-notify --booted; then
             systemctl daemon-reload
         fi;;
       edit)
         exec ${EDITOR:-nano} "$PROFILE_DIR/$2";;
+      verify)
+        verify_profile "$2";;
       wait-online)
         wait_online "$2";;
       *)
