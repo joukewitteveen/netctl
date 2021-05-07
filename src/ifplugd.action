@@ -14,11 +14,10 @@ case "$2" in
             printf '%s' "$profile" > "$PROFILE_FILE"
             exit 0
         fi
-    done < <(list_profiles | while IFS= read -r profile; do
+    done < <(filter_profiles "$1" ethernet | while IFS= read -r profile; do
         report_debug "Examining profile '$profile'"
         (
-          source "$PROFILE_DIR/$profile" > /dev/null
-          [[ $Interface == "$1" && $Connection == "ethernet" ]] || exit
+          load_profile "$profile" > /dev/null
           # Prioritize dhcp based profiles as they can outright fail, whereas
           # it is difficult to tell if a profile with a static address fails
           if [[ $IP == "dhcp" || $IP6 == dhcp* ]]; then

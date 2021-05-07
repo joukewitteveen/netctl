@@ -71,16 +71,11 @@ stop_all() {
 }
 
 switch_to() {
-    cd "$PROFILE_DIR"
-    # We assume interface names are not quoted
-    # Using read removes leading whitespace
-    read InterfaceLine < \
-      <(grep -om1 '^[[:space:]]*Interface=[[:alnum:]:._-]\+' "$1")
-    if [[ -z $InterfaceLine ]]; then
+    Interface=$(. "$PROFILE_DIR/$1" >/dev/null; printf '%s' "$Interface")
+    if [[ -z $Interface ]]; then
         exit_error "Profile '$1' does not specify an interface"
     fi
-    mapfile -t AllProfiles < <(list_profiles)
-    mapfile -t Profiles < <(grep -Fl "$InterfaceLine" "${AllProfiles[@]}")
+    mapfile -t Profiles < <(filter_profiles "$Interface")
     if (( ${#Profiles[@]} )); then
         do_debug sd_call stop "${Profiles[@]}" 2> >(grep -Fv 'not loaded' >&2)
     fi

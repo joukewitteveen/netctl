@@ -88,7 +88,6 @@ elif [[ $# -eq 2 && $1 == @(start|stop) ]]; then
     # Expose the command
     Command=$1
     load_profile "$2"
-    load_interface_config "$Interface"
     "network_$1"
 else
     exit_error "Usage: $0 {start|stop|wait-online} [profile]"

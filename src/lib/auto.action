@@ -1,7 +1,6 @@
 #! /bin/bash
 
 . /usr/lib/netctl/globals
-. "$SUBR_DIR/interface"
 . "$SUBR_DIR/ip"
 
 export INTERFACE="$1"
@@ -11,7 +10,6 @@ PROFILE_FILE="$STATE_DIR/netctl-auto-$INTERFACE.profile"
 case $ACTION in
   CONNECTED)
     load_profile "$WPA_ID_STR"
-    load_interface_config "$INTERFACE"
     DhcpcdOptions+=" -K -L"
     ip_set || exit 1
     mkdir -p "$(dirname "$PROFILE_FILE")"
@@ -26,7 +24,6 @@ case $ACTION in
   DISCONNECTED)
     if [[ -s "$PROFILE_FILE" ]]; then
         load_profile "$(< "$PROFILE_FILE")"
-        load_interface_config "$INTERFACE"
         rm -f "$PROFILE_FILE"
         # Sandbox the eval
         if ! ( do_debug eval "$ExecDownPre" ); then

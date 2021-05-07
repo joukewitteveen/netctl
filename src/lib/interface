@@ -1,15 +1,6 @@
 ## /usr/lib/netctl/globals needs to be sourced before this file
 
 
-## Load interface configuration, if present
-# $1: interface name
-load_interface_config() {
-    local config_file="$PROFILE_DIR/interfaces/$1"
-    if [[ -x $config_file ]]; then
-        source "$config_file"
-    fi
-}
-
 ## Check if a string represents a network interface
 # $1: potential interface name
 is_interface() {

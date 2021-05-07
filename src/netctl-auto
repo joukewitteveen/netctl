@@ -211,12 +211,10 @@ start() {
     # Disable p2p to prevent wpa_supplicant from creating another control interface
     echo "p2p_disabled=1" >> "$WPAConfigFile"
 
-    local profile
-    list_profiles | while IFS= read -r profile; do
+    filter_profiles "$interface" wireless | while IFS= read -r profile; do
         report_debug "Examining profile '$profile'"
         (
-          source "$PROFILE_DIR/$profile"
-          [[ $Interface == "$interface" && $Connection == "wireless" ]] || exit
+          load_profile "$profile"
           is_yes "${ExcludeAuto:-no}" && exit
           # Set default and exclude wpa-config as it does not fit this scheme
           [[ ${Security:=none} != "wpa-config" ]] || exit

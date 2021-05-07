@@ -103,39 +103,69 @@ timeout_wait() {
 
 ### Profile management
 
+## Load all available hooks
+load_hooks() {
+    local hook
+    while IFS= read -r hook; do
+        source "$hook"
+    done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' -not -name $'*\n*' | sort)
+}
+
+## Load interface configuration, if present
+# $1: interface name
+load_interface_config() {
+    local config_file="$PROFILE_DIR/interfaces/$1"
+    if [[ -x $config_file ]]; then
+        source "$config_file"
+    fi
+}
+
+## Sources all hooks and a profile (but no interface configuration)
+# $1: profile name
+load_profile() {
+    # Expose the profile name
+    Profile=$1
+    if [[ -z $Profile || ! -r "$PROFILE_DIR/$Profile" ]]; then
+        exit_error "Profile '$Profile' does not exist or is not readable"
+    fi
+    load_hooks
+    source "$PROFILE_DIR/$Profile"
+    if [[ -z $Interface ]]; then
+        exit_error "Profile '$Profile' does not specify an interface"
+    fi
+    load_interface_config "$Interface"
+    if [[ ! -r "${Connection:+$SUBR_DIR/connections/$Connection}" ]]; then
+        exit_error "Profile '$Profile' does not specify a valid connection"
+    fi
+    source "$SUBR_DIR/connections/$Connection"
+}
+
 ## List all acceptable profiles names separated by newlines
 list_profiles() {
     # Follow aliases with -L, skip forbidden/reserved names
     find -L "$PROFILE_DIR/" -maxdepth 1 -type f -not -name '.*' -not -name '*~' -not -name $'*\n*' -not -name '*.action' -not -name '*.conf' -not -name '*.service' -printf '%f\n'
 }
 
+## List names of profiles for a given interface and/or connection
+# $1: interface (optional)
+# $2: connection (optional)
+filter_profiles() {
+    list_profiles | while IFS= read -r Profile; do
+        if (
+          source "$PROFILE_DIR/$Profile" &> /dev/null
+          [[ $Interface && ( -z $1 || $1 == "$Interface" ) ]] || exit
+          load_interface_config "$Interface" > /dev/null
+          [[ $Connection && ( -z $2 || $2 == "$Connection" ) ]] || exit
+        ); then
+            printf '%s\n' "$Profile"
+        fi
+    done
+}
+
 ## Exit if a profile file is not syntactically correct
 # $1: profile name
 verify_profile() {
     /bin/bash -n "$PROFILE_DIR/$1" || exit 1
-}
-
-## Sources all hooks and a profile (but no interface configuration)
-# $1: profile name
-load_profile() {
-    local hook
-    # Expose the profile name
-    Profile=$1
-    if [[ -z $Profile || ! -r "$PROFILE_DIR/$Profile" ]]; then
-        exit_error "Profile '$Profile' does not exist or is not readable"
-    fi
-    while IFS= read -r hook; do
-        source "$hook"
-    done < <(find -L "$PROFILE_DIR/hooks" -maxdepth 1 -type f -executable -not -name '.*' -not -name '*~' -not -name $'*\n*' | sort -u)
-    unset hook
-    source "$PROFILE_DIR/$Profile"
-    if [[ -z $Interface ]]; then
-        exit_error "Profile '$Profile' does not specify an interface"
-    fi
-    if [[ ! -r "${Connection:+$SUBR_DIR/connections/$Connection}" ]]; then
-        exit_error "Profile '$Profile' does not specify a valid connection"
-    fi
-    source "$SUBR_DIR/connections/$Connection"
 }
 
 ## Wrapper around systemctl converting profile names to unit names
