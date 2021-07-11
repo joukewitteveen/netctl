@@ -1,0 +1,17 @@
+# This file can be used to change netctl's the timeout values
+# Make this file executable and copy it to hooks/ for global values
+# or interfaces/<if-name> for changes on a per interface basis
+
+# Maximum time, in seconds, to wait for DHCP to be successful. Defaults to ‘10’.
+#TimeoutDHCP=10
+
+# Maximum time, in seconds, to wait for IPv6’s Duplicate Address Detection to succeed. Defaults to ‘3’.
+#TimeoutDAD=3
+
+# Maximum time, in seconds, to wait for a carrier. Defaults to ‘5’.
+#TimeoutCarrier=5
+
+# Maximum time, in seconds, to wait for WPA association and authentication to succeed. Defaults to ‘15’.
+#TimeoutWPA=15
+
+# For additional user configurable values see: man netctl.profile
