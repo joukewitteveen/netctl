@@ -49,6 +49,7 @@ wireless_up() {
         return 1
     fi
 
+    network_ready
     # Bring interface up after starting wpa_supplicant
     # This is important since cards such as iwl3945 do not support
     # mode switching when they are already up.

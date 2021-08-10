@@ -19,8 +19,6 @@ mobile_ppp_up() {
         rf_enable "$Interface" "$RFKill" || return 1
     fi
 
-    network_ready
-
     mkdir -p "$options_dir"
     if [[ -z $ChatScript ]]; then
         ChatScript="$options_dir/modem.chat"
@@ -83,6 +81,7 @@ connect $(quote_word "/usr/sbin/chat -v -t15 -f $(quote_word "$ChatScript")")
 ${OptionsFile:+file $(quote_word "$OptionsFile")}
 EOF
 
+    network_ready
     if ! $PPPD file "$options_dir/options"; then
         rm -r "$options_dir"
         report_error "Could not establish a ppp connection for profile '$Profile'."
