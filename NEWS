@@ -1,3 +1,6 @@
+netctl 1.26
+- Make wireless connections reach network.target earlier
+
 netctl 1.25
 - Support profiles that use hooks in netctl-auto
 - Add verify subcommand to netctl
