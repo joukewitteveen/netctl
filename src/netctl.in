@@ -129,10 +129,13 @@ unit_reenable() {
 
 wait_online() {
     local profile="$1"
-    if sd_call "is-active --quiet" "$profile"; then
-        timeout_wait "${TIMEOUT_ONLINE:-120}" \
-                     '[[ $(sd_status_text "$profile") == "online" ]]'
-    else
+    if ! timeout_wait "${TIMEOUT_ONLINE:-120}" \
+                      '! sd_call "is-active --quiet" "$profile" || \
+                       [[ $(sd_status_text "$profile") == "online" ]]'; then
+        report_notice "timeout"
+        return 1
+    elif ! sd_call "is-active --quiet" "$profile"; then
+        report_notice "failed"
         return 1
     fi
 }

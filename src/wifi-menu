@@ -196,7 +196,7 @@ connect_to_ssid() {
             do_debug systemctl restart "netctl-auto@$INTERFACE.service"
         fi
         do_debug netctl-auto switch-to "$PROFILE"
-    elif ! netctl switch-to "$PROFILE"; then
+    elif ! netctl switch-to "$PROFILE" || ! netctl wait-online "$PROFILE"; then
         if is_yes "${NEW_PROFILE:-no}"; then
             msg="         CONNECTING FAILED
 
