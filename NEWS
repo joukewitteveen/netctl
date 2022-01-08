@@ -1,3 +1,6 @@
+netctl 1.27
+- Restore connection failure detection in wifi-menu
+
 netctl 1.26
 - Make wireless connections reach network.target earlier
 
