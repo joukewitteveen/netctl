@@ -90,7 +90,7 @@ init_entries() {
         else
             ENTRIES[i]=" "  # Not present
         fi
-        if [[ "$flags" =~ WPA2|WPA|WEP ]]; then
+        if [[ "$flags" =~ WPA3|WPA2|WPA|WEP ]]; then
             ENTRIES[i]+="${sep}${BASH_REMATCH[0],,}"
         else
             ENTRIES[i]+="${sep}none"
@@ -141,7 +141,7 @@ create_profile() {
     else
         security=none
     fi
-    if [[ "$flags" =~ PSK|WEP ]]; then
+    if [[ "$flags" =~ PSK|SAE|WEP ]]; then
         if is_yes "${OBSCURE:-no}"; then
             box="--insecure --passwordbox"
         else

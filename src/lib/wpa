@@ -231,7 +231,8 @@ wpa_make_config_block() {
         fi
       ;;
       wpa)
-        echo "proto=RSN WPA"
+        echo "key_mgmt=WPA-PSK SAE"
+        echo "ieee80211w=1"
         if [[ "${#Key}" -eq 64 && $Key == +([[:xdigit:]]) ]]; then
             echo "psk=$Key"
         else
