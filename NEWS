@@ -1,3 +1,6 @@
+netctl 1.28
+- Support WPA3-Personal security
+
 netctl 1.27
 - Restore connection failure detection in wifi-menu
 
