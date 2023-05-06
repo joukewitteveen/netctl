@@ -381,51 +381,54 @@ the `pppoe' type:
     The username and password to connect with.
 
 'ConnectionMode='::
-    This option specifies how a connection should be established, and
-    may take either `persist' or `demand' as its argument.
+    One of `persist' or `demand', depending on how a connection should
+    be established. Defaults to `++persist++'.
 
-'IdleTimeout='::
-    This option specifies the idle time (in seconds) after which `pppd'
-    should disconnect. This option is only valid if 'ConnectionMode='
-    is set to `demand'.
+'IdleTimeout=' [requires 'ConnectionMode=demand']::
+    The idle time (in seconds) after which the PPP daemon should
+    disconnect.
 
 'MaxFail='::
     The number of consecutive failed connection attempts to tolerate.
     A value of 0 means no limit. Defaults to `++5++'.
 
 'DefaultRoute='::
-    Use the default route provided by the peer (defaults to `true').
+    Whether or not to use the default route provided by the peer.
+    Defaults to `++yes++'.
 
 'UsePeerDNS='::
-    Use the DNS provided by the peer (defaults to `true').
+    Whether or not to use the DNS servers provided by the peer.
+    Defaults to `++yes++'.
 
 'PPPUnit='::
-    Set the ppp unit number in the interface name (ppp0, ppp1, etc.).
+    The PPP unit number in the interface name (`ppp0', `ppp1', etc.).
 
 'LCPEchoInterval=' and 'LCPEchoFailure='::
     These options override default LCP parameters from
     `/etc/ppp/options'.
 
 'OptionsFile='::
-    A file to read additional pppd options from.
+    A file to read additional *pppd*(8) options from.
 
 The following advanced options are also understood:
 
 'PPPoEService='::
-    This option specifies the PPPoE service name.
+    The PPPoE service name.
 
 'PPPoEAC='::
-    This option specifies the PPPoE access concentrator name.
+    The PPPoE access concentrator name.
 
 'PPPoESession='::
-    This option specifies an existing session to attach to, and is of
-    the form `sessid:macaddr'.
+    An existing session to attach to. This option is of the form
+    `sessid:macaddr'.
 
 'PPPoEMAC='::
-    Only connect to specified MAC address
+    A MAC address to restrict the connection to.
 
 'PPPoEIP6='::
-    Enable IPv6 support
+    Whether or not to enable IPv6CP and IPv6 protocols. When set to
+    `no', IPv6CP negotiation and IPv6 communication is explicitly
+    disabled.
 
 
 OPTIONS FOR `mobile_ppp' CONNECTIONS
@@ -439,7 +442,8 @@ type:
     default, as they are often not required.
 
 'AccessPointName='::
-    The access point (apn) to connect on. This is specific to your ISP.
+    The access point name (APN) to present to the carrier. This is
+    specific to your ISP.
 
 'Pin='::
     If your modem requires a PIN to unlock, set it here.
@@ -448,11 +452,11 @@ type:
     The number to dial. Defaults to `++&ast;99&num;++'.
 
 'Mode='::
-    This option is used to specify the connection mode. Can be one of
-    `3Gpref', `3Gonly', `GPRSpref', `GPRSonly', `None', or a custom
-    +AT^SYSCFG=...+ line specified as `++SYSCFG=...++{empty}'.
-    This generates +AT+ commands specific to certain Huawei modems; all
-    other devices should leave this option unset, or set it to `None'.
+    The connection mode. Can be one of `3Gpref', `3Gonly', `GPRSpref',
+    `GPRSonly', `None', or a custom +AT^SYSCFG=...+ line specified as
+    `++SYSCFG=...++{empty}'. This generates +AT+ commands specific to
+    certain Huawei modems; all other devices should leave this option
+    unset or set to `None'.
 
 'Init='::
     An initialization string sent to the modem before dialing. This
@@ -469,16 +473,18 @@ type:
     A value of 0 means no limit. Defaults to `++5++'.
 
 'DefaultRoute='::
-    Use the default route provided by the peer. Defaults to `++true++'.
+    Whether or not to use the default route provided by the peer.
+    Defaults to `++yes++'.
 
 'UsePeerDNS='::
-    Use the DNS provided by the peer. Defaults to `++true++'.
+    Whether or not to use the DNS servers provided by the peer.
+    Defaults to `++yes++'.
 
 'PPPUnit='::
-    Set the ppp unit number in the interface name (ppp0, ppp1, etc.).
+    The PPP unit number in the interface name (`ppp0', `ppp1', etc.).
 
 'OptionsFile='::
-    A file to read additional pppd options from.
+    A file to read additional *pppd*(8) options from.
 
 'RFKill='::
     The name of an *rfkill* device. When specified, the device is used
