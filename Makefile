@@ -51,8 +51,7 @@ netctl-$(VERSION).tar.xz:
 pkgbuild: PKGBUILD
 PKGBUILD: netctl-$(VERSION).tar.xz netctl.install contrib/PKGBUILD.in
 	sed -e "s|@pkgver@|$(VERSION)|g" \
-	    -e "s|@md5sum@|$(shell md5sum $< | cut -d ' ' -f 1)|" \
-	    -e "s|@md5sum.sig@|$(shell md5sum $<.sig | cut -d ' ' -f 1)|" \
+	    -e "s|@sha256sum@|$(shell sha256sum $< | cut -d ' ' -f 1)|" \
 	    $(lastword $^) > $@
 
 netctl.install: contrib/netctl.install
