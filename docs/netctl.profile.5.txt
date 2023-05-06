@@ -170,14 +170,19 @@ network. In particular, these connection types are +ethernet+,
     `**<address range>** via **<gateway>**'.
 
 'DHCPClient=' [requires 'IP=dhcp']::
-    The name of the DHCP client to use. Clients may accept additional
-    options through client-specific variables. By default, *netctl*
-    comes with support for `dhcpcd' and `dhclient'. Defaults to
-    `++dhcpcd++'.
+    The name of the DHCP client to use. By default, *netctl* comes with
+    support for `dhcpcd' and `dhclient'. Clients may accept additional
+    options through client-specific variables. Command line options for
+    *dhcpcd*(8) are read from 'DhcpcdOptions=' (defaults to
+    `++-L++{empty}'). Command line options for *dhclient*(8) are read
+    from 'DhclientOptions='. Defaults to `++dhcpcd++'.
 
 'DHCP6Client=' [requires 'IP6=dhcp' or 'IP6=dhcp-noaddr']::
     The name of the DHCPv6 client to use. By default, `dhcpcd' and
-    `dhclient' are supported. Defaults to `++dhclient++'.
+    `dhclient' are supported. Command line options for the IPv6
+    instance of *dhcpcd*(8) are read from 'DhcpcdOptions6='. Command
+    line options for the IPv6 instance of *dhclient*(8) are read from
+    'DhclientOptions6='. Defaults to `++dhclient++'.
 
 'DHCPReleaseOnStop='::
     Set to `++yes++' to release the DHCP lease when the profile is
