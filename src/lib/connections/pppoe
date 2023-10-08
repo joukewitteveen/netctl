@@ -24,7 +24,7 @@ pppoe_up() {
 linkname $(quote_word "$Profile")
 ${PPPUnit:+unit $(quote_word "$PPPUnit")}
 updetach
-plugin rp-pppoe.so
+plugin pppoe.so
 nic-$Interface
 
 noauth
