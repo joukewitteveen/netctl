@@ -1,3 +1,7 @@
+netctl 1.29
+- Support ppp>=2.5.0
+- Document bundled DHCP client-specific options
+
 netctl 1.28
 - Support WPA3-Personal security
 
