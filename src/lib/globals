@@ -8,7 +8,7 @@ STATE_FILE="${NETCTL_STATE_FILE:-/var/lib/netctl/netctl.state}"
 ### Logging/Error reporting
 
 report_notice() {
-    echo "$*"
+    printf '%s\n' "$*"
 }
 
 report_error() {
@@ -17,11 +17,11 @@ report_error() {
         prefix=$(tput bold; tput setaf 1)
         suffix=$(tput sgr0)
     fi
-    echo "$prefix$*$suffix" >&2
+    printf '%s%s%s\n' "$prefix" "$*" "$suffix" >&2
 }
 
 report_debug() {
-    is_yes "${NETCTL_DEBUG:-no}" && echo "DEBUG: $*" >&2
+    is_yes "${NETCTL_DEBUG:-no}" && printf 'DEBUG: %s\n' "$*" >&2
 }
 
 exit_error() {
