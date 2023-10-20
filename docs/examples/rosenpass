@@ -1,0 +1,8 @@
+Description="Rosenpass post quantum cryptography for wireguard"
+Interface=rosenpass0
+Connection=rosenpass
+RosenpassConfig=/home/pi/my/rosenpass-0.2.0/peer-a-config.toml
+
+## Example IP Config
+IP6=static
+Address6=('fe80::1/64')
