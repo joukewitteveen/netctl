@@ -19,5 +19,5 @@ rosenpass_up() {
 
 rosenpass_down() {
     ip_unset
-    bring_interface_down "$Interface" || return 1
+    interface_delete "$Interface"
 }
