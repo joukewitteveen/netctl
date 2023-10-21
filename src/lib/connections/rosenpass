@@ -1,0 +1,23 @@
+# Contributed by: Hrushikesh Rao <hrushikesh20thegreat@gmail.com>
+
+. "$SUBR_DIR/ip"
+
+# Make sure BindsToInterfaces is set
+BindsToInterfaces=("${BindsToInterfaces[@]}")
+
+rosenpass_up() {
+    if is_interface "$Interface"; then
+        report_error "Interface '$Interface' already exists"
+        return 1
+    fi
+
+    interface_add wireguard "$Interface" "$MACAddress" || return
+    /root/.cargo/bin/rosenpass exchange-config "$RosenpassConfig"
+    bring_interface_up "$Interface"
+    ip_set
+}
+
+rosenpass_down() {
+    ip_unset
+    interface_delete "$Interface"
+}
